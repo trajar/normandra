@@ -86,7 +86,13 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
     }
 
 
-    public Collection<ColumnMeta> getPrimaryColumns()
+    public Collection<ColumnMeta> getColumns()
+    {
+        return Collections.unmodifiableList(this.columns);
+    }
+
+
+    public Collection<ColumnMeta> getPrimary()
     {
         final List<ColumnMeta> list = new LinkedList<>();
         for (final ColumnMeta column : this.columns)
@@ -115,5 +121,33 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
             return 1;
         }
         return this.name.compareToIgnoreCase(meta.name);
+    }
+
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        EntityMeta that = (EntityMeta) o;
+
+        if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (table != null ? !table.equals(that.table) : that.table != null) return false;
+        if (type != null ? !type.equals(that.type) : that.type != null) return false;
+
+        return true;
+    }
+
+
+    @Override
+    public int hashCode()
+    {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (table != null ? table.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (columns != null ? columns.hashCode() : 0);
+        return result;
     }
 }

@@ -79,7 +79,7 @@ public class CassandraUtils
         }
         if (boolean.class.equals(clazz) || Boolean.class.equals(clazz))
         {
-            return "bigint";
+            return "boolean";
         }
         if (Date.class.equals(clazz))
         {

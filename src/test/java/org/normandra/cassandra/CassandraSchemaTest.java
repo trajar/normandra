@@ -9,11 +9,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.normandra.DatabaseConstruction;
 import org.normandra.config.AnnotationParser;
+import org.normandra.config.CatEntity;
 import org.normandra.config.DatabaseMeta;
+import org.normandra.config.DogEntity;
 import org.normandra.config.EntityMeta;
 import org.normandra.config.SimpleEntity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * cassandra unit tests
@@ -60,9 +64,9 @@ public class CassandraSchemaTest
         // we should start with clean keyspace
         final AnnotationParser parser = new AnnotationParser(SimpleEntity.class);
         final EntityMeta entity = parser.readEntity();
+        Assert.assertNotNull(entity);
         final String table = entity.getTable();
         Assert.assertFalse(this.database.hasTable(table));
-        Assert.assertNotNull(entity);
 
         // construct schema
         final DatabaseMeta meta = new DatabaseMeta(Arrays.asList(entity));
@@ -80,5 +84,32 @@ public class CassandraSchemaTest
         Assert.assertTrue(this.database.hasColumn(table, "id"));
         Assert.assertTrue(this.database.hasColumn(table, "name_colum"));
         Assert.assertTrue(this.database.hasColumn(table, "values"));
+    }
+
+
+    @Test
+    public void testInheritance()
+    {
+        // build meta-data for all entities
+        final List<EntityMeta> list = new ArrayList<>();
+        for (final Class<?> clazz : Arrays.asList(CatEntity.class, DogEntity.class))
+        {
+            final AnnotationParser parser = new AnnotationParser(clazz);
+            final EntityMeta entity = parser.readEntity();
+            Assert.assertNotNull(entity);
+            final String table = entity.getTable();
+            Assert.assertFalse(this.database.hasTable(table));
+            list.add(entity);
+        }
+
+        // construct schema
+        final DatabaseMeta meta = new DatabaseMeta(list);
+        this.database.refresh(meta);
+        Assert.assertTrue(this.database.hasTable("animal"));
+        Assert.assertTrue(this.database.hasColumn("animal", "id"));
+        Assert.assertTrue(this.database.hasColumn("animal", "type"));
+        Assert.assertFalse(this.database.hasColumn("animal", "numBarks"));
+        Assert.assertTrue(this.database.hasColumn("animal", "num_barks"));
+        Assert.assertTrue(this.database.hasColumn("animal", "litter_box"));
     }
 }

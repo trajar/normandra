@@ -18,7 +18,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * a cassandra database
@@ -79,28 +82,48 @@ public class CassandraDatabase implements NormandraDatabase
         }
 
         final Session session = this.ensureSession();
-        for (final EntityMeta entity : meta)
+        for (final Map.Entry<String, Collection<EntityMeta>> entry : meta.getEntities().entrySet())
         {
-            final String table = entity.getTable();
+            final String table = entry.getKey();
             final List<Statement> statements = new ArrayList<>(4);
+
+            // drop table as required
             if (DatabaseConstruction.RECREATE.equals(this.constructionMode) && this.hasTable(table))
             {
                 final StringBuilder cql = new StringBuilder();
                 cql.append("DROP TABLE ").append(table).append(";");
                 statements.add(new SimpleStatement(cql.toString()));
             }
+
+            // create table schema
+            final Collection<ColumnMeta> primaryColumns = new LinkedList<>();
+            final Collection<ColumnMeta> allColumns = new LinkedList<>();
+            for (final EntityMeta entity : entry.getValue())
+            {
+                for (final ColumnMeta column : entity)
+                {
+                    if (column.isPrimaryKey() && !primaryColumns.contains(column))
+                    {
+                        primaryColumns.add(column);
+                    }
+                    if (!allColumns.contains(column))
+                    {
+                        allColumns.add(column);
+                    }
+                }
+            }
             if (DatabaseConstruction.UPDATE.equals(this.constructionMode))
             {
                 // ensure we create base database with all keys - then update/add columns in separate comment
-                statements.add(defineTable(entity, entity.getPrimaryColumns()));
-                for (final ColumnMeta column : entity)
+                statements.add(defineTable(table, primaryColumns));
+                for (final ColumnMeta column : allColumns)
                 {
                     final String name = column.getName();
                     if (!column.isPrimaryKey() && !this.hasColumn(table, name))
                     {
                         final StringBuilder cql = new StringBuilder();
                         final String type = CassandraUtils.columnType(column);
-                        cql.append("ALTER TABLE ").append(entity.getTable()).append(IOUtils.LINE_SEPARATOR);
+                        cql.append("ALTER TABLE ").append(table).append(IOUtils.LINE_SEPARATOR);
                         cql.append("ADD ").append(name).append(" ").append(type).append(";");
                         statements.add(new SimpleStatement(cql.toString()));
                     }
@@ -109,7 +132,7 @@ public class CassandraDatabase implements NormandraDatabase
             else
             {
                 // create table and column definitions in one command
-                statements.add(defineTable(entity, entity));
+                statements.add(defineTable(table, allColumns));
             }
 
             // execute batch statements
@@ -173,10 +196,9 @@ public class CassandraDatabase implements NormandraDatabase
     }
 
 
-    private static Statement defineTable(final EntityMeta entity, final Iterable<ColumnMeta> columns)
+    private static Statement defineTable(final String table, final Iterable<ColumnMeta> columns)
     {
         // define table
-        final String table = entity.getTable();
         final StringBuilder cql = new StringBuilder();
         cql.append("CREATE TABLE ").append(table).append(" (").append(IOUtils.LINE_SEPARATOR);
 
