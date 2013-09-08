@@ -63,6 +63,13 @@ public class ColumnMeta implements Comparable<ColumnMeta>
 
 
     @Override
+    public String toString()
+    {
+        return this.name + " (" + this.type.getSimpleName() + ")";
+    }
+
+
+    @Override
     public boolean equals(Object o)
     {
         if (this == o) return true;

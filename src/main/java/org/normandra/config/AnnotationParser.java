@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * a class used to parse jpa annotations
@@ -95,7 +94,7 @@ public class AnnotationParser
 
     public List<ColumnMeta> getColumns()
     {
-        final Map<String, Field> map = new TreeMap<>();
+        final Map<String, Field> map = new LinkedHashMap<>();
         for (final Class<?> clazz : this.getHierarchyReverse())
         {
             final Field[] fields = clazz.getDeclaredFields();
