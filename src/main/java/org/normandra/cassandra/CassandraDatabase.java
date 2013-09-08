@@ -99,7 +99,7 @@ public class CassandraDatabase implements NormandraDatabase
                     if (!column.isPrimaryKey() && !this.hasColumn(table, name))
                     {
                         final StringBuilder cql = new StringBuilder();
-                        final String type = CassandraUtils.columnType(column.getType());
+                        final String type = CassandraUtils.columnType(column);
                         cql.append("ALTER TABLE ").append(entity.getTable()).append(IOUtils.LINE_SEPARATOR);
                         cql.append("ADD ").append(name).append(" ").append(type).append(";");
                         statements.add(new SimpleStatement(cql.toString()));
@@ -173,7 +173,7 @@ public class CassandraDatabase implements NormandraDatabase
     }
 
 
-    private Statement defineTable(final EntityMeta entity, final Iterable<ColumnMeta> columns)
+    private static Statement defineTable(final EntityMeta entity, final Iterable<ColumnMeta> columns)
     {
         // define table
         final String table = entity.getTable();
