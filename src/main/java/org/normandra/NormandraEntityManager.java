@@ -53,9 +53,9 @@ public class NormandraEntityManager
             final DatabaseMeta meta = new DatabaseMeta(entities);
 
             // create entity manager
-            final String keyspace = this.getParameter(CassandraDatabase.KEYSPACE, String.class);
-            final String hosts = this.getParameter(CassandraDatabase.HOSTS, String.class);
-            final Integer port = this.getParameter(CassandraDatabase.PORT, Integer.class);
+            final String keyspace = this.getParameter(CassandraDatabase.KEYSPACE, String.class, "normandra");
+            final String hosts = this.getParameter(CassandraDatabase.HOSTS, String.class, CassandraDatabaseFactory.DEFAULT_HOST);
+            final Integer port = this.getParameter(CassandraDatabase.PORT, Integer.class, CassandraDatabaseFactory.DEFAULT_PORT);
             final NormandraDatabaseFactory factory = new CassandraDatabaseFactory(keyspace, hosts, port.intValue(), this.mode);
             final NormandraDatabase database = factory.create();
             if (null == database)
@@ -135,7 +135,7 @@ public class NormandraEntityManager
         }
 
 
-        private <T> T getParameter(final String key, final Class<T> clazz)
+        private <T> T getParameter(final String key, final Class<T> clazz, final T defaultValue)
         {
             if (null == key)
             {
@@ -144,7 +144,7 @@ public class NormandraEntityManager
             final Object value = this.parameters.get(key);
             if (null == value)
             {
-                return null;
+                return defaultValue;
             }
             return clazz.cast(value);
         }

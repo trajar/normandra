@@ -147,7 +147,7 @@ public class CassandraDatabase implements NormandraDatabase
                     }
                     catch (final Exception e)
                     {
-                        logger.warn("Unable to execute cql3 station during database refresh.", e);
+                        logger.warn("Unable to execute cql3 statement during database refresh.", e);
                     }
                 }
             }
