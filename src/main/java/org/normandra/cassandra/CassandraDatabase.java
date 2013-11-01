@@ -69,6 +69,20 @@ public class CassandraDatabase implements NormandraDatabase
 
 
     @Override
+    public <T> void save(final EntityMeta meta, final T element)
+    {
+        if (null == meta)
+        {
+            throw new NullArgumentException("entity metadata");
+        }
+        if (null == element)
+        {
+            throw new NullArgumentException("element");
+        }
+    }
+
+
+    @Override
     public void refresh(final DatabaseMeta meta)
     {
         if (null == meta)
@@ -85,7 +99,7 @@ public class CassandraDatabase implements NormandraDatabase
         for (final Map.Entry<String, Collection<EntityMeta>> entry : meta.getEntities().entrySet())
         {
             final String table = entry.getKey();
-            final List<Statement> statements = new ArrayList<>(4);
+            final List<Statement> statements = new ArrayList<>();
 
             // drop table as required
             if (DatabaseConstruction.RECREATE.equals(this.constructionMode) && this.hasTable(table))

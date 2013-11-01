@@ -28,4 +28,28 @@ public class CollectionMeta extends ColumnMeta
     {
         return this.generic;
     }
+
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        CollectionMeta that = (CollectionMeta) o;
+
+        if (generic != null ? !generic.equals(that.generic) : that.generic != null) return false;
+
+        return true;
+    }
+
+
+    @Override
+    public int hashCode()
+    {
+        int result = super.hashCode();
+        result = 31 * result + (generic != null ? generic.hashCode() : 0);
+        return result;
+    }
 }

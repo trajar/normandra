@@ -9,9 +9,11 @@ import org.normandra.config.EntityMeta;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -27,8 +29,6 @@ public class NormandraEntityManager
     public class Builder
     {
         private DatabaseConstruction mode = DatabaseConstruction.CREATE;
-
-        private ClassLoader classLoader = NormandraEntityManager.class.getClassLoader();
 
         private final Set<Class<?>> classes = new HashSet<>();
 
@@ -76,17 +76,6 @@ public class NormandraEntityManager
                 throw new NullArgumentException("database construction mode");
             }
             this.mode = mode;
-            return this;
-        }
-
-
-        public Builder withClassLoader(final ClassLoader cl)
-        {
-            if (null == cl)
-            {
-                throw new NullArgumentException("class loader");
-            }
-            this.classLoader = cl;
             return this;
         }
 
@@ -155,6 +144,8 @@ public class NormandraEntityManager
 
     private final DatabaseMeta meta;
 
+    private final Map<Class<?>, EntityMeta> classMap;
+
 
     private NormandraEntityManager(final NormandraDatabase db, final DatabaseMeta meta)
     {
@@ -168,6 +159,30 @@ public class NormandraEntityManager
         }
         this.database = db;
         this.meta = meta;
+
+        final int size = meta.getEntities().size();
+        this.classMap = new HashMap<>(size);
+        for (final EntityMeta entity : this.meta)
+        {
+            this.classMap.put(entity.getType(), entity);
+        }
     }
 
+
+    public <T> void save(final T element)
+    {
+        if (null == element)
+        {
+            throw new NullArgumentException("element");
+        }
+
+        final Class<?> clazz = element.getClass();
+        final EntityMeta meta = this.classMap.get(clazz);
+        if (null == meta)
+        {
+            throw new IllegalArgumentException("Element [" + element + "] is not a registered entity.");
+        }
+
+        this.database.save(meta, element);
+    }
 }

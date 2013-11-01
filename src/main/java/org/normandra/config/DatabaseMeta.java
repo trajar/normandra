@@ -1,7 +1,9 @@
 package org.normandra.config;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -15,9 +17,9 @@ import java.util.TreeSet;
  * User: bowen
  * Date: 9/4/13
  */
-public class DatabaseMeta
+public class DatabaseMeta implements Iterable<EntityMeta>
 {
-    private Set<EntityMeta> entities = new TreeSet<>();
+    private final Collection<EntityMeta> entities;
 
 
     public DatabaseMeta(final Collection<EntityMeta> c)
@@ -26,7 +28,7 @@ public class DatabaseMeta
         {
             throw new IllegalArgumentException("Entities cannot be null/empty.");
         }
-        this.entities.addAll(c);
+        this.entities = new ArrayList<>(c);
     }
 
 
@@ -74,5 +76,12 @@ public class DatabaseMeta
             }
         }
         return Collections.unmodifiableCollection(list);
+    }
+
+
+    @Override
+    public Iterator<EntityMeta> iterator()
+    {
+        return Collections.unmodifiableCollection(this.entities).iterator();
     }
 }
