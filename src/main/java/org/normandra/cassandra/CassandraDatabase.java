@@ -1,5 +1,6 @@
 package org.normandra.cassandra;
 
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.KeyspaceMetadata;
@@ -7,21 +8,24 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseConstruction;
 import org.normandra.NormandraDatabase;
-import org.normandra.config.ColumnMeta;
-import org.normandra.config.DatabaseMeta;
-import org.normandra.config.EntityMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.normandra.NormandraException;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.DatabaseMeta;
+import org.normandra.meta.EntityMeta;
+import org.normandra.data.ColumnAccessor;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * a cassandra database
@@ -36,8 +40,6 @@ public class CassandraDatabase implements NormandraDatabase
     public static final String HOSTS = "cassandra.hosts";
 
     public static final String PORT = "cassandra.hosts";
-
-    private static final Logger logger = LoggerFactory.getLogger(CassandraDatabase.class);
 
     private final Cluster cluster;
 
@@ -69,7 +71,7 @@ public class CassandraDatabase implements NormandraDatabase
 
 
     @Override
-    public <T> void save(final EntityMeta meta, final T element)
+    public <T> void save(final EntityMeta meta, final T element) throws NormandraException
     {
         if (null == meta)
         {
@@ -79,11 +81,36 @@ public class CassandraDatabase implements NormandraDatabase
         {
             throw new NullArgumentException("element");
         }
+
+        try
+        {
+            boolean hasValue = false;
+            Insert statement = QueryBuilder.insertInto(this.keyspaceName, meta.getTable());
+            for (final ColumnMeta column : meta.getColumns())
+            {
+                final ColumnAccessor<?> accessor = column.getAccessor();
+                final Object value = accessor.getValue(element);
+                if (value != null)
+                {
+                    statement = statement.value(column.getName(), value);
+                    hasValue = true;
+                }
+            }
+            if (!hasValue)
+            {
+                throw new NormandraException("No column values found - cannot save empty entity.");
+            }
+            this.ensureSession().execute(statement);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to save entity [" + meta + "] instance [" + element + "].", e);
+        }
     }
 
 
     @Override
-    public void refresh(final DatabaseMeta meta)
+    public void refresh(final DatabaseMeta meta) throws NormandraException
     {
         if (null == meta)
         {
@@ -95,7 +122,6 @@ public class CassandraDatabase implements NormandraDatabase
             return;
         }
 
-        final Session session = this.ensureSession();
         for (final Map.Entry<String, Collection<EntityMeta>> entry : meta.getEntities().entrySet())
         {
             final String table = entry.getKey();
@@ -110,19 +136,21 @@ public class CassandraDatabase implements NormandraDatabase
             }
 
             // create table schema
-            final Collection<ColumnMeta> primaryColumns = new LinkedList<>();
-            final Collection<ColumnMeta> allColumns = new LinkedList<>();
+            final Set<ColumnMeta> uniqueSet = new TreeSet<>();
+            final Collection<ColumnMeta> primaryColumns = new ArrayList<>();
+            final Collection<ColumnMeta> allColumns = new ArrayList<>();
             for (final EntityMeta entity : entry.getValue())
             {
                 for (final ColumnMeta column : entity)
                 {
-                    if (column.isPrimaryKey() && !primaryColumns.contains(column))
+                    if (!uniqueSet.contains(column))
                     {
-                        primaryColumns.add(column);
-                    }
-                    if (!allColumns.contains(column))
-                    {
+                        uniqueSet.add(column);
                         allColumns.add(column);
+                        if (column.isPrimaryKey())
+                        {
+                            primaryColumns.add(column);
+                        }
                     }
                 }
             }
@@ -157,11 +185,11 @@ public class CassandraDatabase implements NormandraDatabase
                 {
                     try
                     {
-                        session.execute(statement);
+                        this.ensureSession().execute(statement);
                     }
                     catch (final Exception e)
                     {
-                        logger.warn("Unable to execute cql3 statement during database refresh.", e);
+                        throw new NormandraException("Unable to execute cql3 statement during database refresh.", e);
                     }
                 }
             }

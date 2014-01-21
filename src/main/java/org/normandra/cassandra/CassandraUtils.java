@@ -1,7 +1,7 @@
 package org.normandra.cassandra;
 
-import org.normandra.config.CollectionMeta;
-import org.normandra.config.ColumnMeta;
+import org.normandra.meta.CollectionMeta;
+import org.normandra.meta.ColumnMeta;
 
 import java.util.Collection;
 import java.util.Date;

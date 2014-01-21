@@ -1,6 +1,9 @@
-package org.normandra.config;
+package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.data.ColumnAccessor;
+
+import java.util.Collection;
 
 /**
  * collection column meta-data
@@ -8,14 +11,14 @@ import org.apache.commons.lang.NullArgumentException;
  * User: bowen
  * Date: 9/1/13
  */
-public class CollectionMeta extends ColumnMeta
+public class CollectionMeta<T extends Collection> extends ColumnMeta<T>
 {
     private final Class<?> generic;
 
 
-    public CollectionMeta(final String name, final Class<?> clazz, final Class<?> generic)
+    public CollectionMeta(final String name, final ColumnAccessor<T> accessor, final Class<T> clazz, final Class<?> generic)
     {
-        super(name, clazz, false);
+        super(name, accessor, clazz, false);
         if (null == generic)
         {
             throw new NullArgumentException("generic");

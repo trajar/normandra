@@ -1,19 +1,13 @@
 package org.normandra.cassandra;
 
 import junit.framework.Assert;
-import org.apache.log4j.BasicConfigurator;
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.normandra.DatabaseConstruction;
-import org.normandra.config.AnnotationParser;
-import org.normandra.config.CatEntity;
-import org.normandra.config.DatabaseMeta;
-import org.normandra.config.DogEntity;
-import org.normandra.config.EntityMeta;
-import org.normandra.config.SimpleEntity;
+import org.normandra.meta.AnnotationParser;
+import org.normandra.meta.CatEntity;
+import org.normandra.meta.DatabaseMeta;
+import org.normandra.meta.DogEntity;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.SimpleEntity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,41 +19,10 @@ import java.util.List;
  * User: bowen
  * Date: 9/7/13
  */
-public class CassandraSchemaTest
+public class CassandraSchemaTest extends BaseCassandraTest
 {
-    private CassandraDatabase database;
-
-
-    @BeforeClass
-    public static void setupCassandra() throws Exception
-    {
-        BasicConfigurator.configure();
-//      Logger.getRootLogger().setLevel(Level.INFO);
-        EmbeddedCassandraServerHelper.startEmbeddedCassandra("/cassandra-1.2.8.yaml");
-    }
-
-
-    @Before
-    public void create()
-    {
-        this.database = new CassandraDatabaseFactory("test", "localhost", 9142, DatabaseConstruction.RECREATE).create();
-    }
-
-
-    @After
-    public void destroy()
-    {
-        if (this.database != null)
-        {
-            this.database.close();
-            this.database = null;
-        }
-        EmbeddedCassandraServerHelper.cleanEmbeddedCassandra();
-    }
-
-
     @Test
-    public void testSimple()
+    public void testSimple() throws Exception
     {
         // we should start with clean keyspace
         final AnnotationParser parser = new AnnotationParser(SimpleEntity.class);
@@ -88,7 +51,7 @@ public class CassandraSchemaTest
 
 
     @Test
-    public void testInheritance()
+    public void testInheritance() throws Exception
     {
         // build meta-data for all entities
         final List<EntityMeta> list = new ArrayList<>();

@@ -1,4 +1,4 @@
-package org.normandra.config;
+package org.normandra.meta;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;

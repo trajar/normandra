@@ -1,7 +1,7 @@
 package org.normandra;
 
-import org.normandra.config.DatabaseMeta;
-import org.normandra.config.EntityMeta;
+import org.normandra.meta.DatabaseMeta;
+import org.normandra.meta.EntityMeta;
 
 /**
  * a NoSQL database abstraction
@@ -11,7 +11,7 @@ import org.normandra.config.EntityMeta;
  */
 public interface NormandraDatabase
 {
-    <T> void save(EntityMeta meta, T element);
-    void refresh(DatabaseMeta meta);
+    <T> void save(EntityMeta meta, T element) throws NormandraException;
+    void refresh(DatabaseMeta meta) throws NormandraException;
     void close();
 }

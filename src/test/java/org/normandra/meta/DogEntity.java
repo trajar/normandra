@@ -1,19 +1,19 @@
-package org.normandra.config;
+package org.normandra.meta;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 /**
- * cat entity class
+ * dog entity class
  * <p/>
  * User: bowen
  * Date: 9/1/13
  */
 @Entity
-@DiscriminatorValue("cat")
-public class CatEntity extends AnimalEntity
+@DiscriminatorValue("dog")
+public class DogEntity extends AnimalEntity
 {
     @Column
-    private boolean litterBox;
+    private int numBarks;
 }

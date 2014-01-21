@@ -1,4 +1,4 @@
-package org.normandra.config;
+package org.normandra.meta;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -83,5 +83,26 @@ public class DatabaseMeta implements Iterable<EntityMeta>
     public Iterator<EntityMeta> iterator()
     {
         return Collections.unmodifiableCollection(this.entities).iterator();
+    }
+
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DatabaseMeta that = (DatabaseMeta) o;
+
+        if (entities != null ? !entities.equals(that.entities) : that.entities != null) return false;
+
+        return true;
+    }
+
+
+    @Override
+    public int hashCode()
+    {
+        return entities != null ? entities.hashCode() : 0;
     }
 }

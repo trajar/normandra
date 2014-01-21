@@ -1,4 +1,4 @@
-package org.normandra.config;
+package org.normandra.meta;
 
 import junit.framework.Assert;
 import org.junit.Test;

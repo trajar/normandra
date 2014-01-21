@@ -1,0 +1,52 @@
+package org.normandra.cassandra;
+
+import org.junit.Test;
+import org.normandra.meta.AnnotationParser;
+import org.normandra.meta.DatabaseMeta;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.SimpleEntity;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * unit test to test persistence
+ * <p/>
+ * User: bowen
+ * Date: 1/20/14
+ */
+public class CassandraSaveTest extends BaseCassandraTest
+{
+    private Map<Class, EntityMeta> setupEntities(final Class... entities) throws Exception
+    {
+        final Map<Class, EntityMeta> map = new HashMap<>();
+        final List<EntityMeta> list = new ArrayList<>();
+        for (final Class<?> clazz : entities)
+        {
+            final AnnotationParser parser = new AnnotationParser(clazz);
+            final EntityMeta entity = parser.readEntity();
+            if (entity != null)
+            {
+                list.add(entity);
+                map.put(clazz, entity);
+            }
+        }
+        final DatabaseMeta meta = new DatabaseMeta(list);
+        this.database.refresh(meta);
+        return Collections.unmodifiableMap(map);
+    }
+
+
+    @Test
+    public void testSimple() throws Exception
+    {
+        final Map<Class, EntityMeta> entityMap = this.setupEntities(SimpleEntity.class);
+
+        final SimpleEntity entity = new SimpleEntity("test", Arrays.asList("foo", "bar"));
+        this.database.save(entityMap.get(SimpleEntity.class), entity);
+    }
+}

@@ -3,9 +3,9 @@ package org.normandra;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.cassandra.CassandraDatabase;
 import org.normandra.cassandra.CassandraDatabaseFactory;
-import org.normandra.config.AnnotationParser;
-import org.normandra.config.DatabaseMeta;
-import org.normandra.config.EntityMeta;
+import org.normandra.meta.AnnotationParser;
+import org.normandra.meta.DatabaseMeta;
+import org.normandra.meta.EntityMeta;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +35,7 @@ public class NormandraEntityManager
         private final SortedMap<String, Object> parameters = new TreeMap<>();
 
 
-        public NormandraEntityManager create()
+        public NormandraEntityManager create() throws NormandraException
         {
             // read all entities
             final List<EntityMeta> entities = new LinkedList<>();
@@ -62,7 +62,15 @@ public class NormandraEntityManager
             {
                 return null;
             }
-            database.refresh(meta);
+            try
+            {
+                database.refresh(meta);
+            }
+            catch (final Exception e)
+            {
+                database.close();
+                throw new NormandraException("Unable to referesh database.", e);
+            }
 
             // success - create manager
             return new NormandraEntityManager(database, meta);
@@ -169,7 +177,7 @@ public class NormandraEntityManager
     }
 
 
-    public <T> void save(final T element)
+    public <T> void save(final T element) throws NormandraException
     {
         if (null == element)
         {
