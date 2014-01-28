@@ -28,6 +28,13 @@ public class NestedFieldColumnAccessor<T> extends FieldColumnAccessor<T>
 
 
     @Override
+    public boolean isEmpty(final Object entity) throws NormandraException
+    {
+        return this.getValue(entity) != null;
+    }
+
+
+    @Override
     public T getValue(final Object entity) throws NormandraException
     {
         final Object base;
@@ -44,6 +51,13 @@ public class NestedFieldColumnAccessor<T> extends FieldColumnAccessor<T>
             return null;
         }
         return this.delegate.getValue(base);
+    }
+
+
+    @Override
+    public boolean setValue(Object entity, T value) throws NormandraException
+    {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
 

@@ -27,15 +27,34 @@ public class BasicFieldColumnAccessor<T> extends FieldColumnAccessor<T>
         }
         this.clazz = clazz;
         if (this.clazz.equals(long.class) ||
-            this.clazz.equals(int.class) ||
-            this.clazz.equals(char.class) ||
-            this.clazz.equals(short.class))
+                this.clazz.equals(int.class) ||
+                this.clazz.equals(char.class) ||
+                this.clazz.equals(short.class))
         {
             this.primitive = true;
         }
         else
         {
             this.primitive = false;
+        }
+    }
+
+
+    @Override
+    public boolean isEmpty(final Object entity) throws NormandraException
+    {
+        final Object obj = this.getValue(entity);
+        if (null == obj)
+        {
+            return false;
+        }
+        if (obj instanceof Number)
+        {
+            return ((Number) obj).longValue() == 0;
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -61,7 +80,21 @@ public class BasicFieldColumnAccessor<T> extends FieldColumnAccessor<T>
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to get property [" + this.getField().getName() + "] from entity [" + entity + "].", e);
+            throw new NormandraException("Unable to get property [" + this.getField().getName() + "] on entity [" + entity + "].", e);
+        }
+    }
+
+
+    @Override
+    public boolean setValue(final Object entity, final T value) throws NormandraException
+    {
+        try
+        {
+            return this.set(entity, value);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to set property [" + this.getField().getName() + "] on entity [" + entity + "].", e);
         }
     }
 

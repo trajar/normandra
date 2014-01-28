@@ -30,6 +30,42 @@ abstract public class CollectionColumnAccessor<T extends Collection> extends Fie
     }
 
 
+    @Override
+    public boolean isEmpty(final Object entity) throws NormandraException
+    {
+        final Collection list = this.getCollection(entity);
+        if (null == list)
+        {
+            return true;
+        }
+        return list.isEmpty();
+    }
+
+
+    @Override
+    public boolean setValue(final Object entity, final T value) throws NormandraException
+    {
+        return this.setCollection(entity, value);
+    }
+
+
+    public boolean setCollection(final Object entity, final T collection) throws NormandraException
+    {
+        if (null == entity)
+        {
+            return false;
+        }
+        try
+        {
+            return this.set(entity, collection);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to get property [" + this.getField().getName() + "] from entity [" + entity + "].", e);
+        }
+    }
+
+
     public Collection<T> getCollection(final Object entity) throws NormandraException
     {
         if (null == entity)

@@ -19,6 +19,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
@@ -26,6 +27,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -33,7 +35,9 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -110,6 +114,44 @@ public class AnnotationParser
     }
 
 
+    public Map<Field, GeneratedValue> getGenerators()
+    {
+        final Map<Field, GeneratedValue> map = new HashMap<>();
+        for (final Field field : this.getFields())
+        {
+            final GeneratedValue annotation = field.getAnnotation(GeneratedValue.class);
+            if (annotation != null)
+            {
+                map.put(field, annotation);
+            }
+        }
+        return Collections.unmodifiableMap(map);
+    }
+
+
+    public <T extends Annotation> List<T> getAnnotations(final Class<T> clazz)
+    {
+        final List<T> list = new ArrayList<>();
+        for (final Field field : this.getFields())
+        {
+            final T annotation = field.getAnnotation(clazz);
+            if (annotation != null)
+            {
+                list.add(annotation);
+            }
+        }
+        for (final Class<?> type : this.getHierarchy())
+        {
+            final T annotation = type.getAnnotation(clazz);
+            if (annotation != null)
+            {
+                list.add(annotation);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+
     public List<ColumnMeta> getColumns()
     {
         final List<Field> fields = this.getFields();
@@ -180,6 +222,7 @@ public class AnnotationParser
     {
         // basic column info
         final Column column = field.getAnnotation(Column.class);
+        final String property = field.getName();
         final Class<?> type = field.getType();
         String name = column != null ? column.name() : null;
         if (null == name || name.isEmpty())
@@ -193,7 +236,7 @@ public class AnnotationParser
         if (id != null)
         {
             final ColumnAccessor accessor = new BasicFieldColumnAccessor(field, type);
-            columns.add(new ColumnMeta(name, accessor, type, true));
+            columns.add(new ColumnMeta(name, property, accessor, type, true));
             return true;
         }
         else if (embeddedId != null)
@@ -207,7 +250,7 @@ public class AnnotationParser
             {
                 final Class<?> embeddedClass = embeddedColumn.getType();
                 final ColumnAccessor accessor = new NestedFieldColumnAccessor(field, new BasicFieldColumnAccessor(embeddedColumn, embeddedClass));
-                columns.add(new ColumnMeta(name, accessor, type, true));
+                columns.add(new ColumnMeta(name, property, accessor, type, true));
             }
         }
 
@@ -236,14 +279,14 @@ public class AnnotationParser
                     {
                         accessor = new ListColumnAccessor(field, parameterizedClass);
                     }
-                    columns.add(new ColumnMeta(name, accessor, type, false));
+                    columns.add(new CollectionMeta(name, property, accessor, type, parameterizedClass));
                 }
             }
         }
         else
         {
             final ColumnAccessor accessor = new BasicFieldColumnAccessor(field, type);
-            columns.add(new ColumnMeta(name, accessor, type, false));
+            columns.add(new ColumnMeta(name, property, accessor, type, false));
         }
         return true;
     }
@@ -259,6 +302,7 @@ public class AnnotationParser
                 if (column != null)
                 {
                     final String name = column.name();
+                    final String property = "DiscriminatorColumn";
                     final DiscriminatorType type = column.discriminatorType();
                     final DiscriminatorValue value = clazz.getAnnotation(DiscriminatorValue.class);
                     String discriminator = value != null ? value.value() : "";
@@ -272,12 +316,12 @@ public class AnnotationParser
                         switch (type)
                         {
                             case CHAR:
-                                return new ColumnMeta(name, accessor, Character.class, false);
+                                return new ColumnMeta(name, property, accessor, Character.class, false);
                             case INTEGER:
-                                return new ColumnMeta(name, accessor, Integer.class, false);
+                                return new ColumnMeta(name, property, accessor, Integer.class, false);
                             case STRING:
                             default:
-                                return new ColumnMeta(name, accessor, String.class, false);
+                                return new ColumnMeta(name, property, accessor, String.class, false);
                         }
                     }
                 }

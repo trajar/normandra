@@ -15,11 +15,18 @@ import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseConstruction;
 import org.normandra.NormandraDatabase;
 import org.normandra.NormandraException;
+import org.normandra.data.ColumnAccessor;
+import org.normandra.generator.IdGenerator;
+import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
-import org.normandra.data.ColumnAccessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.persistence.GeneratedValue;
+import javax.persistence.TableGenerator;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -33,13 +40,15 @@ import java.util.TreeSet;
  * User: bowen
  * Date: 8/31/13
  */
-public class CassandraDatabase implements NormandraDatabase
+public class CassandraDatabase implements NormandraDatabase, SessionAccessor
 {
     public static final String KEYSPACE = "cassandra.keyspace";
 
     public static final String HOSTS = "cassandra.hosts";
 
     public static final String PORT = "cassandra.hosts";
+
+    private static final Logger logger = LoggerFactory.getLogger(CassandraDatabase.class);
 
     private final Cluster cluster;
 
@@ -88,8 +97,23 @@ public class CassandraDatabase implements NormandraDatabase
             Insert statement = QueryBuilder.insertInto(this.keyspaceName, meta.getTable());
             for (final ColumnMeta column : meta.getColumns())
             {
-                final ColumnAccessor<?> accessor = column.getAccessor();
-                final Object value = accessor.getValue(element);
+                final ColumnAccessor accessor = column.getAccessor();
+                final IdGenerator generator = meta.getGenerator(column);
+                final Object value;
+                if (generator != null && accessor.isEmpty(element))
+                {
+                    final Object generated = generator.generate(meta);
+                    if (generated != null)
+                    {
+                        accessor.setValue(element, generated);
+                    }
+                    value = generated;
+                }
+                else
+                {
+                    value = accessor.getValue(element);
+                }
+
                 if (value != null)
                 {
                     statement = statement.value(column.getName(), value);
@@ -122,77 +146,164 @@ public class CassandraDatabase implements NormandraDatabase
             return;
         }
 
+        // create all entity tables
         for (final Map.Entry<String, Collection<EntityMeta>> entry : meta.getEntities().entrySet())
         {
             final String table = entry.getKey();
-            final List<Statement> statements = new ArrayList<>();
-
-            // drop table as required
-            if (DatabaseConstruction.RECREATE.equals(this.constructionMode) && this.hasTable(table))
+            final Collection<EntityMeta> list = entry.getValue();
+            try
             {
-                final StringBuilder cql = new StringBuilder();
-                cql.append("DROP TABLE ").append(table).append(";");
-                statements.add(new SimpleStatement(cql.toString()));
+                this.refreshEntityTable(table, list);
             }
-
-            // create table schema
-            final Set<ColumnMeta> uniqueSet = new TreeSet<>();
-            final Collection<ColumnMeta> primaryColumns = new ArrayList<>();
-            final Collection<ColumnMeta> allColumns = new ArrayList<>();
-            for (final EntityMeta entity : entry.getValue())
+            catch (final Exception e)
             {
-                for (final ColumnMeta column : entity)
+                throw new NormandraException("Unable to refresh entity table [" + table + "].", e);
+            }
+        }
+
+        // setup any table sequence/id generators
+        for (final EntityMeta entity : meta)
+        {
+            final AnnotationParser parser = new AnnotationParser(entity.getType());
+            for (final Map.Entry<Field, GeneratedValue> entry : parser.getGenerators().entrySet())
+            {
+                final Field field = entry.getKey();
+                final GeneratedValue generator = entry.getValue();
+                final String type = generator.generator();
+                String tableName = "id_generator";
+                String keyColumn = "id";
+                String keyValue = entity.getTable();
+                String valueColumn = "value";
+                for (final TableGenerator table : parser.getAnnotations(TableGenerator.class))
                 {
-                    if (!uniqueSet.contains(column))
+                    if (type.equalsIgnoreCase(table.name()))
                     {
-                        uniqueSet.add(column);
-                        allColumns.add(column);
-                        if (column.isPrimaryKey())
+                        if (!table.table().isEmpty())
                         {
-                            primaryColumns.add(column);
+                            tableName = table.table();
+                        }
+                        if (!table.pkColumnName().isEmpty())
+                        {
+                            keyColumn = table.pkColumnName();
+                        }
+                        if (!table.pkColumnValue().isEmpty())
+                        {
+                            keyColumn = table.pkColumnValue();
+                        }
+                        if (!table.valueColumnName().isEmpty())
+                        {
+                            keyColumn = table.valueColumnName();
                         }
                     }
                 }
-            }
-            if (DatabaseConstruction.UPDATE.equals(this.constructionMode))
-            {
-                // ensure we create base database with all keys - then update/add columns in separate comment
-                statements.add(defineTable(table, primaryColumns));
-                for (final ColumnMeta column : allColumns)
-                {
-                    final String name = column.getName();
-                    if (!column.isPrimaryKey() && !this.hasColumn(table, name))
-                    {
-                        final StringBuilder cql = new StringBuilder();
-                        final String type = CassandraUtils.columnType(column);
-                        cql.append("ALTER TABLE ").append(table).append(IOUtils.LINE_SEPARATOR);
-                        cql.append("ADD ").append(name).append(" ").append(type).append(";");
-                        statements.add(new SimpleStatement(cql.toString()));
-                    }
-                }
-            }
-            else
-            {
-                // create table and column definitions in one command
-                statements.add(defineTable(table, allColumns));
-            }
 
-            // execute batch statements
-            if (!statements.isEmpty())
-            {
-                final Statement[] list = statements.toArray(new Statement[statements.size()]);
-                for (final Statement statement : list)
+                try
                 {
-                    try
+                    this.refreshTableGenerator(tableName, keyColumn, valueColumn);
+                }
+                catch (final Exception e)
+                {
+                    throw new NormandraException("Unable to refresh table id generator [" + generator.generator() + "].", e);
+                }
+
+                final ColumnMeta column = entity.getColumn(field.getName());
+                if (column != null)
+                {
+                    final CounterIdGenerator counter = new CounterIdGenerator(tableName, keyColumn, valueColumn, keyValue, this);
+                    entity.setGenerator(column, counter);
+                    logger.info("Set counter id generator for [" + column + "] on entity [" + entity + "].");
+                }
+            }
+        }
+    }
+
+
+    private void refreshTableGenerator(final String table, final String keyColumn, final String valueColumn)
+    {
+        final List<Statement> statements = new ArrayList<>();
+
+        // drop table as required
+        if (DatabaseConstruction.RECREATE.equals(this.constructionMode) && this.hasTable(table))
+        {
+            final StringBuilder cql = new StringBuilder();
+            cql.append("DROP TABLE ").append(table).append(";");
+            statements.add(new SimpleStatement(cql.toString()));
+        }
+
+        // create table
+        final StringBuilder cql = new StringBuilder();
+        cql.append("CREATE TABLE IF NOT EXISTS ").append(table).append(" (").append(IOUtils.LINE_SEPARATOR);
+        cql.append("  ").append(keyColumn).append(" text PRIMARY KEY, ");
+        cql.append("  ").append(valueColumn).append(" counter ");
+        cql.append(IOUtils.LINE_SEPARATOR).append(");");
+        statements.add(new SimpleStatement(cql.toString()));
+
+        // execute statements
+        for (final Statement statement : statements)
+        {
+            this.ensureSession().execute(statement);
+        }
+    }
+
+
+    private void refreshEntityTable(final String table, final Collection<EntityMeta> entities)
+    {
+        final List<Statement> statements = new ArrayList<>();
+
+        // drop table as required
+        if (DatabaseConstruction.RECREATE.equals(this.constructionMode) && this.hasTable(table))
+        {
+            final StringBuilder cql = new StringBuilder();
+            cql.append("DROP TABLE ").append(table).append(";");
+            statements.add(new SimpleStatement(cql.toString()));
+        }
+
+        // create table schema
+        final Set<ColumnMeta> uniqueSet = new TreeSet<>();
+        final Collection<ColumnMeta> primaryColumns = new ArrayList<>();
+        final Collection<ColumnMeta> allColumns = new ArrayList<>();
+        for (final EntityMeta entity : entities)
+        {
+            for (final ColumnMeta column : entity)
+            {
+                if (!uniqueSet.contains(column))
+                {
+                    uniqueSet.add(column);
+                    allColumns.add(column);
+                    if (column.isPrimaryKey())
                     {
-                        this.ensureSession().execute(statement);
-                    }
-                    catch (final Exception e)
-                    {
-                        throw new NormandraException("Unable to execute cql3 statement during database refresh.", e);
+                        primaryColumns.add(column);
                     }
                 }
             }
+        }
+        if (DatabaseConstruction.UPDATE.equals(this.constructionMode))
+        {
+            // ensure we create base database with all keys - then update/add columns in separate comment
+            statements.add(defineTable(table, primaryColumns));
+            for (final ColumnMeta column : allColumns)
+            {
+                final String name = column.getName();
+                if (!column.isPrimaryKey() && !this.hasColumn(table, name))
+                {
+                    final StringBuilder cql = new StringBuilder();
+                    final String type = CassandraUtils.columnType(column);
+                    cql.append("ALTER TABLE ").append(table).append(IOUtils.LINE_SEPARATOR);
+                    cql.append("ADD ").append(name).append(" ").append(type).append(";");
+                    statements.add(new SimpleStatement(cql.toString()));
+                }
+            }
+        }
+        else
+        {
+            // create table and column definitions in one command
+            statements.add(defineTable(table, allColumns));
+        }
+
+        // execute statements
+        for (final Statement statement : statements)
+        {
+            this.ensureSession().execute(statement);
         }
     }
 
@@ -318,5 +429,19 @@ public class CassandraDatabase implements NormandraDatabase
         {
             session.shutdown();
         }
+    }
+
+
+    @Override
+    public String getKeyspace()
+    {
+        return this.keyspaceName;
+    }
+
+
+    @Override
+    public Session getSession()
+    {
+        return this.ensureSession();
     }
 }

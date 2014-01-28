@@ -1,5 +1,6 @@
 package org.normandra.cassandra;
 
+import junit.framework.Assert;
 import org.junit.Test;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
@@ -48,5 +49,6 @@ public class CassandraSaveTest extends BaseCassandraTest
 
         final SimpleEntity entity = new SimpleEntity("test", Arrays.asList("foo", "bar"));
         this.database.save(entityMap.get(SimpleEntity.class), entity);
+        Assert.assertEquals(1, entity.getId());
     }
 }

@@ -1,5 +1,7 @@
 package org.normandra.data;
 
+import org.normandra.NormandraException;
+
 /**
  * a constant read-only accessor
  * <p/>
@@ -18,9 +20,23 @@ public class ReadOnlyColumnAccessor<T> implements ColumnAccessor<T>
 
 
     @Override
+    public boolean isEmpty(Object entity) throws NormandraException
+    {
+        return false;
+    }
+
+
+    @Override
     public T getValue(Object entity)
     {
         return this.value;
+    }
+
+
+    @Override
+    public boolean setValue(Object entity, T value) throws NormandraException
+    {
+        return false;
     }
 
 

@@ -1,6 +1,5 @@
 package org.normandra.data;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.NullArgumentException;
 
 import java.lang.reflect.Field;
@@ -15,8 +14,6 @@ import java.lang.reflect.InvocationTargetException;
 abstract public class FieldColumnAccessor<T> implements ColumnAccessor<T>
 {
     private final Field field;
-
-    private transient Boolean hasGetter = null;
 
 
     public FieldColumnAccessor(final Field field)
@@ -35,43 +32,32 @@ abstract public class FieldColumnAccessor<T> implements ColumnAccessor<T>
     }
 
 
+    protected final boolean set(final Object entity, final T value) throws IllegalAccessException, InvocationTargetException
+    {
+        if (null == entity)
+        {
+            return false;
+        }
+        if (!this.field.isAccessible())
+        {
+            this.field.setAccessible(true);
+        }
+        this.field.set(entity, value);
+        return true;
+    }
+
+
     protected final Object get(final Object entity) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException
     {
         if (null == entity)
         {
             return null;
         }
-        if (this.field.isAccessible())
-        {
-            return this.field.get(entity);
-        }
-        else if (this.checkGetMethod(entity))
-        {
-            return BeanUtils.getSimpleProperty(entity, this.field.getName());
-        }
-        else
+        if (!this.field.isAccessible())
         {
             this.field.setAccessible(true);
-            return this.field.get(entity);
         }
-    }
-
-
-    private boolean checkGetMethod(final Object entity) throws InvocationTargetException, IllegalAccessException
-    {
-        if (null == this.hasGetter)
-        {
-            try
-            {
-                BeanUtils.getProperty(entity, this.field.getName());
-                this.hasGetter = true;
-            }
-            catch (final NoSuchMethodException e)
-            {
-                this.hasGetter = false;
-            }
-        }
-        return this.hasGetter.booleanValue();
+        return this.field.get(entity);
     }
 
 

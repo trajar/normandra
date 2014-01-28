@@ -2,10 +2,14 @@ package org.normandra.meta;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.TableGenerator;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * simple entity exemplar
@@ -18,6 +22,8 @@ import java.util.Collection;
 public class SimpleEntity
 {
     @Id
+    @TableGenerator(name = "id_gen", table = "guid")
+    @GeneratedValue(generator = "id_gen", strategy = GenerationType.TABLE)
     private long id;
 
     @Column(name = "name_colum")
@@ -38,5 +44,23 @@ public class SimpleEntity
     {
         this.name = name;
         this.values = new ArrayList<>(c);
+    }
+
+
+    public long getId()
+    {
+        return id;
+    }
+
+
+    public String getName()
+    {
+        return name;
+    }
+
+
+    public Collection<String> getValues()
+    {
+        return Collections.unmodifiableCollection(this.values);
     }
 }

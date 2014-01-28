@@ -1,6 +1,7 @@
 package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.generator.IdGenerator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,6 +9,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * entity meta-data
@@ -24,6 +27,8 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
     private final Class<?> type;
 
     private final List<ColumnMeta> columns;
+
+    private final Map<ColumnMeta, IdGenerator> generators = new TreeMap<>();
 
 
     public EntityMeta(final String name, final String table, final Class<?> clazz, final Collection<ColumnMeta> c)
@@ -51,6 +56,31 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
     }
 
 
+    public IdGenerator<?> getGenerator(final ColumnMeta column)
+    {
+        if (null == column)
+        {
+            return null;
+        }
+        return this.generators.get(column);
+    }
+
+
+    public <T> boolean setGenerator(final ColumnMeta column, final IdGenerator<T> generator)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        if (null == generator)
+        {
+            return this.generators.remove(column) != null;
+        }
+        this.generators.put(column, generator);
+        return true;
+    }
+
+
     public String getName()
     {
         return name;
@@ -69,26 +99,36 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
     }
 
 
-    public boolean hasColumn(final String name)
+    public boolean hasColumn(final String nameOrProperty)
     {
-        if (null == name || name.isEmpty())
-        {
-            return false;
-        }
-        for (final ColumnMeta meta : this)
-        {
-            if (name.equalsIgnoreCase(meta.getName()))
-            {
-                return true;
-            }
-        }
-        return false;
+        return this.getColumn(nameOrProperty) != null;
     }
 
 
     public Collection<ColumnMeta> getColumns()
     {
         return Collections.unmodifiableList(this.columns);
+    }
+
+
+    public ColumnMeta getColumn(final String nameOrProperty)
+    {
+        if (null == nameOrProperty || nameOrProperty.isEmpty())
+        {
+            return null;
+        }
+        for (final ColumnMeta meta : this)
+        {
+            if (nameOrProperty.equalsIgnoreCase(meta.getName()))
+            {
+                return meta;
+            }
+            if (nameOrProperty.equalsIgnoreCase(meta.getProperty()))
+            {
+                return meta;
+            }
+        }
+        return null;
     }
 
 
