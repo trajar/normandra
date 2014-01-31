@@ -16,4 +16,23 @@ public class CatEntity extends AnimalEntity
 {
     @Column
     private boolean litterBox;
+
+
+    public CatEntity()
+    {
+
+    }
+
+
+    public CatEntity(final String name, final boolean litter)
+    {
+        super(name);
+        this.litterBox = litter;
+    }
+
+
+    public boolean isLitterBox()
+    {
+        return litterBox;
+    }
 }

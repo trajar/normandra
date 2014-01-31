@@ -16,4 +16,23 @@ public class DogEntity extends AnimalEntity
 {
     @Column
     private int numBarks;
+
+
+    public DogEntity()
+    {
+
+    }
+
+
+    public DogEntity(final String name, final int barks)
+    {
+        super(name);
+        this.numBarks = barks;
+    }
+
+
+    public int getNumBarks()
+    {
+        return numBarks;
+    }
 }

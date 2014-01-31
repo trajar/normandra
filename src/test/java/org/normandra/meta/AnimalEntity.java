@@ -4,6 +4,8 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -22,8 +24,33 @@ import javax.persistence.Table;
 public class AnimalEntity
 {
     @Id
-    private long id;
+    @GeneratedValue(strategy = GenerationType.TABLE)
+    private Long id;
 
     @Column
     private String name;
+
+
+    public AnimalEntity()
+    {
+
+    }
+
+
+    public AnimalEntity(final String name)
+    {
+        this.name = name;
+    }
+
+
+    public Long getId()
+    {
+        return id;
+    }
+
+
+    public String getName()
+    {
+        return name;
+    }
 }

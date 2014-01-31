@@ -27,9 +27,10 @@ public class BasicFieldColumnAccessor<T> extends FieldColumnAccessor<T>
         }
         this.clazz = clazz;
         if (this.clazz.equals(long.class) ||
-                this.clazz.equals(int.class) ||
-                this.clazz.equals(char.class) ||
-                this.clazz.equals(short.class))
+            this.clazz.equals(int.class) ||
+            this.clazz.equals(char.class) ||
+            this.clazz.equals(short.class) ||
+            this.clazz.equals(boolean.class))
         {
             this.primitive = true;
         }
@@ -46,7 +47,7 @@ public class BasicFieldColumnAccessor<T> extends FieldColumnAccessor<T>
         final Object obj = this.getValue(entity);
         if (null == obj)
         {
-            return false;
+            return true;
         }
         if (obj instanceof Number)
         {
