@@ -18,6 +18,8 @@ public class BaseCassandraTest
 {
     protected CassandraDatabase database;
 
+    protected CassandraDatabaseSession session;
+
     protected DatabaseConstruction construction = DatabaseConstruction.RECREATE;
 
 
@@ -30,15 +32,21 @@ public class BaseCassandraTest
 
 
     @Before
-    public void create()
+    public void create() throws Exception
     {
         this.database = new CassandraDatabaseFactory("test", "localhost", 9142, this.construction).create();
+        this.session = this.database.createSession();
     }
 
 
     @After
     public void destroy() throws IOException
     {
+        if (this.session != null)
+        {
+            this.session.close();
+            this.session = null;
+        }
         if (this.database != null)
         {
             this.database.close();

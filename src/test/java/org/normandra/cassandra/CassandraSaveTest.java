@@ -50,14 +50,21 @@ public class CassandraSaveTest extends BaseCassandraTest
         final Map<Class, EntityMeta> entityMap = this.setupEntities(SimpleEntity.class);
         final EntityMeta<SimpleEntity> meta = entityMap.values().iterator().next();
         final SimpleEntity entity = new SimpleEntity("test", Arrays.asList("foo", "bar"));
-        this.database.save(meta, entity);
+        this.session.save(meta, entity);
         Assert.assertEquals(1, entity.getId());
 
-        final SimpleEntity notfound = this.database.get(meta, 0);
+        Assert.assertFalse(this.session.exists(meta, 0));
+        Assert.assertTrue(this.session.exists(meta, 1));
+
+        final SimpleEntity notfound = this.session.get(meta, 0);
         Assert.assertNull(notfound);
-        final SimpleEntity existing = this.database.get(meta, 1);
+        final SimpleEntity existing = this.session.get(meta, 1);
         Assert.assertNotNull(existing);
         Assert.assertEquals(1, existing.getId());
+
+        this.session.delete(meta, existing);
+        Assert.assertFalse(this.session.exists(meta, 1));
+        Assert.assertNull(this.session.get(meta, 1));
     }
 
 
@@ -66,10 +73,10 @@ public class CassandraSaveTest extends BaseCassandraTest
     {
         final Map<Class, EntityMeta> entityMap = this.setupEntities(DogEntity.class, CatEntity.class);
         final DogEntity dog = new DogEntity("fido", 12);
-        this.database.save(entityMap.get(DogEntity.class), dog);
+        this.session.save(entityMap.get(DogEntity.class), dog);
         Assert.assertEquals(Long.valueOf(1), dog.getId());
         final CatEntity cat = new CatEntity("hank", true);
-        this.database.save(entityMap.get(CatEntity.class), cat);
+        this.session.save(entityMap.get(CatEntity.class), cat);
         Assert.assertEquals(Long.valueOf(2), cat.getId());
     }
 }

@@ -4,22 +4,16 @@ package org.normandra.cassandra;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.KeyspaceMetadata;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
-import com.datastax.driver.core.querybuilder.Insert;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.querybuilder.Select;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseConstruction;
 import org.normandra.NormandraDatabase;
+import org.normandra.NormandraDatabaseSession;
 import org.normandra.NormandraException;
-import org.normandra.data.ColumnAccessor;
-import org.normandra.generator.IdGenerator;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DatabaseMeta;
@@ -29,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.TableGenerator;
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,116 +77,9 @@ public class CassandraDatabase implements NormandraDatabase, SessionAccessor
 
 
     @Override
-    public <T> T get(final EntityMeta<T> meta, final Serializable key) throws NormandraException
+    public CassandraDatabaseSession createSession() throws NormandraException
     {
-        if (null == meta || null == key)
-        {
-            return null;
-        }
-
-        final ColumnMeta partition = meta.getPartition();
-        if (null == partition)
-        {
-            return null;
-        }
-
-        try
-        {
-            final List<ColumnMeta> columns = new ArrayList<>(meta.getColumns());
-            final String[] names = new String[columns.size()];
-            for (int i = 0; i < columns.size(); i++)
-            {
-                names[i] = columns.get(i).getName();
-            }
-            final Select statement = QueryBuilder.select(names)
-                    .from(this.keyspaceName, meta.getTable())
-                    .where(QueryBuilder.eq(partition.getName(), key)).limit(1);
-            final ResultSet results = this.ensureSession().execute(statement);
-            if (null == results)
-            {
-                return null;
-            }
-            final Row row = results.one();
-            if (null == row)
-            {
-                return null;
-            }
-
-            final T entity = meta.getType().newInstance();
-            if (null == entity)
-            {
-                return null;
-            }
-            for (int i = 0; i < names.length; i++)
-            {
-                final ColumnMeta column = columns.get(i);
-                final Object value = CassandraUtils.unpack(row, i, column);
-                if (value != null)
-                {
-                    column.getAccessor().setValue(entity, value);
-                }
-            }
-            return entity;
-        }
-        catch (final Exception e)
-        {
-            throw new NormandraException("Unable to get entity [" + meta + "] by key [" + key + "].", e);
-        }
-    }
-
-
-    @Override
-    public <T> void save(final EntityMeta meta, final T element) throws NormandraException
-    {
-        if (null == meta)
-        {
-            throw new NullArgumentException("entity metadata");
-        }
-        if (null == element)
-        {
-            throw new NullArgumentException("element");
-        }
-
-        try
-        {
-            boolean hasValue = false;
-            Insert statement = QueryBuilder.insertInto(this.keyspaceName, meta.getTable());
-            final Collection<ColumnMeta> columns = meta.getColumns();
-            for (final ColumnMeta column : columns)
-            {
-                final ColumnAccessor accessor = column.getAccessor();
-                final IdGenerator generator = meta.getGenerator(column);
-                final Object value;
-                if (generator != null && accessor.isEmpty(element))
-                {
-                    final Object generated = generator.generate(meta);
-                    if (generated != null)
-                    {
-                        accessor.setValue(element, generated);
-                    }
-                    value = generated;
-                }
-                else
-                {
-                    value = accessor.getValue(element);
-                }
-
-                if (value != null)
-                {
-                    statement = statement.value(column.getName(), value);
-                    hasValue = true;
-                }
-            }
-            if (!hasValue)
-            {
-                throw new NormandraException("No column values found - cannot save empty entity.");
-            }
-            this.ensureSession().execute(statement);
-        }
-        catch (final Exception e)
-        {
-            throw new NormandraException("Unable to save entity [" + meta + "] instance [" + element + "].", e);
-        }
+        return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession());
     }
 
 

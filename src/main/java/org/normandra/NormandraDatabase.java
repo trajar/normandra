@@ -1,9 +1,6 @@
 package org.normandra;
 
 import org.normandra.meta.DatabaseMeta;
-import org.normandra.meta.EntityMeta;
-
-import java.io.Serializable;
 
 /**
  * a NoSQL database abstraction
@@ -13,8 +10,7 @@ import java.io.Serializable;
  */
 public interface NormandraDatabase
 {
-    <T> T get(EntityMeta<T> meta, Serializable key) throws NormandraException;
-    <T> void save(EntityMeta meta, T element) throws NormandraException;
+    NormandraDatabaseSession createSession() throws NormandraException;
     void refresh(DatabaseMeta meta) throws NormandraException;
     void close();
 }
