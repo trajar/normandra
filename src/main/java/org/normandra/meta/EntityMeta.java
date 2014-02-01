@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -18,20 +17,20 @@ import java.util.TreeMap;
  * User: bowen
  * Date: 9/1/13
  */
-public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
+public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMeta>
 {
     private final String name;
 
     private final String table;
 
-    private final Class<?> type;
+    private final Class<T> type;
 
     private final List<ColumnMeta> columns;
 
     private final Map<ColumnMeta, IdGenerator> generators = new TreeMap<>();
 
 
-    public EntityMeta(final String name, final String table, final Class<?> clazz, final Collection<ColumnMeta> c)
+    public EntityMeta(final String name, final String table, final Class<T> clazz, final Collection<ColumnMeta> c)
     {
         if (null == name || name.isEmpty())
         {
@@ -66,7 +65,7 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
     }
 
 
-    public <T> boolean setGenerator(final ColumnMeta column, final IdGenerator<T> generator)
+    public boolean setGenerator(final ColumnMeta column, final IdGenerator<?> generator)
     {
         if (null == column)
         {
@@ -93,7 +92,7 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
     }
 
 
-    public Class<?> getType()
+    public Class<T> getType()
     {
         return type;
     }
@@ -132,9 +131,19 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
     }
 
 
+    public ColumnMeta getPartition()
+    {
+        if (this.columns.isEmpty())
+        {
+            return null;
+        }
+        return this.getPrimary().iterator().next();
+    }
+
+
     public Collection<ColumnMeta> getPrimary()
     {
-        final List<ColumnMeta> list = new LinkedList<>();
+        final List<ColumnMeta> list = new ArrayList<>(4);
         for (final ColumnMeta column : this.columns)
         {
             if (column.isPrimaryKey())
