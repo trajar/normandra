@@ -12,7 +12,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseConstruction;
 import org.normandra.NormandraDatabase;
-import org.normandra.NormandraDatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
@@ -43,7 +42,7 @@ public class CassandraDatabase implements NormandraDatabase, SessionAccessor
 
     public static final String HOSTS = "cassandra.hosts";
 
-    public static final String PORT = "cassandra.hosts";
+    public static final String PORT = "cassandra.port";
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraDatabase.class);
 

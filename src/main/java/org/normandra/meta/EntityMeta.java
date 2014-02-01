@@ -25,6 +25,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
 
     private final Class<T> type;
 
+
     private final List<ColumnMeta> columns;
 
     private final Map<ColumnMeta, IdGenerator> generators = new TreeMap<>();
@@ -82,19 +83,19 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
 
     public String getName()
     {
-        return name;
+        return this.name;
     }
 
 
     public String getTable()
     {
-        return table;
+        return this.table;
     }
 
 
     public Class<T> getType()
     {
-        return type;
+        return this.type;
     }
 
 

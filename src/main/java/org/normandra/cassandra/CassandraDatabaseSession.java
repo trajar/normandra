@@ -10,15 +10,17 @@ import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.functors.InstanceofPredicate;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.NormandraException;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.generator.IdGenerator;
 import org.normandra.impl.AbstractNormandraDatabaseSession;
 import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EntityMeta;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -98,7 +100,7 @@ public class CassandraDatabaseSession extends AbstractNormandraDatabaseSession
 
 
     @Override
-    public <T> boolean exists(final EntityMeta<T> meta, final Serializable key) throws NormandraException
+    public <T> boolean exists(final EntityMeta<T> meta, final Object key) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -146,7 +148,56 @@ public class CassandraDatabaseSession extends AbstractNormandraDatabaseSession
 
 
     @Override
-    public <T> T get(final EntityMeta<T> meta, final Serializable key) throws NormandraException
+    public <T> Object discriminator(final EntityMeta<T> meta, final Object key) throws NormandraException
+    {
+        if (this.isClosed())
+        {
+            throw new IllegalStateException("Session is closed.");
+        }
+        if (null == meta || null == key)
+        {
+            return null;
+        }
+
+        final ColumnMeta partition = meta.getPartition();
+        if (null == partition)
+        {
+            return null;
+        }
+
+        final DiscriminatorMeta descrim = (DiscriminatorMeta) CollectionUtils.find(meta.getColumns(), InstanceofPredicate.getInstance(DiscriminatorMeta.class));
+        if (null == descrim)
+        {
+            return null;
+        }
+
+        try
+        {
+            final String[] names = new String[]{descrim.getName()};
+            final Select statement = QueryBuilder.select(names)
+                    .from(this.keyspaceName, meta.getTable())
+                    .where(QueryBuilder.eq(partition.getName(), key)).limit(1);
+            final ResultSet results = this.session.execute(statement);
+            if (null == results)
+            {
+                return null;
+            }
+            final Row row = results.one();
+            if (null == row)
+            {
+                return null;
+            }
+            return CassandraUtils.unpack(row, 0, descrim);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to get entity [" + meta + "] by key [" + key + "].", e);
+        }
+    }
+
+
+    @Override
+    public <T> T get(final EntityMeta<T> meta, final Object key) throws NormandraException
     {
         if (this.isClosed())
         {

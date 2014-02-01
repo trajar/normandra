@@ -1,6 +1,8 @@
 package org.normandra.cassandra;
 
 import junit.framework.Assert;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.CatEntity;
@@ -9,6 +11,7 @@ import org.normandra.meta.DogEntity;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.SimpleEntity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,6 +27,36 @@ import java.util.Map;
  */
 public class CassandraSaveTest extends BaseCassandraTest
 {
+    private CassandraDatabase database;
+
+    private CassandraDatabaseSession session;
+
+
+    @Before
+    public void create() throws Exception
+    {
+        this.database = new CassandraDatabaseFactory(keyspace, "localhost", port, construction).create();
+        this.session = this.database.createSession();
+    }
+
+
+    @After
+    public void destroy() throws IOException
+    {
+        if (this.session != null)
+        {
+            this.session.close();
+            this.session = null;
+        }
+        if (this.database != null)
+        {
+            this.database.close();
+            this.database = null;
+        }
+        CassandraUtil.reset();
+    }
+
+
     private Map<Class, EntityMeta> setupEntities(final Class... entities) throws Exception
     {
         final Map<Class, EntityMeta> map = new HashMap<>();

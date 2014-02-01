@@ -7,11 +7,9 @@ import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +24,7 @@ import java.util.TreeMap;
  */
 public class NormandraEntityManagerFactory
 {
-    public class Builder
+    public static class Builder
     {
         private DatabaseConstruction mode = DatabaseConstruction.CREATE;
 
@@ -38,7 +36,7 @@ public class NormandraEntityManagerFactory
         public NormandraEntityManagerFactory create() throws NormandraException
         {
             // read all entities
-            final List<EntityMeta> entities = new LinkedList<>();
+            final List<EntityMeta> entities = new ArrayList<>(this.classes.size());
             for (final Class<?> clazz : this.classes)
             {
                 final AnnotationParser parser = new AnnotationParser(clazz);
@@ -105,18 +103,24 @@ public class NormandraEntityManagerFactory
             {
                 throw new NullArgumentException("classes");
             }
-            this.classes.addAll(Arrays.asList(clazzes));
+            for (final Class<?> clazz : clazzes)
+            {
+                this.withClass(clazz);
+            }
             return this;
         }
 
 
-        public Builder withClasses(final Collection<Class<?>> c)
+        public Builder withClasses(final Iterable<Class<?>> c)
         {
             if (null == c)
             {
                 throw new NullArgumentException("classes");
             }
-            this.classes.addAll(c);
+            for (final Class<?> clazz : c)
+            {
+                this.withClass(clazz);
+            }
             return this;
         }
 

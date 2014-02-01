@@ -35,4 +35,28 @@ public class CatEntity extends AnimalEntity
     {
         return litterBox;
     }
+
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        CatEntity catEntity = (CatEntity) o;
+
+        if (litterBox != catEntity.litterBox) return false;
+
+        return true;
+    }
+
+
+    @Override
+    public int hashCode()
+    {
+        int result = super.hashCode();
+        result = 31 * result + (litterBox ? 1 : 0);
+        return result;
+    }
 }

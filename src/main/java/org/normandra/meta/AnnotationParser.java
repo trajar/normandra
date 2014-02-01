@@ -5,7 +5,6 @@ import org.normandra.data.BasicFieldColumnAccessor;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.ListColumnAccessor;
 import org.normandra.data.NestedFieldColumnAccessor;
-import org.normandra.data.ReadOnlyColumnAccessor;
 import org.normandra.data.SetColumnAccessor;
 import org.normandra.util.CaseUtils;
 import org.slf4j.Logger;
@@ -310,18 +309,17 @@ public class AnnotationParser
                     {
                         discriminator = CaseUtils.camelToSnakeCase(this.entityClass.getSimpleName());
                     }
-                    final ColumnAccessor accessor = new ReadOnlyColumnAccessor(discriminator);
                     if (type != null)
                     {
                         switch (type)
                         {
                             case CHAR:
-                                return new ColumnMeta(name, property, accessor, Character.class, false);
+                                return new DiscriminatorMeta(name, property, discriminator.charAt(0), Character.class);
                             case INTEGER:
-                                return new ColumnMeta(name, property, accessor, Integer.class, false);
+                                return new DiscriminatorMeta(name, property, Integer.parseInt(discriminator), Integer.class);
                             case STRING:
                             default:
-                                return new ColumnMeta(name, property, accessor, String.class, false);
+                                return new DiscriminatorMeta(name, property, discriminator, String.class);
                         }
                     }
                 }
