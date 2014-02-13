@@ -1,5 +1,6 @@
 package org.normandra.data;
 
+import org.normandra.NormandraDatabaseSession;
 import org.normandra.NormandraException;
 
 /**
@@ -8,12 +9,12 @@ import org.normandra.NormandraException;
  * User: bowen
  * Date: 1/15/14
  */
-public class ReadOnlyColumnAccessor<T> implements ColumnAccessor<T>
+public class ReadOnlyColumnAccessor implements ColumnAccessor
 {
-    private final T value;
+    private final Object value;
 
 
-    public ReadOnlyColumnAccessor(final T value)
+    public ReadOnlyColumnAccessor(final Object value)
     {
         this.value = value;
     }
@@ -27,14 +28,14 @@ public class ReadOnlyColumnAccessor<T> implements ColumnAccessor<T>
 
 
     @Override
-    public T getValue(Object entity)
+    public Object getValue(Object entity)
     {
         return this.value;
     }
 
 
     @Override
-    public boolean setValue(Object entity, T value) throws NormandraException
+    public boolean setValue(Object entity, Object value, NormandraDatabaseSession session) throws NormandraException
     {
         return false;
     }

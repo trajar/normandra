@@ -7,10 +7,9 @@ import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -28,7 +27,7 @@ public class NormandraEntityManagerFactory
     {
         private DatabaseConstruction mode = DatabaseConstruction.CREATE;
 
-        private final Set<Class<?>> classes = new HashSet<>();
+        private final Set<Class> classes = new HashSet<>();
 
         private final SortedMap<String, Object> parameters = new TreeMap<>();
 
@@ -36,16 +35,8 @@ public class NormandraEntityManagerFactory
         public NormandraEntityManagerFactory create() throws NormandraException
         {
             // read all entities
-            final List<EntityMeta> entities = new ArrayList<>(this.classes.size());
-            for (final Class<?> clazz : this.classes)
-            {
-                final AnnotationParser parser = new AnnotationParser(clazz);
-                final EntityMeta entity = parser.readEntity();
-                if (entity != null)
-                {
-                    entities.add(entity);
-                }
-            }
+            final AnnotationParser parser = new AnnotationParser(this.classes);
+            final Collection<EntityMeta> entities = parser.read();
 
             // setup database
             final DatabaseMeta meta = new DatabaseMeta(entities);
@@ -156,7 +147,7 @@ public class NormandraEntityManagerFactory
 
     private final DatabaseMeta meta;
 
-    private final Map<Class<?>, EntityMeta> classMap;
+    private final Map<Class, EntityMeta> classMap;
 
 
     private NormandraEntityManagerFactory(final NormandraDatabase db, final DatabaseMeta meta)

@@ -13,10 +13,12 @@ import com.datastax.driver.core.querybuilder.Select;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.functors.InstanceofPredicate;
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.NormandraDatabaseSession;
 import org.normandra.NormandraException;
+import org.normandra.cache.EntityCache;
+import org.normandra.cache.MemoryCache;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.generator.IdGenerator;
-import org.normandra.impl.AbstractNormandraDatabaseSession;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EntityMeta;
@@ -33,13 +35,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 2/1/14
  */
-public class CassandraDatabaseSession extends AbstractNormandraDatabaseSession
+public class CassandraDatabaseSession implements NormandraDatabaseSession
 {
     private final String keyspaceName;
 
     private final Session session;
 
+    private final EntityCache cache = new MemoryCache();
+
     private final List<RegularStatement> statements = new CopyOnWriteArrayList<>();
+
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     private final AtomicBoolean activeTransaction = new AtomicBoolean(false);
 
@@ -56,6 +62,29 @@ public class CassandraDatabaseSession extends AbstractNormandraDatabaseSession
         }
         this.keyspaceName = keyspace;
         this.session = session;
+    }
+
+
+    @Override
+    public void close()
+    {
+        // do nothing - session is thread safe and can be shared
+        this.closed.getAndSet(true);
+        this.cache.clear();
+    }
+
+
+    public boolean isClosed()
+    {
+        return this.closed.get();
+    }
+
+
+    @Override
+    public void clear() throws NormandraException
+    {
+        this.cache.clear();
+        this.statements.clear();
     }
 
 
@@ -247,10 +276,10 @@ public class CassandraDatabaseSession extends AbstractNormandraDatabaseSession
                 final Object value = CassandraUtils.unpack(row, i, column);
                 if (value != null)
                 {
-                    column.getAccessor().setValue(entity, value);
+                    column.getAccessor().setValue(entity, value, this);
                 }
             }
-            this.cacheEntity(meta, entity);
+            this.cache.put(meta, entity);
             return entity;
         }
         catch (final Exception e)
@@ -331,7 +360,7 @@ public class CassandraDatabaseSession extends AbstractNormandraDatabaseSession
                     final Object generated = generator.generate(meta);
                     if (generated != null)
                     {
-                        accessor.setValue(element, generated);
+                        accessor.setValue(element, generated, this);
                     }
                     value = generated;
                 }
@@ -358,7 +387,7 @@ public class CassandraDatabaseSession extends AbstractNormandraDatabaseSession
             {
                 this.session.execute(statement);
             }
-            this.cacheEntity(meta, element);
+            this.cache.put(meta, element);
         }
         catch (final Exception e)
         {

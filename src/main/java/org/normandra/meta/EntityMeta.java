@@ -134,16 +134,16 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
 
     public ColumnMeta getPartition()
     {
-        if (this.columns.isEmpty())
-        {
-            return null;
-        }
         return this.getPrimary().iterator().next();
     }
 
 
     public Collection<ColumnMeta> getPrimary()
     {
+        if (this.columns.isEmpty())
+        {
+            return Collections.emptyList();
+        }
         final List<ColumnMeta> list = new ArrayList<>(4);
         for (final ColumnMeta column : this.columns)
         {

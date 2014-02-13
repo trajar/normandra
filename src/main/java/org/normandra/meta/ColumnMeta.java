@@ -17,12 +17,12 @@ public class ColumnMeta<T> implements Comparable<ColumnMeta>
 
     private final Class<T> type;
 
-    private final ColumnAccessor<T> accessor;
+    private final ColumnAccessor accessor;
 
     private boolean primaryKey;
 
 
-    public ColumnMeta(final String name, final String property, final ColumnAccessor<T> accessor, final Class<T> clazz, final boolean primaryKey)
+    public ColumnMeta(final String name, final String property, final ColumnAccessor accessor, final Class<T> clazz, final boolean primaryKey)
     {
         if (null == name)
         {
@@ -60,7 +60,7 @@ public class ColumnMeta<T> implements Comparable<ColumnMeta>
     }
 
 
-    public ColumnAccessor<T> getAccessor()
+    public ColumnAccessor getAccessor()
     {
         return this.accessor;
     }

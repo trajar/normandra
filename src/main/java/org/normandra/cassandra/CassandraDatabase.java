@@ -113,8 +113,9 @@ public class CassandraDatabase implements NormandraDatabase, SessionAccessor
         // setup any table sequence/id generators
         for (final EntityMeta entity : meta)
         {
-            final AnnotationParser parser = new AnnotationParser(entity.getType());
-            for (final Map.Entry<Field, GeneratedValue> entry : parser.getGenerators().entrySet())
+            final Class<?> entityType = entity.getType();
+            final AnnotationParser parser = new AnnotationParser(entityType);
+            for (final Map.Entry<Field, GeneratedValue> entry : parser.getGenerators(entityType).entrySet())
             {
                 final Field field = entry.getKey();
                 final GeneratedValue generator = entry.getValue();
@@ -123,7 +124,7 @@ public class CassandraDatabase implements NormandraDatabase, SessionAccessor
                 String keyColumn = "id";
                 String keyValue = entity.getTable();
                 String valueColumn = "value";
-                for (final TableGenerator table : parser.getAnnotations(TableGenerator.class))
+                for (final TableGenerator table : parser.getAnnotations(entityType, TableGenerator.class))
                 {
                     if (type.equalsIgnoreCase(table.name()))
                     {

@@ -1,6 +1,7 @@
 package org.normandra.data;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.NormandraDatabaseSession;
 import org.normandra.NormandraException;
 
 import java.lang.reflect.Field;
@@ -14,7 +15,7 @@ import java.util.Collections;
  * User: bowen
  * Date: 1/19/14
  */
-abstract public class CollectionColumnAccessor<T extends Collection> extends FieldColumnAccessor<T>
+abstract public class CollectionColumnAccessor<T extends Collection> extends FieldColumnAccessor
 {
     private final Class<?> generic;
 
@@ -43,13 +44,13 @@ abstract public class CollectionColumnAccessor<T extends Collection> extends Fie
 
 
     @Override
-    public boolean setValue(final Object entity, final T value) throws NormandraException
+    public boolean setValue(final Object entity, final Object value, final NormandraDatabaseSession session) throws NormandraException
     {
-        return this.setCollection(entity, value);
+        return this.setCollection(entity, (Collection) value);
     }
 
 
-    public boolean setCollection(final Object entity, final T collection) throws NormandraException
+    public boolean setCollection(final Object entity, final Collection<?> collection) throws NormandraException
     {
         if (null == entity)
         {
@@ -66,7 +67,7 @@ abstract public class CollectionColumnAccessor<T extends Collection> extends Fie
     }
 
 
-    public Collection<T> getCollection(final Object entity) throws NormandraException
+    public Collection<?> getCollection(final Object entity) throws NormandraException
     {
         if (null == entity)
         {
@@ -81,7 +82,7 @@ abstract public class CollectionColumnAccessor<T extends Collection> extends Fie
             }
             if (obj instanceof Collection)
             {
-                return new ArrayList<T>((Collection) obj);
+                return new ArrayList<Object>((Collection) obj);
             }
             else
             {

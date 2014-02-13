@@ -1,6 +1,7 @@
 package org.normandra.meta;
 
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -29,7 +30,7 @@ public class SimpleEntity
     @Column(name = "name_colum")
     private String name;
 
-    @Column
+    @ElementCollection
     private Collection<String> values;
 
 

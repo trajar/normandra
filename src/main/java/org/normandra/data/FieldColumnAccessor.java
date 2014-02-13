@@ -11,7 +11,7 @@ import java.lang.reflect.InvocationTargetException;
  * User: bowen
  * Date: 1/15/14
  */
-abstract public class FieldColumnAccessor<T> implements ColumnAccessor<T>
+abstract public class FieldColumnAccessor implements ColumnAccessor
 {
     private final Field field;
 
@@ -32,7 +32,7 @@ abstract public class FieldColumnAccessor<T> implements ColumnAccessor<T>
     }
 
 
-    protected final boolean set(final Object entity, final T value) throws IllegalAccessException, InvocationTargetException
+    protected final boolean set(final Object entity, final Object value) throws IllegalAccessException, InvocationTargetException
     {
         if (null == entity)
         {

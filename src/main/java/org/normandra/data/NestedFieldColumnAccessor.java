@@ -1,6 +1,7 @@
 package org.normandra.data;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.NormandraDatabaseSession;
 import org.normandra.NormandraException;
 
 import java.lang.reflect.Field;
@@ -11,12 +12,12 @@ import java.lang.reflect.Field;
  * User: bowen
  * Date: 1/21/14
  */
-public class NestedFieldColumnAccessor<T> extends FieldColumnAccessor<T>
+public class NestedFieldColumnAccessor extends FieldColumnAccessor
 {
-    private final ColumnAccessor<T> delegate;
+    private final ColumnAccessor delegate;
 
 
-    public NestedFieldColumnAccessor(final Field field, final ColumnAccessor<T> delegate)
+    public NestedFieldColumnAccessor(final Field field, final ColumnAccessor delegate)
     {
         super(field);
         if (null == delegate)
@@ -35,7 +36,7 @@ public class NestedFieldColumnAccessor<T> extends FieldColumnAccessor<T>
 
 
     @Override
-    public T getValue(final Object entity) throws NormandraException
+    public Object getValue(final Object entity) throws NormandraException
     {
         final Object base;
         try
@@ -55,7 +56,7 @@ public class NestedFieldColumnAccessor<T> extends FieldColumnAccessor<T>
 
 
     @Override
-    public boolean setValue(Object entity, T value) throws NormandraException
+    public boolean setValue(final Object entity, final Object value, final NormandraDatabaseSession session) throws NormandraException
     {
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }

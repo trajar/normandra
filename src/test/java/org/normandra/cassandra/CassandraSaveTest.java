@@ -60,16 +60,12 @@ public class CassandraSaveTest extends BaseCassandraTest
     private Map<Class, EntityMeta> setupEntities(final Class... entities) throws Exception
     {
         final Map<Class, EntityMeta> map = new HashMap<>();
+        final AnnotationParser parser = new AnnotationParser(Arrays.asList(entities));
         final List<EntityMeta> list = new ArrayList<>();
-        for (final Class<?> clazz : entities)
+        list.addAll(parser.read());
+        for (final EntityMeta meta : list)
         {
-            final AnnotationParser parser = new AnnotationParser(clazz);
-            final EntityMeta entity = parser.readEntity();
-            if (entity != null)
-            {
-                list.add(entity);
-                map.put(clazz, entity);
-            }
+            map.put(meta.getType(), meta);
         }
         final DatabaseMeta meta = new DatabaseMeta(list);
         this.database.refresh(meta);

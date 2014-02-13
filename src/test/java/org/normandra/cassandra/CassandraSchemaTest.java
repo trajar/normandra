@@ -51,7 +51,7 @@ public class CassandraSchemaTest extends BaseCassandraTest
     {
         // we should start with clean keyspace
         final AnnotationParser parser = new AnnotationParser(SimpleEntity.class);
-        final EntityMeta entity = parser.readEntity();
+        final EntityMeta entity = parser.read().iterator().next();
         Assert.assertNotNull(entity);
         final String table = entity.getTable();
         Assert.assertFalse(this.database.hasTable(table));
@@ -83,7 +83,7 @@ public class CassandraSchemaTest extends BaseCassandraTest
         for (final Class<?> clazz : Arrays.asList(CatEntity.class, DogEntity.class))
         {
             final AnnotationParser parser = new AnnotationParser(clazz);
-            final EntityMeta entity = parser.readEntity();
+            final EntityMeta entity = parser.read().iterator().next();
             Assert.assertNotNull(entity);
             final String table = entity.getTable();
             Assert.assertFalse(this.database.hasTable(table));

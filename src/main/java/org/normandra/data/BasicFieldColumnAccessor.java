@@ -1,6 +1,7 @@
 package org.normandra.data;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.NormandraDatabaseSession;
 import org.normandra.NormandraException;
 
 import java.lang.reflect.Field;
@@ -11,14 +12,14 @@ import java.lang.reflect.Field;
  * User: bowen
  * Date: 1/15/14
  */
-public class BasicFieldColumnAccessor<T> extends FieldColumnAccessor<T>
+public class BasicFieldColumnAccessor extends FieldColumnAccessor
 {
-    private final Class<T> clazz;
+    private final Class<?> clazz;
 
     private final boolean primitive;
 
 
-    public BasicFieldColumnAccessor(final Field field, final Class<T> clazz)
+    public BasicFieldColumnAccessor(final Field field, final Class<?> clazz)
     {
         super(field);
         if (null == clazz)
@@ -27,10 +28,10 @@ public class BasicFieldColumnAccessor<T> extends FieldColumnAccessor<T>
         }
         this.clazz = clazz;
         if (this.clazz.equals(long.class) ||
-            this.clazz.equals(int.class) ||
-            this.clazz.equals(char.class) ||
-            this.clazz.equals(short.class) ||
-            this.clazz.equals(boolean.class))
+                this.clazz.equals(int.class) ||
+                this.clazz.equals(char.class) ||
+                this.clazz.equals(short.class) ||
+                this.clazz.equals(boolean.class))
         {
             this.primitive = true;
         }
@@ -61,7 +62,7 @@ public class BasicFieldColumnAccessor<T> extends FieldColumnAccessor<T>
 
 
     @Override
-    public T getValue(final Object entity) throws NormandraException
+    public Object getValue(final Object entity) throws NormandraException
     {
         try
         {
@@ -72,7 +73,7 @@ public class BasicFieldColumnAccessor<T> extends FieldColumnAccessor<T>
             }
             if (this.primitive)
             {
-                return (T) obj;
+                return obj;
             }
             else
             {
@@ -87,7 +88,7 @@ public class BasicFieldColumnAccessor<T> extends FieldColumnAccessor<T>
 
 
     @Override
-    public boolean setValue(final Object entity, final T value) throws NormandraException
+    public boolean setValue(final Object entity, final Object value, final NormandraDatabaseSession session) throws NormandraException
     {
         try
         {

@@ -30,7 +30,7 @@ public class CassandraInheritanceTest extends BaseCassandraTest
                 .withClass(CatEntity.class)
                 .withClass(DogEntity.class)
                 .withParameter(CassandraDatabase.HOSTS, "localhost")
-                .withParameter(CassandraDatabase.PORT, 9142)
+                .withParameter(CassandraDatabase.PORT, port)
                 .withParameter(CassandraDatabase.KEYSPACE, keyspace)
                 .withDatabaseConstruction(construction)
                 .create();
@@ -53,10 +53,15 @@ public class CassandraInheritanceTest extends BaseCassandraTest
     @Test
     public void testSave() throws Exception
     {
+        Assert.assertFalse(this.manager.exists(AnimalEntity.class, 1));
+        Assert.assertFalse(this.manager.exists(AnimalEntity.class, 1));
+
         final DogEntity dog = new DogEntity("sophi", 12);
         this.manager.save(dog);
+
+        Assert.assertTrue(this.manager.exists(DogEntity.class, 1));
+        Assert.assertTrue(this.manager.exists(AnimalEntity.class, 1));
         Assert.assertEquals(dog, this.manager.get(DogEntity.class, 1));
         Assert.assertEquals(dog, this.manager.get(AnimalEntity.class, 1));
-//      Assert.assertNull(this.manager.get(CatEntity.class, 1));
     }
 }
