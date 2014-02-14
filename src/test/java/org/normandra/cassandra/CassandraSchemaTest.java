@@ -5,11 +5,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.normandra.meta.AnnotationParser;
-import org.normandra.meta.CatEntity;
+import org.normandra.entities.CatEntity;
 import org.normandra.meta.DatabaseMeta;
-import org.normandra.meta.DogEntity;
+import org.normandra.entities.DogEntity;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SimpleEntity;
+import org.normandra.entities.SimpleEntity;
 
 import java.io.IOException;
 import java.util.ArrayList;

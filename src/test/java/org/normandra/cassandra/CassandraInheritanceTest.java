@@ -6,9 +6,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.normandra.NormandraEntityManager;
 import org.normandra.NormandraEntityManagerFactory;
-import org.normandra.meta.AnimalEntity;
-import org.normandra.meta.CatEntity;
-import org.normandra.meta.DogEntity;
+import org.normandra.entities.AnimalEntity;
+import org.normandra.entities.CatEntity;
+import org.normandra.entities.DogEntity;
 
 import java.io.IOException;
 

@@ -257,14 +257,14 @@ public class AnnotationParser
                     if (!Modifier.isTransient(field.getModifiers()))
                     {
                         if (field.isAnnotationPresent(Column.class) ||
-                            field.isAnnotationPresent(EmbeddedId.class) ||
-                            field.isAnnotationPresent(Id.class) ||
-                            field.isAnnotationPresent(ElementCollection.class) ||
-                            field.isAnnotationPresent(JoinColumn.class) ||
-                            field.isAnnotationPresent(OneToMany.class) ||
-                            field.isAnnotationPresent(ManyToOne.class) ||
-                            field.isAnnotationPresent(ManyToMany.class) ||
-                            field.isAnnotationPresent(OneToOne.class))
+                                field.isAnnotationPresent(EmbeddedId.class) ||
+                                field.isAnnotationPresent(Id.class) ||
+                                field.isAnnotationPresent(ElementCollection.class) ||
+                                field.isAnnotationPresent(JoinColumn.class) ||
+                                field.isAnnotationPresent(OneToMany.class) ||
+                                field.isAnnotationPresent(ManyToOne.class) ||
+                                field.isAnnotationPresent(ManyToMany.class) ||
+                                field.isAnnotationPresent(OneToOne.class))
                         {
                             list.add(field);
                         }
@@ -328,6 +328,10 @@ public class AnnotationParser
         {
             return this.configureOneToOne(field, name, property, columns);
         }
+        else if (field.isAnnotationPresent(ManyToOne.class))
+        {
+            return this.configureManyToOne(field, name, property, columns);
+        }
 
         // regular column
         if (column != null)
@@ -342,7 +346,7 @@ public class AnnotationParser
     }
 
 
-    protected boolean configureOneToOne(final Field field, final String name, final String property, final Collection<ColumnMeta> columns)
+    private boolean configureOneToOne(final Field field, final String name, final String property, final Collection<ColumnMeta> columns)
     {
         final OneToOne oneToOne = field.getAnnotation(OneToOne.class);
         final boolean lazy = FetchType.LAZY.equals(oneToOne.fetch());
@@ -351,8 +355,14 @@ public class AnnotationParser
         {
             // create table column for this relationship
             final Class<?> type = field.getType();
-            final ColumnAccessor accessor = new JoinColumnAccessor(field, this.readEntity(type), type, lazy);
-            columns.add(new ColumnMeta<>(name, property, accessor, type, false));
+            final EntityMeta<?> entity = this.readEntity(type);
+            if (null == entity)
+            {
+                throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
+            }
+            final Class<?> keyType = entity.getPartition().getType();
+            final ColumnAccessor accessor = new JoinColumnAccessor(field, entity, keyType, lazy);
+            columns.add(new JoinColumnMeta<>(name, property, accessor, keyType, entity));
             return true;
         }
         else
@@ -360,6 +370,23 @@ public class AnnotationParser
             // this table does not own this column
             return false;
         }
+    }
+
+
+    private boolean configureManyToOne(final Field field, final String name, final String property, final Collection<ColumnMeta> columns)
+    {
+        final ManyToOne manyToOne = field.getAnnotation(ManyToOne.class);
+        final boolean lazy = FetchType.LAZY.equals(manyToOne.fetch());
+        final Class<?> type = field.getType();
+        final EntityMeta<?> entity = this.readEntity(type);
+        if (null == entity)
+        {
+            throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
+        }
+        final Class<?> keyType = entity.getPartition().getType();
+        final ColumnAccessor accessor = new JoinColumnAccessor(field, entity, keyType, lazy);
+        columns.add(new JoinColumnMeta<>(name, property, accessor, keyType, entity));
+        return true;
     }
 
 

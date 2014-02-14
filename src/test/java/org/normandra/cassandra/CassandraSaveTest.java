@@ -4,12 +4,14 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.normandra.entities.ClassEntity;
+import org.normandra.entities.StudentEntity;
 import org.normandra.meta.AnnotationParser;
-import org.normandra.meta.CatEntity;
+import org.normandra.entities.CatEntity;
 import org.normandra.meta.DatabaseMeta;
-import org.normandra.meta.DogEntity;
+import org.normandra.entities.DogEntity;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SimpleEntity;
+import org.normandra.entities.SimpleEntity;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -107,5 +109,37 @@ public class CassandraSaveTest extends BaseCassandraTest
         final CatEntity cat = new CatEntity("hank", true);
         this.session.save(entityMap.get(CatEntity.class), cat);
         Assert.assertEquals(Long.valueOf(2), cat.getId());
+    }
+
+
+    @Test
+    public void testJoinColumn() throws Exception
+    {
+        final Map<Class, EntityMeta> entityMap = this.setupEntities(StudentEntity.class, ClassEntity.class);
+        final ClassEntity classroom = new ClassEntity("geopolitics", 234);
+        this.session.save(entityMap.get(ClassEntity.class), classroom);
+        Assert.assertTrue(classroom == this.session.get(entityMap.get(ClassEntity.class), 1L));
+        this.session.clear();
+        Assert.assertEquals(classroom, this.session.get(entityMap.get(ClassEntity.class), 1L));
+
+        StudentEntity student = new StudentEntity("fred");
+        this.session.save(entityMap.get(StudentEntity.class), student);
+        Assert.assertNull(student.getClassroom());
+        this.session.clear();
+
+        student = (StudentEntity) this.session.get(entityMap.get(StudentEntity.class), student.getId());
+        Assert.assertNotNull(student);
+        Assert.assertNull(student.getClassroom());
+
+        student.setClassroom(classroom);
+        this.session.save(entityMap.get(StudentEntity.class), student);
+        this.session.clear();
+
+        student = (StudentEntity) this.session.get(entityMap.get(StudentEntity.class), student.getId());
+        Assert.assertNotNull(student);
+        Assert.assertNotNull(student.getClassroom());
+        Assert.assertEquals(classroom.getId(), student.getClassroom().getId());
+        Assert.assertEquals(classroom.getName(), student.getClassroom().getName());
+        Assert.assertEquals(classroom.getRoom(), student.getClassroom().getRoom());
     }
 }

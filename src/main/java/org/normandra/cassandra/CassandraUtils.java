@@ -27,6 +27,11 @@ public class CassandraUtils
 {
     public static Object unpack(final Row row, final int column, final ColumnMeta<?> meta) throws IOException, ClassNotFoundException
     {
+        if (row.isNull(column))
+        {
+            return null;
+        }
+
         if (meta instanceof CollectionMeta)
         {
             return unpackCollection(row, column, (CollectionMeta) meta);

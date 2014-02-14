@@ -1,27 +1,19 @@
-package org.normandra.meta;
+package org.normandra.entities;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.Table;
 
 /**
- * base entity for inheritance
+ * class entity
  * <p/>
  * User: bowen
- * Date: 9/1/13
+ * Date: 2/14/14
  */
 @Entity
-@Table(name = "animal")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING, length = 32)
-public class AnimalEntity
+public class ClassEntity
 {
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
@@ -30,16 +22,20 @@ public class AnimalEntity
     @Column
     private String name;
 
+    @Column
+    private int room;
 
-    public AnimalEntity()
+
+    public ClassEntity()
     {
 
     }
 
 
-    public AnimalEntity(final String name)
+    public ClassEntity(final String name, final int room)
     {
         this.name = name;
+        this.room = room;
     }
 
 
@@ -55,14 +51,21 @@ public class AnimalEntity
     }
 
 
+    public int getRoom()
+    {
+        return room;
+    }
+
+
     @Override
     public boolean equals(Object o)
     {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        AnimalEntity that = (AnimalEntity) o;
+        ClassEntity that = (ClassEntity) o;
 
+        if (room != that.room) return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
@@ -75,6 +78,7 @@ public class AnimalEntity
     {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + room;
         return result;
     }
 }

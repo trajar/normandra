@@ -23,6 +23,7 @@ import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EntityMeta;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -235,6 +236,16 @@ public class CassandraDatabaseSession implements NormandraDatabaseSession
         if (null == meta || null == key)
         {
             return null;
+        }
+
+        if (key instanceof Serializable)
+        {
+            // check cache
+            final Object existing = this.cache.get(meta, (Serializable) key);
+            if (existing != null)
+            {
+                return meta.getType().cast(existing);
+            }
         }
 
         final ColumnMeta partition = meta.getPartition();

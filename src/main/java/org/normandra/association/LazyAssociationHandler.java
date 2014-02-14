@@ -6,6 +6,8 @@ import org.normandra.NormandraDatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,6 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LazyAssociationHandler<T> implements MethodHandler
 {
+    private static final Logger logger = LoggerFactory.getLogger(LazyAssociationHandler.class);
+
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
     private final EntityMeta<T> meta;
@@ -66,22 +70,22 @@ public class LazyAssociationHandler<T> implements MethodHandler
             return false;
         }
 
+        logger.info("Intercepting proxy method invocation, fetching lazy association for [" + this.meta + "].");
         final Object value = this.accessor.get();
         if (null == value)
         {
+            logger.info("Lazy association fetched, null/empty value found.");
             return false;
         }
 
         final T entity = this.meta.getType().cast(value);
-        if (entity != null)
+        logger.info("Lazy association fetched, copying entity values from instance [" + entity + "].");
+        for (final ColumnMeta column : this.meta)
         {
-            for (final ColumnMeta column : this.meta)
+            final Object columnValue = column.getAccessor().getValue(entity);
+            if (columnValue != null)
             {
-                final Object columnValue = column.getAccessor().getValue(entity);
-                if (columnValue != null)
-                {
-                    column.getAccessor().setValue(self, columnValue, this.session);
-                }
+                column.getAccessor().setValue(self, columnValue, this.session);
             }
         }
 
