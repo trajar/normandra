@@ -13,20 +13,17 @@ import java.lang.reflect.Field;
  * User: bowen
  * Date: 2/1/14
  */
-public class JoinColumnAccessor extends FieldColumnAccessor
+public class JoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
     private final EntityMeta<?> entity;
-
-    private final Class<?> type;
 
     private final boolean lazy;
 
 
-    public JoinColumnAccessor(final Field field, final EntityMeta<?> meta, final Class<?> clazz, final boolean lazy)
+    public JoinColumnAccessor(final Field field, final EntityMeta<?> meta, final boolean lazy)
     {
         super(field);
         this.entity = meta;
-        this.type = clazz;
         this.lazy = lazy;
     }
 
@@ -48,39 +45,20 @@ public class JoinColumnAccessor extends FieldColumnAccessor
     @Override
     public Object getValue(final Object entity) throws NormandraException
     {
-        final Object obj;
+        final Object associatedEntity;
         try
         {
-            obj = this.get(entity);
+            associatedEntity = this.get(entity);
         }
         catch (final Exception e)
         {
             throw new NormandraException("Unable to get join-column [" + this.getField().getName() + "].", e);
         }
-        if (null == obj)
+        if (null == associatedEntity)
         {
             return null;
         }
-
-        final ColumnAccessor accessor = this.entity.getPartition().getAccessor();
-        if (accessor.isEmpty(obj))
-        {
-            return null;
-        }
-        final Object id = this.entity.getPartition().getAccessor().getValue(obj);
-        if (null == id)
-        {
-            return null;
-        }
-
-        try
-        {
-            return this.type.cast(id);
-        }
-        catch (final ClassCastException e)
-        {
-            throw new NormandraException("Unexpected type [" + id + "] for [" + this.getField().getName() + "].", e);
-        }
+        return this.entity.getId().fromEntity(associatedEntity);
     }
 
 

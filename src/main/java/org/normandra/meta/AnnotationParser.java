@@ -1,11 +1,14 @@
 package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.data.BasicFieldColumnAccessor;
+import org.normandra.data.BasicColumnAccessor;
+import org.normandra.data.BasicIdAccessor;
 import org.normandra.data.ColumnAccessor;
+import org.normandra.data.CompositeIdAccessor;
+import org.normandra.data.IdAccessor;
 import org.normandra.data.JoinColumnAccessor;
 import org.normandra.data.ListColumnAccessor;
-import org.normandra.data.NestedFieldColumnAccessor;
+import org.normandra.data.NestedColumnAccessor;
 import org.normandra.data.SetColumnAccessor;
 import org.normandra.util.CaseUtils;
 import org.slf4j.Logger;
@@ -34,12 +37,14 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -128,7 +133,8 @@ public class AnnotationParser
         final String name = this.getEntity(entityClass);
         final String table = this.getTable(entityClass);
         final Collection<ColumnMeta> columns = this.getColumns(entityClass);
-        final EntityMeta<T> meta = new EntityMeta<>(name, table, entityClass, columns);
+        final IdAccessor id = this.configureIdAccessor(entityClass);
+        final EntityMeta<T> meta = new EntityMeta<>(name, table, entityClass, id, columns);
         this.entities.put(entityClass, meta);
         return meta;
     }
@@ -220,7 +226,7 @@ public class AnnotationParser
         final List<ColumnMeta> columns = new ArrayList<>();
         for (final Field field : fields)
         {
-            if (this.configureField(entityClass, field, columns))
+            if (columns.addAll(this.configureField(field)))
             {
                 logger.debug("Configured metadata for [" + field + "] in [" + entityClass + "].");
             }
@@ -244,7 +250,7 @@ public class AnnotationParser
     }
 
 
-    protected List<Field> getFields(final Class<?> entityClass)
+    private List<Field> getFields(final Class<?> entityClass)
     {
         final List<Field> list = new ArrayList<>();
         for (final Class<?> clazz : this.getHierarchyReverse(entityClass))
@@ -276,13 +282,66 @@ public class AnnotationParser
     }
 
 
-    protected boolean configureField(final Class<?> entityClass, final Field field, final Collection<ColumnMeta> columns)
+    private IdAccessor configureIdAccessor(final Class<?> entityClass)
+    {
+        // find id fields
+        final List<Field> embeddedKeys = new ArrayList<>();
+        final List<Field> regularKeys = new ArrayList<>();
+        for (final Field field : this.getFields(entityClass))
+        {
+            if (field.getAnnotation(EmbeddedId.class) != null)
+            {
+                embeddedKeys.add(field);
+            }
+            else if (field.getAnnotation(Id.class) != null)
+            {
+                regularKeys.add(field);
+            }
+        }
+
+        if (embeddedKeys.isEmpty() && regularKeys.isEmpty())
+        {
+            return null;
+        }
+        if (!embeddedKeys.isEmpty() && !regularKeys.isEmpty())
+        {
+            throw new IllegalStateException("Cannot specify both @Id or @EmbeddedId annotations for class [" + entityClass + "].");
+        }
+        if (embeddedKeys.size() > 1 || regularKeys.size() > 1)
+        {
+            logger.warn("Multiple @Id or @EmbeddedId annotations found for class [" + entityClass + "] - you may be unable to access entity by #get api.");
+        }
+
+        if (embeddedKeys.size() > 0)
+        {
+            // composite keys
+            final Field key = embeddedKeys.get(0);
+            final Map<ColumnMeta, ColumnAccessor> map = new TreeMap<>();
+            for (final ColumnMeta column : this.configureId(key, false))
+            {
+                map.put(column, new BasicColumnAccessor(key, key.getType()));
+            }
+            return new CompositeIdAccessor(key, map);
+        }
+        else if (regularKeys.size() > 0)
+        {
+            // regular primary key
+            final Field key = regularKeys.get(0);
+            for (final ColumnMeta column : this.configureId(key, false))
+            {
+                return new BasicIdAccessor(key, column.getName());
+            }
+        }
+
+        return null;
+    }
+
+
+    private String getColumnName(final Field field)
     {
         // basic column info
         final Column column = field.getAnnotation(Column.class);
         final JoinColumn join = field.getAnnotation(JoinColumn.class);
-        final String property = field.getName();
-        final Class<?> type = field.getType();
         String name = CaseUtils.camelToSnakeCase(field.getName());
         if (column != null && !column.name().trim().isEmpty())
         {
@@ -292,61 +351,121 @@ public class AnnotationParser
         {
             name = join.name();
         }
+        return name;
+    }
+
+
+    private Collection<ColumnMeta> configureId(final Field field, final boolean useNested)
+    {
+        final String name = this.getColumnName(field);
+        final String property = field.getName();
+        final Class<?> type = field.getType();
+
+        final Id id = field.getAnnotation(Id.class);
+        if (id != null)
+        {
+            final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
+            return Arrays.asList(new ColumnMeta(name, property, accessor, type, true));
+        }
+
+        final EmbeddedId embeddedId = field.getAnnotation(EmbeddedId.class);
+        if (embeddedId != null)
+        {
+            final List<ColumnMeta> columns = new ArrayList<>();
+            final Embeddable embeddable = type.getAnnotation(Embeddable.class);
+            if (null == embeddable)
+            {
+                throw new IllegalStateException("Class [" + type + "] does not have Embeddable annotation.");
+            }
+            for (final Field embeddedColumn : new AnnotationParser(type).getFields(type))
+            {
+                final Class<?> embeddedClass = embeddedColumn.getType();
+                final ColumnAccessor basic = new BasicColumnAccessor(embeddedColumn, embeddedClass);
+                final ColumnAccessor accessor;
+                if (useNested)
+                {
+                    accessor = new NestedColumnAccessor(field, basic);
+                }
+                else
+                {
+                    accessor = basic;
+                }
+                columns.add(new ColumnMeta<>(name, property, accessor, type, true));
+            }
+            return Collections.unmodifiableList(columns);
+        }
+
+        return Collections.emptyList();
+    }
+
+
+    private Collection<ColumnMeta> configureField(final Field field)
+    {
+        // basic column info
+        final String name = this.getColumnName(field);
+        final String property = field.getName();
+        final Class<?> type = field.getType();
 
         // setup guid
         final EmbeddedId embeddedId = field.getAnnotation(EmbeddedId.class);
         final Id id = field.getAnnotation(Id.class);
         if (id != null)
         {
-            final ColumnAccessor accessor = new BasicFieldColumnAccessor(field, type);
-            columns.add(new ColumnMeta<>(name, property, accessor, type, true));
-            return true;
+            final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
+            return Arrays.asList(new ColumnMeta(name, property, accessor, type, true));
         }
         else if (embeddedId != null)
         {
+            final List<ColumnMeta> columns = new ArrayList<>();
             final Embeddable embeddable = type.getAnnotation(Embeddable.class);
             if (null == embeddable)
             {
                 throw new IllegalStateException("Class [" + type + "] does not have Embeddable annotation.");
             }
-            for (final Field embeddedColumn : new AnnotationParser(type).getFields(entityClass))
+            for (final Field embeddedColumn : new AnnotationParser(type).getFields(type))
             {
                 final Class<?> embeddedClass = embeddedColumn.getType();
-                final ColumnAccessor accessor = new NestedFieldColumnAccessor(field, new BasicFieldColumnAccessor(embeddedColumn, embeddedClass));
+                final ColumnAccessor accessor = new NestedColumnAccessor(field, new BasicColumnAccessor(embeddedColumn, embeddedClass));
                 columns.add(new ColumnMeta<>(name, property, accessor, type, true));
             }
+            return Collections.unmodifiableList(columns);
+        }
+
+        // primary key
+        if (field.getAnnotation(EmbeddedId.class) != null || field.getAnnotation(Id.class) != null)
+        {
+            return this.configureId(field, true);
         }
 
         // regular column
         if (field.isAnnotationPresent(ElementCollection.class))
         {
-            return this.configureElementCollection(field, name, property, columns);
+            return this.configureElementCollection(field, name, property);
         }
 
         // associations and join columns
         if (field.isAnnotationPresent(OneToOne.class))
         {
-            return this.configureOneToOne(field, name, property, columns);
+            return this.configureOneToOne(field, name, property);
         }
         else if (field.isAnnotationPresent(ManyToOne.class))
         {
-            return this.configureManyToOne(field, name, property, columns);
+            return this.configureManyToOne(field, name, property);
         }
 
         // regular column
-        if (column != null)
+        if (field.getAnnotation(Column.class) != null)
         {
-            final ColumnAccessor accessor = new BasicFieldColumnAccessor(field, type);
-            columns.add(new ColumnMeta<>(name, property, accessor, type, false));
-            return true;
+            final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
+            return Arrays.asList(new ColumnMeta(name, property, accessor, type, false));
         }
 
         // not jpa column
-        return false;
+        return Collections.emptyList();
     }
 
 
-    private boolean configureOneToOne(final Field field, final String name, final String property, final Collection<ColumnMeta> columns)
+    private Collection<ColumnMeta> configureOneToOne(final Field field, final String name, final String property)
     {
         final OneToOne oneToOne = field.getAnnotation(OneToOne.class);
         final boolean lazy = FetchType.LAZY.equals(oneToOne.fetch());
@@ -360,20 +479,23 @@ public class AnnotationParser
             {
                 throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
             }
-            final Class<?> keyType = entity.getPartition().getType();
-            final ColumnAccessor accessor = new JoinColumnAccessor(field, entity, keyType, lazy);
-            columns.add(new JoinColumnMeta<>(name, property, accessor, keyType, entity));
-            return true;
+            final ColumnAccessor accessor = new JoinColumnAccessor(field, entity, lazy);
+            final List<ColumnMeta> list = new ArrayList<>();
+            for (final ColumnMeta primary : entity.getPrimaryKeys())
+            {
+                list.add(new JoinColumnMeta(name, property, accessor, primary.getType(), entity));
+            }
+            return Collections.unmodifiableList(list);
         }
         else
         {
             // this table does not own this column
-            return false;
+            return Collections.emptyList();
         }
     }
 
 
-    private boolean configureManyToOne(final Field field, final String name, final String property, final Collection<ColumnMeta> columns)
+    private Collection<ColumnMeta> configureManyToOne(final Field field, final String name, final String property)
     {
         final ManyToOne manyToOne = field.getAnnotation(ManyToOne.class);
         final boolean lazy = FetchType.LAZY.equals(manyToOne.fetch());
@@ -383,14 +505,17 @@ public class AnnotationParser
         {
             throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
         }
-        final Class<?> keyType = entity.getPartition().getType();
-        final ColumnAccessor accessor = new JoinColumnAccessor(field, entity, keyType, lazy);
-        columns.add(new JoinColumnMeta<>(name, property, accessor, keyType, entity));
-        return true;
+        final ColumnAccessor accessor = new JoinColumnAccessor(field, entity, lazy);
+        final List<ColumnMeta> list = new ArrayList<>();
+        for (final ColumnMeta primary : entity.getPrimaryKeys())
+        {
+            list.add(new JoinColumnMeta(name, property, accessor, primary.getType(), entity));
+        }
+        return Collections.unmodifiableList(list);
     }
 
 
-    protected boolean configureElementCollection(final Field field, final String name, final String property, final Collection<ColumnMeta> columns)
+    protected Collection<ColumnMeta> configureElementCollection(final Field field, final String name, final String property)
     {
         final Class<?> type = field.getType();
         final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
@@ -398,12 +523,12 @@ public class AnnotationParser
         final Class<?> parameterizedClass = types != null && types.length > 0 ? (Class<?>) types[0] : null;
         if (null == parameterizedClass)
         {
-            return false;
+            return Collections.emptyList();
         }
 
         if (this.isEntity(parameterizedClass))
         {
-            return false;
+            return Collections.emptyList();
         }
 
         final ColumnAccessor accessor;
@@ -415,8 +540,9 @@ public class AnnotationParser
         {
             accessor = new ListColumnAccessor(field, parameterizedClass);
         }
-        columns.add(new CollectionMeta(name, property, accessor, type, parameterizedClass));
-        return true;
+        final List<ColumnMeta> list = new ArrayList<>(1);
+        list.add(new CollectionMeta(name, property, accessor, type, parameterizedClass));
+        return Collections.unmodifiableList(list);
     }
 
 

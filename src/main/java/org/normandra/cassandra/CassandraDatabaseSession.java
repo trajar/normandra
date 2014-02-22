@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -141,18 +142,25 @@ public class CassandraDatabaseSession implements NormandraDatabaseSession
             return false;
         }
 
-        final ColumnMeta partition = meta.getPartition();
-        if (null == partition)
-        {
-            return false;
-        }
-
         try
         {
-            final String[] names = new String[]{partition.getName()};
+            final Map<String, Object> columns = meta.getId().fromKey(key);
+            final List<String> namelist = new ArrayList<>(columns.size());
+            for (final String column : columns.keySet())
+            {
+                namelist.add(column);
+            }
+            final String[] names = namelist.toArray(new String[namelist.size()]);
             final Select statement = QueryBuilder.select(names)
                     .from(this.keyspaceName, meta.getTable())
-                    .where(QueryBuilder.eq(partition.getName(), key)).limit(1);
+                    .limit(1);
+            for (final Map.Entry<String, Object> entry : columns.entrySet())
+            {
+                final String name = entry.getKey();
+                final Object value = entry.getValue();
+                statement.where(QueryBuilder.eq(name, value));
+            }
+
             final ResultSet results = this.session.execute(statement);
             if (null == results)
             {
@@ -163,6 +171,7 @@ public class CassandraDatabaseSession implements NormandraDatabaseSession
             {
                 return false;
             }
+
             final ColumnDefinitions definitions = row.getColumnDefinitions();
             if (null == definitions)
             {
@@ -189,12 +198,6 @@ public class CassandraDatabaseSession implements NormandraDatabaseSession
             return null;
         }
 
-        final ColumnMeta partition = meta.getPartition();
-        if (null == partition)
-        {
-            return null;
-        }
-
         final DiscriminatorMeta descrim = (DiscriminatorMeta) CollectionUtils.find(meta.getColumns(), InstanceofPredicate.getInstance(DiscriminatorMeta.class));
         if (null == descrim)
         {
@@ -206,7 +209,13 @@ public class CassandraDatabaseSession implements NormandraDatabaseSession
             final String[] names = new String[]{descrim.getName()};
             final Select statement = QueryBuilder.select(names)
                     .from(this.keyspaceName, meta.getTable())
-                    .where(QueryBuilder.eq(partition.getName(), key)).limit(1);
+                    .limit(1);
+            for (final Map.Entry<String, Object> entry : meta.getId().fromKey(key).entrySet())
+            {
+                final String name = entry.getKey();
+                final Object value = entry.getValue();
+                statement.where(QueryBuilder.eq(name, value));
+            }
             final ResultSet results = this.session.execute(statement);
             if (null == results)
             {
@@ -248,12 +257,6 @@ public class CassandraDatabaseSession implements NormandraDatabaseSession
             }
         }
 
-        final ColumnMeta partition = meta.getPartition();
-        if (null == partition)
-        {
-            return null;
-        }
-
         try
         {
             final List<ColumnMeta> columns = new ArrayList<>(meta.getColumns());
@@ -264,7 +267,14 @@ public class CassandraDatabaseSession implements NormandraDatabaseSession
             }
             final Select statement = QueryBuilder.select(names)
                     .from(this.keyspaceName, meta.getTable())
-                    .where(QueryBuilder.eq(partition.getName(), key)).limit(1);
+                    .limit(1);
+            for (final Map.Entry<String, Object> entry : meta.getId().fromKey(key).entrySet())
+            {
+                final String name = entry.getKey();
+                final Object value = entry.getValue();
+                statement.where(QueryBuilder.eq(name, value));
+            }
+
             final ResultSet results = this.session.execute(statement);
             if (null == results)
             {
@@ -303,27 +313,27 @@ public class CassandraDatabaseSession implements NormandraDatabaseSession
     @Override
     public <T> void delete(final EntityMeta<T> meta, final T element) throws NormandraException
     {
+        if (null == element)
+        {
+            throw new NullArgumentException("entity");
+        }
         if (this.isClosed())
         {
             throw new IllegalStateException("Session is closed.");
         }
 
-        final ColumnMeta partition = meta.getPartition();
-        if (null == partition)
-        {
-            throw new NormandraException("Unable to determine the partiation key for [" + meta + "].");
-        }
-
-        final Object key = partition.getAccessor().getValue(element);
-        if (null == key)
-        {
-            throw new NormandraException("Entity [" + meta + "] instance [" + element + "] has null/empty partition key.");
-        }
-
         try
         {
             final Delete statement = QueryBuilder.delete().all().from(this.keyspaceName, meta.getTable());
-            statement.where(QueryBuilder.eq(partition.getName(), key));
+            for (final ColumnMeta column : meta.getColumns())
+            {
+                if (column.isPrimaryKey())
+                {
+                    final String name = column.getName();
+                    final Object value = column.getAccessor().getValue(element);
+                    statement.where(QueryBuilder.eq(name, value));
+                }
+            }
             if (this.activeTransaction.get())
             {
                 this.statements.add(statement);
@@ -335,7 +345,7 @@ public class CassandraDatabaseSession implements NormandraDatabaseSession
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to delete entity [" + meta + "] by key [" + key + "].", e);
+            throw new NormandraException("Unable to delete entity [" + element + "] of type [" + meta + "].", e);
         }
     }
 

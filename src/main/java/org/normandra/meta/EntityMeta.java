@@ -1,6 +1,7 @@
 package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.data.IdAccessor;
 import org.normandra.generator.IdGenerator;
 
 import java.util.ArrayList;
@@ -25,13 +26,14 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
 
     private final Class<T> type;
 
+    private final IdAccessor id;
 
     private final List<ColumnMeta> columns;
 
     private final Map<ColumnMeta, IdGenerator> generators = new TreeMap<>();
 
 
-    public EntityMeta(final String name, final String table, final Class<T> clazz, final Collection<ColumnMeta> c)
+    public EntityMeta(final String name, final String table, final Class<T> clazz, final IdAccessor id, final Collection<ColumnMeta> c)
     {
         if (null == name || name.isEmpty())
         {
@@ -45,6 +47,10 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
         {
             throw new NullArgumentException("class");
         }
+        if (null == id)
+        {
+            throw new NullArgumentException("id accessor");
+        }
         if (null == c || c.isEmpty())
         {
             throw new IllegalArgumentException("Columns cannot be empty/null.");
@@ -52,6 +58,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
         this.name = name;
         this.table = table;
         this.type = clazz;
+        this.id = id;
         this.columns = new ArrayList<>(c);
     }
 
@@ -78,6 +85,12 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
         }
         this.generators.put(column, generator);
         return true;
+    }
+
+
+    public IdAccessor getId()
+    {
+        return this.id;
     }
 
 
@@ -111,6 +124,20 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
     }
 
 
+    public Collection<ColumnMeta> getPrimaryKeys()
+    {
+        final List<ColumnMeta> keys = new ArrayList<>(4);
+        for (final ColumnMeta column : this.columns)
+        {
+            if (column.isPrimaryKey())
+            {
+                keys.add(column);
+            }
+        }
+        return Collections.unmodifiableList(keys);
+    }
+
+
     public ColumnMeta getColumn(final String nameOrProperty)
     {
         if (null == nameOrProperty || nameOrProperty.isEmpty())
@@ -129,30 +156,6 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
             }
         }
         return null;
-    }
-
-
-    public ColumnMeta getPartition()
-    {
-        return this.getPrimary().iterator().next();
-    }
-
-
-    public Collection<ColumnMeta> getPrimary()
-    {
-        if (this.columns.isEmpty())
-        {
-            return Collections.emptyList();
-        }
-        final List<ColumnMeta> list = new ArrayList<>(4);
-        for (final ColumnMeta column : this.columns)
-        {
-            if (column.isPrimaryKey())
-            {
-                list.add(column);
-            }
-        }
-        return Collections.unmodifiableCollection(list);
     }
 
 
@@ -190,6 +193,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
         EntityMeta that = (EntityMeta) o;
 
         if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (table != null ? !table.equals(that.table) : that.table != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
@@ -204,6 +208,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (table != null ? table.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (id != null ? id.hashCode() : 0);
         result = 31 * result + (columns != null ? columns.hashCode() : 0);
         return result;
     }

@@ -15,7 +15,7 @@ import java.util.Collections;
  * User: bowen
  * Date: 1/19/14
  */
-abstract public class CollectionColumnAccessor<T extends Collection> extends FieldColumnAccessor
+abstract public class CollectionColumnAccessor<T extends Collection> extends FieldColumnAccessor implements ColumnAccessor
 {
     private final Class<?> generic;
 

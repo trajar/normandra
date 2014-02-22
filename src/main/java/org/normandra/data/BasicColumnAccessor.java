@@ -12,14 +12,14 @@ import java.lang.reflect.Field;
  * User: bowen
  * Date: 1/15/14
  */
-public class BasicFieldColumnAccessor extends FieldColumnAccessor
+public class BasicColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
     private final Class<?> clazz;
 
     private final boolean primitive;
 
 
-    public BasicFieldColumnAccessor(final Field field, final Class<?> clazz)
+    public BasicColumnAccessor(final Field field, final Class<?> clazz)
     {
         super(field);
         if (null == clazz)
@@ -28,10 +28,10 @@ public class BasicFieldColumnAccessor extends FieldColumnAccessor
         }
         this.clazz = clazz;
         if (this.clazz.equals(long.class) ||
-                this.clazz.equals(int.class) ||
-                this.clazz.equals(char.class) ||
-                this.clazz.equals(short.class) ||
-                this.clazz.equals(boolean.class))
+            this.clazz.equals(int.class) ||
+            this.clazz.equals(char.class) ||
+            this.clazz.equals(short.class) ||
+            this.clazz.equals(boolean.class))
         {
             this.primitive = true;
         }
@@ -108,7 +108,7 @@ public class BasicFieldColumnAccessor extends FieldColumnAccessor
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        BasicFieldColumnAccessor that = (BasicFieldColumnAccessor) o;
+        BasicColumnAccessor that = (BasicColumnAccessor) o;
 
         if (clazz != null ? !clazz.equals(that.clazz) : that.clazz != null) return false;
 

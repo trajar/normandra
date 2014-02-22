@@ -1,15 +1,14 @@
 package org.normandra.cache;
 
 import org.normandra.NormandraException;
-import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * a simple in-memory cache
@@ -66,19 +65,13 @@ public class MemoryCache implements EntityCache
         Map<Object, Object> entities = this.cache.get(meta);
         if (null == entities)
         {
-            entities = new HashMap<>();
+            entities = new ConcurrentHashMap<>();
             this.cache.put(meta, entities);
-        }
-
-        final ColumnMeta column = meta.getPartition();
-        if (null == column)
-        {
-            return false;
         }
 
         try
         {
-            final Object key = column.getAccessor().getValue(instance);
+            final Object key = meta.getId().fromEntity(instance);
             if (null == key)
             {
                 return false;

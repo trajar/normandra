@@ -12,18 +12,21 @@ import java.lang.reflect.Field;
  * User: bowen
  * Date: 1/21/14
  */
-public class NestedFieldColumnAccessor extends FieldColumnAccessor
+public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
     private final ColumnAccessor delegate;
 
+    private final Class<?> type;
 
-    public NestedFieldColumnAccessor(final Field field, final ColumnAccessor delegate)
+
+    public NestedColumnAccessor(final Field field, final ColumnAccessor delegate)
     {
         super(field);
         if (null == delegate)
         {
             throw new NullArgumentException("accessor");
         }
+        this.type = field.getType();
         this.delegate = delegate;
     }
 
@@ -58,7 +61,37 @@ public class NestedFieldColumnAccessor extends FieldColumnAccessor
     @Override
     public boolean setValue(final Object entity, final Object value, final NormandraDatabaseSession session) throws NormandraException
     {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        Object base;
+        try
+        {
+            base = this.get(entity);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to get base value for nested property [" + this.getField().getName() + "].", e);
+        }
+
+        if (null == base)
+        {
+            if (null == value)
+            {
+                return false;
+            }
+            try
+            {
+                base = this.type.newInstance();
+            }
+            catch (final Exception e)
+            {
+                throw new NormandraException("Unable to instantiate new instance of nested/embedded type [" + this.type + "] for property [" + this.getField().getName() + "].", e);
+            }
+        }
+
+        if (null == base)
+        {
+            return false;
+        }
+        return this.delegate.setValue(base, value, session);
     }
 
 
@@ -69,9 +102,10 @@ public class NestedFieldColumnAccessor extends FieldColumnAccessor
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        NestedFieldColumnAccessor that = (NestedFieldColumnAccessor) o;
+        NestedColumnAccessor that = (NestedColumnAccessor) o;
 
         if (delegate != null ? !delegate.equals(that.delegate) : that.delegate != null) return false;
+        if (type != null ? !type.equals(that.type) : that.type != null) return false;
 
         return true;
     }
@@ -82,6 +116,7 @@ public class NestedFieldColumnAccessor extends FieldColumnAccessor
     {
         int result = super.hashCode();
         result = 31 * result + (delegate != null ? delegate.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
         return result;
     }
 }

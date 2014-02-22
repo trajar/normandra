@@ -84,7 +84,8 @@ public class CassandraSaveTest extends BaseCassandraTest
         this.session.save(meta, entity);
         Assert.assertEquals(1, entity.getId());
 
-        Assert.assertFalse(this.session.exists(meta, 0));
+        Assert.assertFalse(this.session.exists(meta, 0L));
+        Assert.assertTrue(this.session.exists(meta, 1L));
         Assert.assertTrue(this.session.exists(meta, 1));
 
         final SimpleEntity notfound = this.session.get(meta, 0);
