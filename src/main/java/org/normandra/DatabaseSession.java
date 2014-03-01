@@ -8,7 +8,7 @@ import org.normandra.meta.EntityMeta;
  * User: bowen
  * Date: 2/1/14
  */
-public interface NormandraDatabaseSession extends EntitySession
+public interface DatabaseSession extends EntitySession
 {
     void close();
     void clear() throws NormandraException;

@@ -1,6 +1,6 @@
 package org.normandra.data;
 
-import org.normandra.NormandraDatabaseSession;
+import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 
 /**
@@ -35,7 +35,7 @@ public class ReadOnlyColumnAccessor implements ColumnAccessor
 
 
     @Override
-    public boolean setValue(Object entity, Object value, NormandraDatabaseSession session) throws NormandraException
+    public boolean setValue(Object entity, Object value, DatabaseSession session) throws NormandraException
     {
         return false;
     }

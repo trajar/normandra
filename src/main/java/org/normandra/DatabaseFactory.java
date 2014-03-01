@@ -6,7 +6,7 @@ package org.normandra;
  * User: bowen
  * Date: 8/31/13
  */
-public interface NormandraDatabaseFactory
+public interface DatabaseFactory
 {
-    NormandraDatabase create();
+    Database create();
 }

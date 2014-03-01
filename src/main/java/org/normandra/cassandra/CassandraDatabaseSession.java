@@ -13,7 +13,7 @@ import com.datastax.driver.core.querybuilder.Select;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.functors.InstanceofPredicate;
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.NormandraDatabaseSession;
+import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
 import org.normandra.cache.MemoryCache;
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 2/1/14
  */
-public class CassandraDatabaseSession implements NormandraDatabaseSession
+public class CassandraDatabaseSession implements DatabaseSession
 {
     private final String keyspaceName;
 

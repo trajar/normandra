@@ -3,14 +3,14 @@ package org.normandra.cassandra;
 import com.datastax.driver.core.Cluster;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseConstruction;
-import org.normandra.NormandraDatabaseFactory;
+import org.normandra.DatabaseFactory;
 
 /**
  * cassandra database factory
  * User: bowen
  * Date: 8/31/13
  */
-public class CassandraDatabaseFactory implements NormandraDatabaseFactory
+public class CassandraDatabaseFactory implements DatabaseFactory
 {
     public static final String DEFAULT_HOST = "localhost";
 

@@ -4,8 +4,8 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.normandra.NormandraEntityManager;
-import org.normandra.NormandraEntityManagerFactory;
+import org.normandra.EntityManager;
+import org.normandra.EntityManagerFactory;
 import org.normandra.entities.AnimalEntity;
 import org.normandra.entities.CatEntity;
 import org.normandra.entities.DogEntity;
@@ -20,13 +20,13 @@ import java.io.IOException;
  */
 public class CassandraInheritanceTest extends BaseCassandraTest
 {
-    private NormandraEntityManager manager;
+    private EntityManager manager;
 
 
     @Before
     public void create() throws Exception
     {
-        final NormandraEntityManagerFactory factory = new NormandraEntityManagerFactory.Builder()
+        final EntityManagerFactory factory = new EntityManagerFactory.Builder()
                 .withClass(CatEntity.class)
                 .withClass(DogEntity.class)
                 .withParameter(CassandraDatabase.HOSTS, "localhost")

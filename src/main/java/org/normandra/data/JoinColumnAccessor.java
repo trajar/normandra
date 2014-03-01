@@ -1,6 +1,6 @@
 package org.normandra.data;
 
-import org.normandra.NormandraDatabaseSession;
+import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.association.AssociationUtils;
 import org.normandra.meta.EntityMeta;
@@ -63,7 +63,7 @@ public class JoinColumnAccessor extends FieldColumnAccessor implements ColumnAcc
 
 
     @Override
-    public boolean setValue(final Object entity, final Object key, final NormandraDatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final Object key, final DatabaseSession session) throws NormandraException
     {
         if (null == key)
         {

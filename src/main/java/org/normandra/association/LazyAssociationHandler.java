@@ -2,7 +2,7 @@ package org.normandra.association;
 
 import javassist.util.proxy.MethodHandler;
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.NormandraDatabaseSession;
+import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
@@ -28,10 +28,10 @@ public class LazyAssociationHandler<T> implements MethodHandler
 
     private final AssociationAccessor accessor;
 
-    private final NormandraDatabaseSession session;
+    private final DatabaseSession session;
 
 
-    public LazyAssociationHandler(final EntityMeta<T> meta, final AssociationAccessor accessor, final NormandraDatabaseSession session)
+    public LazyAssociationHandler(final EntityMeta<T> meta, final AssociationAccessor accessor, final DatabaseSession session)
     {
         if (null == meta)
         {

@@ -21,7 +21,7 @@ import java.util.TreeMap;
  * User: bowen
  * Date: 2/1/14
  */
-public class NormandraEntityManagerFactory
+public class EntityManagerFactory
 {
     public static class Builder
     {
@@ -32,7 +32,7 @@ public class NormandraEntityManagerFactory
         private final SortedMap<String, Object> parameters = new TreeMap<>();
 
 
-        public NormandraEntityManagerFactory create() throws NormandraException
+        public EntityManagerFactory create() throws NormandraException
         {
             // read all entities
             final AnnotationParser parser = new AnnotationParser(this.classes);
@@ -45,8 +45,8 @@ public class NormandraEntityManagerFactory
             final String keyspace = this.getParameter(CassandraDatabase.KEYSPACE, String.class, "normandra");
             final String hosts = this.getParameter(CassandraDatabase.HOSTS, String.class, CassandraDatabaseFactory.DEFAULT_HOST);
             final Integer port = this.getParameter(CassandraDatabase.PORT, Integer.class, CassandraDatabaseFactory.DEFAULT_PORT);
-            final NormandraDatabaseFactory factory = new CassandraDatabaseFactory(keyspace, hosts, port.intValue(), this.mode);
-            final NormandraDatabase database = factory.create();
+            final DatabaseFactory factory = new CassandraDatabaseFactory(keyspace, hosts, port.intValue(), this.mode);
+            final Database database = factory.create();
             if (null == database)
             {
                 return null;
@@ -62,7 +62,7 @@ public class NormandraEntityManagerFactory
             }
 
             // success - create manager
-            return new NormandraEntityManagerFactory(database, meta);
+            return new EntityManagerFactory(database, meta);
         }
 
 
@@ -143,14 +143,14 @@ public class NormandraEntityManagerFactory
 
     }
 
-    private final NormandraDatabase database;
+    private final Database database;
 
     private final DatabaseMeta meta;
 
     private final Map<Class, EntityMeta> classMap;
 
 
-    private NormandraEntityManagerFactory(final NormandraDatabase db, final DatabaseMeta meta)
+    private EntityManagerFactory(final Database db, final DatabaseMeta meta)
     {
         if (null == db)
         {
@@ -172,9 +172,9 @@ public class NormandraEntityManagerFactory
     }
 
 
-    public NormandraEntityManager create() throws NormandraException
+    public EntityManager create() throws NormandraException
     {
-        final NormandraDatabaseSession session = this.database.createSession();
-        return new NormandraEntityManager(session, this.meta);
+        final DatabaseSession session = this.database.createSession();
+        return new EntityManager(session, this.meta);
     }
 }

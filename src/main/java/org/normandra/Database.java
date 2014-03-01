@@ -8,9 +8,9 @@ import org.normandra.meta.DatabaseMeta;
  * User: bowen
  * Date: 8/31/13
  */
-public interface NormandraDatabase
+public interface Database
 {
-    NormandraDatabaseSession createSession() throws NormandraException;
+    DatabaseSession createSession() throws NormandraException;
     void refresh(DatabaseMeta meta) throws NormandraException;
     void close();
 }

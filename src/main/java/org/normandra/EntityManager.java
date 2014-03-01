@@ -20,16 +20,16 @@ import java.util.Map;
  * User: bowen
  * Date: 8/31/13
  */
-public class NormandraEntityManager
+public class EntityManager
 {
-    private final NormandraDatabaseSession database;
+    private final DatabaseSession database;
 
     private final DatabaseMeta meta;
 
     private final Map<Class<?>, EntityMeta<?>> classMap;
 
 
-    protected NormandraEntityManager(final NormandraDatabaseSession db, final DatabaseMeta meta)
+    protected EntityManager(final DatabaseSession db, final DatabaseMeta meta)
     {
         if (null == db)
         {

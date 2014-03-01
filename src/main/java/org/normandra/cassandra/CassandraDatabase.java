@@ -10,8 +10,8 @@ import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.Database;
 import org.normandra.DatabaseConstruction;
-import org.normandra.NormandraDatabase;
 import org.normandra.NormandraException;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
@@ -36,7 +36,7 @@ import java.util.TreeSet;
  * User: bowen
  * Date: 8/31/13
  */
-public class CassandraDatabase implements NormandraDatabase, SessionAccessor
+public class CassandraDatabase implements Database, SessionAccessor
 {
     public static final String KEYSPACE = "cassandra.keyspace";
 

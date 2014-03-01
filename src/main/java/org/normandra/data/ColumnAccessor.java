@@ -1,6 +1,6 @@
 package org.normandra.data;
 
-import org.normandra.NormandraDatabaseSession;
+import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 
 /**
@@ -13,5 +13,5 @@ public interface ColumnAccessor
 {
     boolean isEmpty(Object entity) throws NormandraException;
     Object getValue(Object entity) throws NormandraException;
-    boolean setValue(Object entity, Object value, NormandraDatabaseSession session) throws NormandraException;
+    boolean setValue(Object entity, Object value, DatabaseSession session) throws NormandraException;
 }
