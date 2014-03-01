@@ -263,10 +263,10 @@ public class CassandraDatabase implements Database, SessionAccessor
     {
         if (this.session != null)
         {
-            this.session.shutdown();
+            this.session.close();
             this.session = null;
         }
-        this.cluster.shutdown();
+        this.cluster.close();
     }
 
 
@@ -377,7 +377,7 @@ public class CassandraDatabase implements Database, SessionAccessor
         }
         finally
         {
-            session.shutdown();
+            session.close();
         }
     }
 

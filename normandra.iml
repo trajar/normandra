@@ -18,7 +18,7 @@
     <orderEntry type="library" name="Maven: commons-lang:commons-lang:2.6" level="project" />
     <orderEntry type="library" name="Maven: org.jodd:jodd-bean:3.4.10" level="project" />
     <orderEntry type="library" name="Maven: org.jodd:jodd-core:3.4.10" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.cassandra:cassandra-all:2.0.3" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.cassandra:cassandra-all:2.0.4" level="project" />
     <orderEntry type="library" name="Maven: org.xerial.snappy:snappy-java:1.0.5" level="project" />
     <orderEntry type="library" name="Maven: net.jpountz.lz4:lz4:1.2.0" level="project" />
     <orderEntry type="library" name="Maven: com.ning:compress-lzf:0.8.4" level="project" />
@@ -51,12 +51,12 @@
     <orderEntry type="library" name="Maven: commons-logging:commons-logging:1.1.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.10" level="project" />
     <orderEntry type="library" name="Maven: log4j:log4j:1.2.16" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.cassandra:cassandra-thrift:2.0.3" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.cassandra:cassandra-thrift:2.0.4" level="project" />
     <orderEntry type="library" name="Maven: com.github.stephenc:jamm:0.2.5" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty:3.6.6.Final" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.cassandra:cassandra-clientutil:2.0.3" level="project" />
-    <orderEntry type="library" name="Maven: com.datastax.cassandra:cassandra-driver-core:2.0.0-rc2" level="project" />
-    <orderEntry type="library" name="Maven: com.codahale.metrics:metrics-core:3.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.cassandra:cassandra-clientutil:2.0.4" level="project" />
+    <orderEntry type="library" name="Maven: com.datastax.cassandra:cassandra-driver-core:2.0.0" level="project" />
+    <orderEntry type="library" name="Maven: com.codahale.metrics:metrics-core:3.0.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.hectorclient:hector-core:1.1-4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: commons-pool:commons-pool:1.5.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: com.github.stephenc.eaio-uuid:uuid:3.2.0" level="project" />
