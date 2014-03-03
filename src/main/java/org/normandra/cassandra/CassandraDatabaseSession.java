@@ -53,7 +53,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    private final AtomicBoolean activeTransaction = new AtomicBoolean(false);
+    private final AtomicBoolean activeUnitOfWork = new AtomicBoolean(false);
 
 
     public CassandraDatabaseSession(final String keyspace, final Session session)
@@ -90,25 +90,24 @@ public class CassandraDatabaseSession implements DatabaseSession
     public void clear() throws NormandraException
     {
         this.cache.clear();
-        this.statements.clear();
     }
 
 
     @Override
-    public void beginTransaction() throws NormandraException
+    public void beginWork() throws NormandraException
     {
-        if (this.activeTransaction.get())
+        if (this.activeUnitOfWork.get())
         {
-            throw new IllegalStateException("Transaction already active.");
+            throw new IllegalStateException("Unit of work already active.");
         }
-        this.activeTransaction.getAndSet(true);
+        this.activeUnitOfWork.getAndSet(true);
     }
 
 
     @Override
-    public void commitTransaction() throws NormandraException
+    public void commitWork() throws NormandraException
     {
-        if (!this.activeTransaction.get())
+        if (!this.activeUnitOfWork.get())
         {
             throw new IllegalStateException("No active transaction.");
         }
@@ -118,19 +117,19 @@ public class CassandraDatabaseSession implements DatabaseSession
         this.session.execute(batch);
         this.statements.clear();
 
-        this.activeTransaction.getAndSet(false);
+        this.activeUnitOfWork.getAndSet(false);
     }
 
 
     @Override
-    public void rollbackTransaction() throws NormandraException
+    public void rollbackWork() throws NormandraException
     {
-        if (!this.activeTransaction.get())
+        if (!this.activeUnitOfWork.get())
         {
             throw new IllegalStateException("No active transaction.");
         }
         this.statements.clear();
-        this.activeTransaction.getAndSet(false);
+        this.activeUnitOfWork.getAndSet(false);
     }
 
 
@@ -184,11 +183,7 @@ public class CassandraDatabaseSession implements DatabaseSession
             }
 
             final ColumnDefinitions definitions = row.getColumnDefinitions();
-            if (null == definitions)
-            {
-                return false;
-            }
-            return definitions.size() > 0;
+            return definitions != null && definitions.size() > 0;
         }
         catch (final Exception e)
         {
@@ -352,7 +347,7 @@ public class CassandraDatabaseSession implements DatabaseSession
                     statement.where(QueryBuilder.eq(name, value));
                 }
             }
-            if (this.activeTransaction.get())
+            if (this.activeUnitOfWork.get())
             {
                 this.statements.add(statement);
             }
@@ -418,7 +413,7 @@ public class CassandraDatabaseSession implements DatabaseSession
             {
                 throw new NormandraException("No column values found - cannot save empty entity.");
             }
-            if (this.activeTransaction.get())
+            if (this.activeUnitOfWork.get())
             {
                 this.statements.add(statement);
             }
