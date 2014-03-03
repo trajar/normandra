@@ -121,6 +121,7 @@ public class CassandraSchemaTest extends BaseCassandraTest
         Assert.assertTrue(this.database.hasColumn("student_index", "name"));
         Assert.assertTrue(this.database.hasColumn("student_index", "classroom_id"));
         Assert.assertTrue(this.database.hasTable("composite_index"));
+        Assert.assertFalse(this.database.hasColumn("composite_index", "key"));
         Assert.assertTrue(this.database.hasColumn("composite_index", "id"));
         Assert.assertTrue(this.database.hasColumn("composite_index", "name"));
 
