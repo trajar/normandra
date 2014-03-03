@@ -39,6 +39,13 @@ public class CompositeIndexEntity
             this.id = UUID.randomUUID();
             this.name = name;
         }
+
+
+        public Key(final UUID id, final String name)
+        {
+            this.id = id;
+            this.name = name;
+        }
     }
 
     @EmbeddedId

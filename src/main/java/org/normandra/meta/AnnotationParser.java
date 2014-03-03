@@ -8,6 +8,7 @@ import org.normandra.data.CompositeIdAccessor;
 import org.normandra.data.JoinColumnAccessor;
 import org.normandra.data.ListColumnAccessor;
 import org.normandra.data.NestedColumnAccessor;
+import org.normandra.data.NullIdAccessor;
 import org.normandra.data.SetColumnAccessor;
 import org.normandra.util.CaseUtils;
 import org.slf4j.Logger;
@@ -137,7 +138,7 @@ public class AnnotationParser
 
         // configure entity
         this.readColumns(meta);
-        this.configureIdAccessor(meta);
+        this.readIdAccessor(meta);
 
         // done
         return meta;
@@ -272,14 +273,14 @@ public class AnnotationParser
                     if (!Modifier.isTransient(field.getModifiers()))
                     {
                         if (field.isAnnotationPresent(Column.class) ||
-                                field.isAnnotationPresent(EmbeddedId.class) ||
-                                field.isAnnotationPresent(Id.class) ||
-                                field.isAnnotationPresent(ElementCollection.class) ||
-                                field.isAnnotationPresent(JoinColumn.class) ||
-                                field.isAnnotationPresent(OneToMany.class) ||
-                                field.isAnnotationPresent(ManyToOne.class) ||
-                                field.isAnnotationPresent(ManyToMany.class) ||
-                                field.isAnnotationPresent(OneToOne.class))
+                            field.isAnnotationPresent(EmbeddedId.class) ||
+                            field.isAnnotationPresent(Id.class) ||
+                            field.isAnnotationPresent(ElementCollection.class) ||
+                            field.isAnnotationPresent(JoinColumn.class) ||
+                            field.isAnnotationPresent(OneToMany.class) ||
+                            field.isAnnotationPresent(ManyToOne.class) ||
+                            field.isAnnotationPresent(ManyToMany.class) ||
+                            field.isAnnotationPresent(OneToOne.class))
                         {
                             list.add(field);
                         }
@@ -291,7 +292,7 @@ public class AnnotationParser
     }
 
 
-    private <T> boolean configureIdAccessor(final EntityMeta<T> entity)
+    private <T> boolean readIdAccessor(final EntityMeta<T> entity)
     {
         // find id fields
         final Class<?> entityClass = entity.getType();
@@ -320,6 +321,8 @@ public class AnnotationParser
         if (embeddedKeys.size() > 1 || regularKeys.size() > 1)
         {
             logger.warn("Multiple @Id or @EmbeddedId annotations found for class [" + entityClass + "] - you may be unable to access entity by #get api.");
+            entity.setId(NullIdAccessor.getInstance());
+            return true;
         }
 
         if (embeddedKeys.size() > 0)
@@ -329,7 +332,7 @@ public class AnnotationParser
             final Map<ColumnMeta, ColumnAccessor> map = new TreeMap<>();
             for (final ColumnMeta column : this.configureId(key, false))
             {
-                map.put(column, new BasicColumnAccessor(key, key.getType()));
+                map.put(column, column.getAccessor());
             }
             entity.setId(new CompositeIdAccessor(key, map));
             return true;

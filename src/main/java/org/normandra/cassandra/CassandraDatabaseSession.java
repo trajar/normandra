@@ -22,6 +22,8 @@ import org.normandra.generator.IdGenerator;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EntityMeta;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -39,6 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class CassandraDatabaseSession implements DatabaseSession
 {
+    private static final Logger logger = LoggerFactory.getLogger(CassandraDatabaseSession.class);
+
     private final String keyspaceName;
 
     private final Session session;
@@ -154,11 +158,18 @@ public class CassandraDatabaseSession implements DatabaseSession
             final Select statement = QueryBuilder.select(names)
                     .from(this.keyspaceName, meta.getTable())
                     .limit(1);
+            boolean hasWhere = false;
             for (final Map.Entry<String, Object> entry : columns.entrySet())
             {
                 final String name = entry.getKey();
                 final Object value = entry.getValue();
                 statement.where(QueryBuilder.eq(name, value));
+                hasWhere = true;
+            }
+            if (!hasWhere)
+            {
+                logger.warn("Unable to #exists value without key - empty where statement for type [" + meta + "].");
+                return false;
             }
 
             final ResultSet results = this.session.execute(statement);
@@ -268,11 +279,18 @@ public class CassandraDatabaseSession implements DatabaseSession
             final Select statement = QueryBuilder.select(names)
                     .from(this.keyspaceName, meta.getTable())
                     .limit(1);
+            boolean hasWhere = false;
             for (final Map.Entry<String, Object> entry : meta.getId().fromKey(key).entrySet())
             {
                 final String name = entry.getKey();
                 final Object value = entry.getValue();
                 statement.where(QueryBuilder.eq(name, value));
+                hasWhere = true;
+            }
+            if (!hasWhere)
+            {
+                logger.warn("Unable to #get value without key - empty where statement for type [" + meta + "].");
+                return null;
             }
 
             final ResultSet results = this.session.execute(statement);

@@ -4,14 +4,16 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.normandra.entities.ClassEntity;
-import org.normandra.entities.StudentEntity;
-import org.normandra.meta.AnnotationParser;
 import org.normandra.entities.CatEntity;
-import org.normandra.meta.DatabaseMeta;
+import org.normandra.entities.ClassEntity;
+import org.normandra.entities.CompositeIndexEntity;
 import org.normandra.entities.DogEntity;
-import org.normandra.meta.EntityMeta;
 import org.normandra.entities.SimpleEntity;
+import org.normandra.entities.StudentEntity;
+import org.normandra.entities.StudentIndexEntity;
+import org.normandra.meta.AnnotationParser;
+import org.normandra.meta.DatabaseMeta;
+import org.normandra.meta.EntityMeta;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -142,5 +144,31 @@ public class CassandraSaveTest extends BaseCassandraTest
         Assert.assertEquals(classroom.getId(), student.getClassroom().getId());
         Assert.assertEquals(classroom.getName(), student.getClassroom().getName());
         Assert.assertEquals(classroom.getRoom(), student.getClassroom().getRoom());
+    }
+
+
+    @Test
+    public void testComposite() throws Exception
+    {
+        final Map<Class, EntityMeta> entityMap = this.setupEntities(StudentIndexEntity.class, CompositeIndexEntity.class);
+        final EntityMeta studentMeta = entityMap.get(StudentIndexEntity.class);
+        final EntityMeta compositeMeta = entityMap.get(CompositeIndexEntity.class);
+
+        final StudentIndexEntity student = new StudentIndexEntity("fred", 101);
+        this.session.save(studentMeta, student);
+        Assert.assertNull(session.get(studentMeta, "fred"));
+        Assert.assertNull(session.get(studentMeta, "101"));
+
+        final CompositeIndexEntity composite = new CompositeIndexEntity("foo");
+        this.session.save(compositeMeta, composite);
+        Assert.assertNotNull(composite.getId());
+        Assert.assertNotNull(composite.getName());
+        this.session.clear();
+        final CompositeIndexEntity existing = (CompositeIndexEntity) this.session.get(compositeMeta, new CompositeIndexEntity.Key(composite.getId(), composite.getName()));
+        Assert.assertNotNull(existing);
+        Assert.assertEquals(composite.getId(), existing.getId());
+        Assert.assertEquals(composite.getName(), existing.getName());
+        Assert.assertNull(this.session.get(compositeMeta, composite.getId()));
+        Assert.assertNull(this.session.get(compositeMeta, composite.getName()));
     }
 }

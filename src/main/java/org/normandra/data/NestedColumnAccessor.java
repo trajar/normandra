@@ -80,6 +80,7 @@ public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnA
             try
             {
                 base = this.type.newInstance();
+                this.set(entity, base);
             }
             catch (final Exception e)
             {

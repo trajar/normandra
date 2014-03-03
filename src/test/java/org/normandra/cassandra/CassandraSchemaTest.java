@@ -4,8 +4,8 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.normandra.data.BasicIdAccessor;
 import org.normandra.data.CompositeIdAccessor;
+import org.normandra.data.NullIdAccessor;
 import org.normandra.entities.CatEntity;
 import org.normandra.entities.CompositeIndexEntity;
 import org.normandra.entities.DogEntity;
@@ -129,7 +129,7 @@ public class CassandraSchemaTest extends BaseCassandraTest
         Assert.assertNotNull(student);
         Assert.assertEquals(2, student.getPrimaryKeys().size());
         Assert.assertNotNull(student.getId());
-        Assert.assertTrue(student.getId() instanceof BasicIdAccessor);
+        Assert.assertTrue(student.getId() instanceof NullIdAccessor);
 
         final EntityMeta composite = meta.getEntity("composite_index");
         Assert.assertNotNull(composite);

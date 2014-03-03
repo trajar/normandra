@@ -1,6 +1,5 @@
 package org.normandra.data;
 
-import jodd.bean.BeanUtil;
 import org.apache.commons.lang.NullArgumentException;
 
 import java.lang.reflect.Field;
@@ -44,6 +43,7 @@ abstract public class FieldColumnAccessor
             this.field.setAccessible(true);
         }
         this.field.set(entity, value);
+//      BeanUtil.setPropertyForced(entity, this.field.g);
         return true;
     }
 
@@ -54,12 +54,12 @@ abstract public class FieldColumnAccessor
         {
             return null;
         }
-        BeanUtil.getProperty(entity, this.field.getName());
         if (!this.field.isAccessible())
         {
             this.field.setAccessible(true);
         }
         return this.field.get(entity);
+//      return BeanUtil.getProperty(entity, this.field.getName());
     }
 
 

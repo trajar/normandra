@@ -56,6 +56,10 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
         {
             return Collections.emptyMap();
         }
+        if (!this.getField().getType().isInstance(key))
+        {
+            return Collections.emptyMap();
+        }
 
         final Map<String, Object> map = new HashMap<>(this.accessors.size());
         for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet())
