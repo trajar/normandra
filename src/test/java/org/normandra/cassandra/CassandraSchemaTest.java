@@ -4,16 +4,21 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.normandra.meta.AnnotationParser;
+import org.normandra.data.BasicIdAccessor;
+import org.normandra.data.CompositeIdAccessor;
 import org.normandra.entities.CatEntity;
-import org.normandra.meta.DatabaseMeta;
+import org.normandra.entities.CompositeIndexEntity;
 import org.normandra.entities.DogEntity;
-import org.normandra.meta.EntityMeta;
 import org.normandra.entities.SimpleEntity;
+import org.normandra.entities.StudentIndexEntity;
+import org.normandra.meta.AnnotationParser;
+import org.normandra.meta.DatabaseMeta;
+import org.normandra.meta.EntityMeta;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -99,5 +104,36 @@ public class CassandraSchemaTest extends BaseCassandraTest
         Assert.assertFalse(this.database.hasColumn("animal", "numBarks"));
         Assert.assertTrue(this.database.hasColumn("animal", "num_barks"));
         Assert.assertTrue(this.database.hasColumn("animal", "litter_box"));
+    }
+
+
+    @Test
+    public void testComposite() throws Exception
+    {
+        final AnnotationParser parser = new AnnotationParser(StudentIndexEntity.class, CompositeIndexEntity.class);
+        final Collection<EntityMeta> list = parser.read();
+        Assert.assertFalse(list.isEmpty());
+        Assert.assertEquals(2, list.size());
+
+        final DatabaseMeta meta = new DatabaseMeta(list);
+        this.database.refresh(meta);
+        Assert.assertTrue(this.database.hasTable("student_index"));
+        Assert.assertTrue(this.database.hasColumn("student_index", "name"));
+        Assert.assertTrue(this.database.hasColumn("student_index", "classroom_id"));
+        Assert.assertTrue(this.database.hasTable("composite_index"));
+        Assert.assertTrue(this.database.hasColumn("composite_index", "id"));
+        Assert.assertTrue(this.database.hasColumn("composite_index", "name"));
+
+        final EntityMeta student = meta.getEntity("student_index");
+        Assert.assertNotNull(student);
+        Assert.assertEquals(2, student.getPrimaryKeys().size());
+        Assert.assertNotNull(student.getId());
+        Assert.assertTrue(student.getId() instanceof BasicIdAccessor);
+
+        final EntityMeta composite = meta.getEntity("composite_index");
+        Assert.assertNotNull(composite);
+        Assert.assertEquals(2, composite.getPrimaryKeys().size());
+        Assert.assertNotNull(composite.getId());
+        Assert.assertTrue(composite.getId() instanceof CompositeIdAccessor);
     }
 }

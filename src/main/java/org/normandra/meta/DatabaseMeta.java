@@ -61,6 +61,23 @@ public class DatabaseMeta implements Iterable<EntityMeta>
     }
 
 
+    public EntityMeta getEntity(final String table)
+    {
+        if (null == table || table.isEmpty())
+        {
+            return null;
+        }
+        for (final EntityMeta meta : this.entities)
+        {
+            if (table.equalsIgnoreCase(meta.getTable()))
+            {
+                return meta;
+            }
+        }
+        return null;
+    }
+
+
     public Collection<EntityMeta> getEntities(final String table)
     {
         if (null == table || table.isEmpty())

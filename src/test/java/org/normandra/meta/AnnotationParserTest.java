@@ -25,9 +25,6 @@ public class AnnotationParserTest
         Assert.assertTrue(parser.isEntity(SimpleEntity.class));
         Assert.assertEquals("SimpleEntity", parser.getEntity(SimpleEntity.class));
         Assert.assertEquals("simple_entity", parser.getTable(SimpleEntity.class));
-        final List<ColumnMeta> columns = parser.getColumns(SimpleEntity.class);
-        Assert.assertFalse(columns.isEmpty());
-        Assert.assertEquals(3, columns.size());
     }
 
 

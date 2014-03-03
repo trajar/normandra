@@ -5,7 +5,6 @@ import org.normandra.data.BasicColumnAccessor;
 import org.normandra.data.BasicIdAccessor;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.CompositeIdAccessor;
-import org.normandra.data.IdAccessor;
 import org.normandra.data.JoinColumnAccessor;
 import org.normandra.data.ListColumnAccessor;
 import org.normandra.data.NestedColumnAccessor;
@@ -130,12 +129,17 @@ public class AnnotationParser
             return null;
         }
 
+        // create entity first - to help resolve cyclical relationships
         final String name = this.getEntity(entityClass);
         final String table = this.getTable(entityClass);
-        final Collection<ColumnMeta> columns = this.getColumns(entityClass);
-        final IdAccessor id = this.configureIdAccessor(entityClass);
-        final EntityMeta<T> meta = new EntityMeta<>(name, table, entityClass, id, columns);
+        final EntityMeta<T> meta = new EntityMeta<>(name, table, entityClass);
         this.entities.put(entityClass, meta);
+
+        // configure entity
+        this.readColumns(meta);
+        this.configureIdAccessor(meta);
+
+        // done
         return meta;
     }
 
@@ -215,12 +219,13 @@ public class AnnotationParser
     }
 
 
-    protected List<ColumnMeta> getColumns(final Class<?> entityClass)
+    private <T> int readColumns(final EntityMeta<T> entity)
     {
+        final Class<?> entityClass = entity.getType();
         final List<Field> fields = this.getFields(entityClass);
         if (null == fields || fields.isEmpty())
         {
-            return Collections.emptyList();
+            return 0;
         }
 
         final List<ColumnMeta> columns = new ArrayList<>();
@@ -237,16 +242,20 @@ public class AnnotationParser
         }
         if (columns.isEmpty())
         {
-            return Collections.emptyList();
+            return 0;
         }
 
         final ColumnMeta meta = this.getDiscriminator(entityClass);
         if (meta != null)
         {
-            columns.add(meta);
+            entity.addColumn(meta);
+        }
+        for (final ColumnMeta column : columns)
+        {
+            entity.addColumn(column);
         }
 
-        return Collections.unmodifiableList(columns);
+        return columns.size();
     }
 
 
@@ -282,9 +291,10 @@ public class AnnotationParser
     }
 
 
-    private IdAccessor configureIdAccessor(final Class<?> entityClass)
+    private <T> boolean configureIdAccessor(final EntityMeta<T> entity)
     {
         // find id fields
+        final Class<?> entityClass = entity.getType();
         final List<Field> embeddedKeys = new ArrayList<>();
         final List<Field> regularKeys = new ArrayList<>();
         for (final Field field : this.getFields(entityClass))
@@ -301,7 +311,7 @@ public class AnnotationParser
 
         if (embeddedKeys.isEmpty() && regularKeys.isEmpty())
         {
-            return null;
+            return false;
         }
         if (!embeddedKeys.isEmpty() && !regularKeys.isEmpty())
         {
@@ -321,7 +331,8 @@ public class AnnotationParser
             {
                 map.put(column, new BasicColumnAccessor(key, key.getType()));
             }
-            return new CompositeIdAccessor(key, map);
+            entity.setId(new CompositeIdAccessor(key, map));
+            return true;
         }
         else if (regularKeys.size() > 0)
         {
@@ -329,11 +340,13 @@ public class AnnotationParser
             final Field key = regularKeys.get(0);
             for (final ColumnMeta column : this.configureId(key, false))
             {
-                return new BasicIdAccessor(key, column.getName());
+                entity.setId(new BasicIdAccessor(key, column.getName()));
+                return true;
             }
         }
 
-        return null;
+        // no id configured
+        return false;
     }
 
 
@@ -357,13 +370,12 @@ public class AnnotationParser
 
     private Collection<ColumnMeta> configureId(final Field field, final boolean useNested)
     {
-        final String name = this.getColumnName(field);
-        final String property = field.getName();
         final Class<?> type = field.getType();
-
         final Id id = field.getAnnotation(Id.class);
         if (id != null)
         {
+            final String name = this.getColumnName(field);
+            final String property = field.getName();
             final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
             return Arrays.asList(new ColumnMeta(name, property, accessor, type, true));
         }
@@ -380,6 +392,7 @@ public class AnnotationParser
             for (final Field embeddedColumn : new AnnotationParser(type).getFields(type))
             {
                 final Class<?> embeddedClass = embeddedColumn.getType();
+                final String embeddedName = this.getColumnName(embeddedColumn);
                 final ColumnAccessor basic = new BasicColumnAccessor(embeddedColumn, embeddedClass);
                 final ColumnAccessor accessor;
                 if (useNested)
@@ -390,7 +403,8 @@ public class AnnotationParser
                 {
                     accessor = basic;
                 }
-                columns.add(new ColumnMeta<>(name, property, accessor, type, true));
+                final String property = field.getName() + "." + embeddedColumn.getName();
+                columns.add(new ColumnMeta<>(embeddedName, property, accessor, embeddedClass, true));
             }
             return Collections.unmodifiableList(columns);
         }
@@ -403,33 +417,7 @@ public class AnnotationParser
     {
         // basic column info
         final String name = this.getColumnName(field);
-        final String property = field.getName();
         final Class<?> type = field.getType();
-
-        // setup guid
-        final EmbeddedId embeddedId = field.getAnnotation(EmbeddedId.class);
-        final Id id = field.getAnnotation(Id.class);
-        if (id != null)
-        {
-            final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
-            return Arrays.asList(new ColumnMeta(name, property, accessor, type, true));
-        }
-        else if (embeddedId != null)
-        {
-            final List<ColumnMeta> columns = new ArrayList<>();
-            final Embeddable embeddable = type.getAnnotation(Embeddable.class);
-            if (null == embeddable)
-            {
-                throw new IllegalStateException("Class [" + type + "] does not have Embeddable annotation.");
-            }
-            for (final Field embeddedColumn : new AnnotationParser(type).getFields(type))
-            {
-                final Class<?> embeddedClass = embeddedColumn.getType();
-                final ColumnAccessor accessor = new NestedColumnAccessor(field, new BasicColumnAccessor(embeddedColumn, embeddedClass));
-                columns.add(new ColumnMeta<>(name, property, accessor, type, true));
-            }
-            return Collections.unmodifiableList(columns);
-        }
 
         // primary key
         if (field.getAnnotation(EmbeddedId.class) != null || field.getAnnotation(Id.class) != null)
@@ -440,24 +428,24 @@ public class AnnotationParser
         // regular column
         if (field.isAnnotationPresent(ElementCollection.class))
         {
-            return this.configureElementCollection(field, name, property);
+            return this.configureElementCollection(field, name, field.getName());
         }
 
         // associations and join columns
         if (field.isAnnotationPresent(OneToOne.class))
         {
-            return this.configureOneToOne(field, name, property);
+            return this.configureOneToOne(field, name, field.getName());
         }
         else if (field.isAnnotationPresent(ManyToOne.class))
         {
-            return this.configureManyToOne(field, name, property);
+            return this.configureManyToOne(field, name, field.getName());
         }
 
         // regular column
         if (field.getAnnotation(Column.class) != null)
         {
             final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
-            return Arrays.asList(new ColumnMeta(name, property, accessor, type, false));
+            return Arrays.asList(new ColumnMeta(name, field.getName(), accessor, type, false));
         }
 
         // not jpa column

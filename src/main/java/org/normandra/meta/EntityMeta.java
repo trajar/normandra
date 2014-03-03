@@ -26,14 +26,14 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
 
     private final Class<T> type;
 
-    private final IdAccessor id;
+    private IdAccessor id;
 
-    private final List<ColumnMeta> columns;
+    private final Collection<ColumnMeta> columns = new ArrayList<>();
 
     private final Map<ColumnMeta, IdGenerator> generators = new TreeMap<>();
 
 
-    public EntityMeta(final String name, final String table, final Class<T> clazz, final IdAccessor id, final Collection<ColumnMeta> c)
+    public EntityMeta(final String name, final String table, final Class<T> clazz)
     {
         if (null == name || name.isEmpty())
         {
@@ -47,19 +47,39 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
         {
             throw new NullArgumentException("class");
         }
+        this.name = name;
+        this.table = table;
+        this.type = clazz;
+    }
+
+
+    protected boolean addColumn(final ColumnMeta column)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        return this.columns.add(column);
+    }
+
+
+    protected boolean removeColumn(final ColumnMeta column)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        return this.columns.remove(column);
+    }
+
+
+    protected void setId(final IdAccessor id)
+    {
         if (null == id)
         {
             throw new NullArgumentException("id accessor");
         }
-        if (null == c || c.isEmpty())
-        {
-            throw new IllegalArgumentException("Columns cannot be empty/null.");
-        }
-        this.name = name;
-        this.table = table;
-        this.type = clazz;
         this.id = id;
-        this.columns = new ArrayList<>(c);
     }
 
 
@@ -120,7 +140,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
 
     public Collection<ColumnMeta> getColumns()
     {
-        return Collections.unmodifiableList(this.columns);
+        return Collections.unmodifiableCollection(this.columns);
     }
 
 
@@ -193,6 +213,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
         EntityMeta that = (EntityMeta) o;
 
         if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
+        if (generators != null ? !generators.equals(that.generators) : that.generators != null) return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (table != null ? !table.equals(that.table) : that.table != null) return false;
@@ -210,6 +231,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (id != null ? id.hashCode() : 0);
         result = 31 * result + (columns != null ? columns.hashCode() : 0);
+        result = 31 * result + (generators != null ? generators.hashCode() : 0);
         return result;
     }
 }
