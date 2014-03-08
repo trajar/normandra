@@ -4,6 +4,7 @@ import javassist.util.proxy.MethodHandler;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
+import org.normandra.data.ColumnAccessor;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
@@ -82,10 +83,11 @@ public class LazyAssociationHandler<T> implements MethodHandler
         logger.info("Lazy association fetched, copying entity values from instance [" + entity + "].");
         for (final ColumnMeta column : this.meta)
         {
-            final Object columnValue = column.getAccessor().getValue(entity);
+            final ColumnAccessor accessor = this.meta.getAccessor(column);
+            final Object columnValue = accessor != null ? accessor.getValue(entity) : null;
             if (columnValue != null)
             {
-                column.getAccessor().setValue(self, columnValue, this.session);
+                accessor.setValue(self, columnValue, this.session);
             }
         }
 

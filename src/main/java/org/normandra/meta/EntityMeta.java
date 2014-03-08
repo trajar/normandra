@@ -1,6 +1,7 @@
 package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.data.ColumnAccessor;
 import org.normandra.data.IdAccessor;
 import org.normandra.generator.IdGenerator;
 
@@ -29,6 +30,8 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
     private IdAccessor id;
 
     private final Collection<ColumnMeta> columns = new ArrayList<>();
+
+    private final Map<ColumnMeta, ColumnAccessor> accessors = new TreeMap<>();
 
     private final Map<ColumnMeta, IdGenerator> generators = new TreeMap<>();
 
@@ -80,6 +83,31 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
             throw new NullArgumentException("id accessor");
         }
         this.id = id;
+    }
+
+
+    public ColumnAccessor getAccessor(final ColumnMeta<?> column)
+    {
+        if (null == column)
+        {
+            return null;
+        }
+        return this.accessors.get(column);
+    }
+
+
+    public boolean setAccessor(final ColumnMeta column, final ColumnAccessor accessor)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        if (null == accessor)
+        {
+            return this.accessors.remove(column) != null;
+        }
+        this.accessors.put(column, accessor);
+        return true;
     }
 
 
@@ -212,6 +240,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
 
         EntityMeta that = (EntityMeta) o;
 
+        if (accessors != null ? !accessors.equals(that.accessors) : that.accessors != null) return false;
         if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
         if (generators != null ? !generators.equals(that.generators) : that.generators != null) return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
@@ -231,6 +260,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (id != null ? id.hashCode() : 0);
         result = 31 * result + (columns != null ? columns.hashCode() : 0);
+        result = 31 * result + (accessors != null ? accessors.hashCode() : 0);
         result = 31 * result + (generators != null ? generators.hashCode() : 0);
         return result;
     }

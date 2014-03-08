@@ -1,7 +1,6 @@
 package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.data.ColumnAccessor;
 
 /**
  * a join column meta description
@@ -14,9 +13,9 @@ public class JoinColumnMeta<T> extends ColumnMeta<T>
     private final EntityMeta entity;
 
 
-    public JoinColumnMeta(final String name, final String property, final ColumnAccessor accessor, final Class<T> clazz, final EntityMeta entity)
+    public JoinColumnMeta(final String name, final String property, final Class<T> clazz, final EntityMeta entity, final boolean primaryKey)
     {
-        super(name, property, accessor, clazz, false);
+        super(name, property, clazz, primaryKey);
         if (null == entity)
         {
             throw new NullArgumentException("entity");

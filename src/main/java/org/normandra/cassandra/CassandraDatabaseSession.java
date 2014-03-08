@@ -307,10 +307,14 @@ public class CassandraDatabaseSession implements DatabaseSession
             for (int i = 0; i < names.length; i++)
             {
                 final ColumnMeta column = columns.get(i);
-                final Object value = CassandraUtils.unpack(row, i, column);
-                if (value != null)
+                final ColumnAccessor accessor = meta.getAccessor(column);
+                if (accessor != null)
                 {
-                    column.getAccessor().setValue(entity, value, this);
+                    final Object value = CassandraUtils.unpack(row, i, column);
+                    if (value != null)
+                    {
+                        accessor.setValue(entity, value, this);
+                    }
                 }
             }
             this.cache.put(meta, entity);
@@ -340,10 +344,11 @@ public class CassandraDatabaseSession implements DatabaseSession
             final Delete statement = QueryBuilder.delete().all().from(this.keyspaceName, meta.getTable());
             for (final ColumnMeta column : meta.getColumns())
             {
-                if (column.isPrimaryKey())
+                final ColumnAccessor accessor = meta.getAccessor(column);
+                if (accessor != null && column.isPrimaryKey())
                 {
                     final String name = column.getName();
-                    final Object value = column.getAccessor().getValue(element);
+                    final Object value = accessor.getValue(element);
                     statement.where(QueryBuilder.eq(name, value));
                 }
             }
@@ -386,10 +391,10 @@ public class CassandraDatabaseSession implements DatabaseSession
             final Collection<ColumnMeta> columns = meta.getColumns();
             for (final ColumnMeta column : columns)
             {
-                final ColumnAccessor accessor = column.getAccessor();
+                final ColumnAccessor accessor = meta.getAccessor(column);
                 final IdGenerator generator = meta.getGenerator(column);
-                final Object value;
-                if (generator != null && accessor.isEmpty(element))
+                Object value = null;
+                if (generator != null && accessor != null && accessor.isEmpty(element))
                 {
                     final Object generated = generator.generate(meta);
                     if (generated != null)
@@ -398,7 +403,7 @@ public class CassandraDatabaseSession implements DatabaseSession
                     }
                     value = generated;
                 }
-                else
+                else if (accessor != null)
                 {
                     value = accessor.getValue(element);
                 }

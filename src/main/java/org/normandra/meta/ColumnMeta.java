@@ -1,7 +1,6 @@
 package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.data.ColumnAccessor;
 
 /**
  * column meta-data
@@ -17,12 +16,10 @@ public class ColumnMeta<T> implements Comparable<ColumnMeta>
 
     private final Class<T> type;
 
-    private final ColumnAccessor accessor;
-
-    private boolean primaryKey;
+    private final boolean primaryKey;
 
 
-    public ColumnMeta(final String name, final String property, final ColumnAccessor accessor, final Class<T> clazz, final boolean primaryKey)
+    public ColumnMeta(final String name, final String property, final Class<T> clazz, final boolean primaryKey)
     {
         if (null == name)
         {
@@ -32,10 +29,6 @@ public class ColumnMeta<T> implements Comparable<ColumnMeta>
         {
             throw new NullArgumentException("property");
         }
-        if (null == accessor)
-        {
-            throw new NullArgumentException("accessor");
-        }
         if (null == clazz)
         {
             throw new NullArgumentException("class");
@@ -43,7 +36,6 @@ public class ColumnMeta<T> implements Comparable<ColumnMeta>
         this.name = name;
         this.property = property;
         this.type = clazz;
-        this.accessor = accessor;
         this.primaryKey = primaryKey;
     }
 
@@ -57,12 +49,6 @@ public class ColumnMeta<T> implements Comparable<ColumnMeta>
     public String getProperty()
     {
         return this.property;
-    }
-
-
-    public ColumnAccessor getAccessor()
-    {
-        return this.accessor;
     }
 
 
@@ -105,7 +91,6 @@ public class ColumnMeta<T> implements Comparable<ColumnMeta>
         ColumnMeta that = (ColumnMeta) o;
 
         if (primaryKey != that.primaryKey) return false;
-        if (accessor != null ? !accessor.equals(that.accessor) : that.accessor != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (property != null ? !property.equals(that.property) : that.property != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
@@ -120,7 +105,6 @@ public class ColumnMeta<T> implements Comparable<ColumnMeta>
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (property != null ? property.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
-        result = 31 * result + (accessor != null ? accessor.hashCode() : 0);
         result = 31 * result + (primaryKey ? 1 : 0);
         return result;
     }

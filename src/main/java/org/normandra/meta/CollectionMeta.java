@@ -1,7 +1,6 @@
 package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.data.ColumnAccessor;
 
 import java.util.Collection;
 
@@ -16,9 +15,9 @@ public class CollectionMeta<T extends Collection> extends ColumnMeta<T>
     private final Class<?> generic;
 
 
-    public CollectionMeta(final String name, final String property, final ColumnAccessor accessor, final Class<T> clazz, final Class<?> generic)
+    public CollectionMeta(final String name, final String property, final Class<T> clazz, final Class<?> generic)
     {
-        super(name, property, accessor, clazz, false);
+        super(name, property, clazz, false);
         if (null == generic)
         {
             throw new NullArgumentException("generic");

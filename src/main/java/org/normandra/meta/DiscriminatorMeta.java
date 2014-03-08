@@ -1,7 +1,5 @@
 package org.normandra.meta;
 
-import org.normandra.data.ReadOnlyColumnAccessor;
-
 /**
  * a discriminator column for abstract/inherited entities
  * <p/>
@@ -15,7 +13,7 @@ public class DiscriminatorMeta<T> extends ColumnMeta<T>
 
     public DiscriminatorMeta(final String name, final String property, final T descrim, final Class<T> clazz)
     {
-        super(name, property, new ReadOnlyColumnAccessor(descrim), clazz, false);
+        super(name, property, clazz, false);
         this.value = descrim;
     }
 
