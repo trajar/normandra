@@ -14,6 +14,7 @@ import org.normandra.entities.StudentIndexEntity;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.TableMeta;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,12 +59,15 @@ public class CassandraSchemaTest extends BaseCassandraTest
         final AnnotationParser parser = new AnnotationParser(SimpleEntity.class);
         final EntityMeta entity = parser.read().iterator().next();
         Assert.assertNotNull(entity);
-        final String table = entity.getTable();
-        Assert.assertFalse(this.database.hasTable(table));
+        for (final TableMeta table : entity.getTables())
+        {
+            Assert.assertFalse(this.database.hasTable(table.getName()));
+        }
 
         // construct schema
         final DatabaseMeta meta = new DatabaseMeta(Arrays.asList(entity));
         this.database.refresh(meta);
+        final String table = meta.getTables().iterator().next();
         Assert.assertTrue(this.database.hasTable(table));
         Assert.assertTrue(this.database.hasColumn(table, "id"));
         Assert.assertFalse(this.database.hasColumn(table, "name"));
@@ -90,8 +94,10 @@ public class CassandraSchemaTest extends BaseCassandraTest
             final AnnotationParser parser = new AnnotationParser(clazz);
             final EntityMeta entity = parser.read().iterator().next();
             Assert.assertNotNull(entity);
-            final String table = entity.getTable();
-            Assert.assertFalse(this.database.hasTable(table));
+            for (final TableMeta table : entity.getTables())
+            {
+                Assert.assertFalse(this.database.hasTable(table.getName()));
+            }
             list.add(entity);
         }
 
@@ -126,14 +132,16 @@ public class CassandraSchemaTest extends BaseCassandraTest
         Assert.assertTrue(this.database.hasColumn("composite_index", "name"));
 
         final EntityMeta student = meta.getEntity("student_index");
+        final TableMeta studentTable = student.getTables().iterator().next();
         Assert.assertNotNull(student);
-        Assert.assertEquals(2, student.getPrimaryKeys().size());
+        Assert.assertEquals(2, studentTable.getPrimaryKeys().size());
         Assert.assertNotNull(student.getId());
         Assert.assertTrue(student.getId() instanceof NullIdAccessor);
 
         final EntityMeta composite = meta.getEntity("composite_index");
+        final TableMeta compositeTable = student.getTables().iterator().next();
         Assert.assertNotNull(composite);
-        Assert.assertEquals(2, composite.getPrimaryKeys().size());
+        Assert.assertEquals(2, compositeTable.getPrimaryKeys().size());
         Assert.assertNotNull(composite.getId());
         Assert.assertTrue(composite.getId() instanceof CompositeIdAccessor);
     }

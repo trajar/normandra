@@ -17,6 +17,8 @@ import org.normandra.meta.EntityMeta;
  */
 public class CounterIdGenerator implements IdGenerator<Long>
 {
+    private static final Object lock = new Object();
+
     private final String tableName;
 
     private final String keyColumn;
@@ -46,20 +48,34 @@ public class CounterIdGenerator implements IdGenerator<Long>
             return null;
         }
 
-        try
+        synchronized (lock)
         {
-            return this.incrementCounter();
+            try
+            {
+                // try to update counter a fixed number of times
+                for (int i = 0; i < 10; i++)
+                {
+                    final Long value = this.incrementCounter();
+                    if (value != null)
+                    {
+                        return value;
+                    }
+                }
+            }
+            catch (final Exception e)
+            {
+                throw new NormandraException("Unable to increment counter id [" + this.keyValue + "] from table [" + this.tableName + "].", e);
+            }
         }
-        catch (final Exception e)
-        {
-            throw new NormandraException("Unable to increment counter id [" + this.keyValue + "] from table [" + this.tableName + "].", e);
-        }
+
+        throw new NormandraException("Unable to generate counter id.");
     }
 
 
     private Long incrementCounter()
     {
         final String keyspace = this.sessionAccessor.getKeyspace();
+        final Session session = this.sessionAccessor.getSession();
 
         final RegularStatement increment = QueryBuilder.update(keyspace, this.tableName)
                 .with(QueryBuilder.incr(this.valueColumn))
@@ -69,18 +85,31 @@ public class CounterIdGenerator implements IdGenerator<Long>
                 .from(keyspace, this.tableName)
                 .where(QueryBuilder.eq(this.keyColumn, this.keyValue));
 
-        final Session session = this.sessionAccessor.getSession();
+        ResultSet results = session.execute(select);
+        Row row = results != null ? results.one() : null;
+        final Long current = row != null ? row.getLong(0) : null;
+
         session.execute(increment);
-        final ResultSet results = session.execute(select);
-        if (null == results)
+
+        results = session.execute(select);
+        row = results != null ? results.one() : null;
+        final Long next = row != null ? row.getLong(0) : null;
+
+        if (null == next)
         {
             return null;
         }
-        final Row row = results.one();
-        if (null == row)
+        if (null == current && next.equals(1L))
         {
-            return null;
+            // as expected - generated the first id
+            return next;
         }
-        return row.getLong(0);
+        if (current != null && next.equals(current.longValue() + 1))
+        {
+            // as expected - generated the next id in sequence
+            return next;
+        }
+        // something went wrong - we generated an out of sequence or unexpected id
+        return null;
     }
 }

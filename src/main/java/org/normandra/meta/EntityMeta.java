@@ -3,15 +3,17 @@ package org.normandra.meta;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.IdAccessor;
+import org.normandra.data.NullIdAccessor;
 import org.normandra.generator.IdGenerator;
+import org.normandra.util.ArraySet;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * entity meta-data
@@ -19,70 +21,72 @@ import java.util.TreeMap;
  * User: bowen
  * Date: 9/1/13
  */
-public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMeta>
+public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
 {
     private final String name;
 
-    private final String table;
+    private final Set<TableMeta> tables = new TreeSet<>();
 
-    private final Class<T> type;
-
-    private IdAccessor id;
-
-    private final Collection<ColumnMeta> columns = new ArrayList<>();
+    private final Class<?> type;
 
     private final Map<ColumnMeta, ColumnAccessor> accessors = new TreeMap<>();
 
     private final Map<ColumnMeta, IdGenerator> generators = new TreeMap<>();
 
+    private IdAccessor id = NullIdAccessor.getInstance();
 
-    public EntityMeta(final String name, final String table, final Class<T> clazz)
+
+    public EntityMeta(final String name, final Class<?> clazz)
     {
         if (null == name || name.isEmpty())
         {
             throw new IllegalArgumentException("Name cannot be empty/null.");
-        }
-        if (null == table || table.isEmpty())
-        {
-            throw new IllegalArgumentException("Table cannot be empty/null.");
         }
         if (null == clazz)
         {
             throw new NullArgumentException("class");
         }
         this.name = name;
-        this.table = table;
         this.type = clazz;
     }
 
 
-    protected boolean addColumn(final ColumnMeta column)
+    public DiscriminatorMeta getDiscriminator()
     {
-        if (null == column)
+        for (final TableMeta table : this.tables)
         {
-            return false;
+            for (final ColumnMeta column : table)
+            {
+                if (column instanceof DiscriminatorMeta)
+                {
+                    return (DiscriminatorMeta) column;
+                }
+            }
         }
-        return this.columns.add(column);
+        return null;
     }
 
 
-    protected boolean removeColumn(final ColumnMeta column)
+    public Collection<ColumnMeta> getPrimaryKeys()
     {
-        if (null == column)
+        final Set<ColumnMeta> columns = new ArraySet<>();
+        for (final TableMeta table : this.tables)
         {
-            return false;
+            columns.addAll(table.getPrimaryKeys());
         }
-        return this.columns.remove(column);
+        return Collections.unmodifiableSet(columns);
     }
 
 
-    protected void setId(final IdAccessor id)
+    public Collection<TableMeta> getTables()
     {
-        if (null == id)
-        {
-            throw new NullArgumentException("id accessor");
-        }
-        this.id = id;
+        return Collections.unmodifiableCollection(this.tables);
+    }
+
+
+    public Iterable<Map.Entry<ColumnMeta, ColumnAccessor>> getAccessors()
+    {
+        return Collections.unmodifiableMap(this.accessors).entrySet();
     }
 
 
@@ -96,18 +100,21 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
     }
 
 
-    public boolean setAccessor(final ColumnMeta column, final ColumnAccessor accessor)
+    public ColumnAccessor getAccessor(final String columnName)
     {
-        if (null == column)
+        if (null == columnName || columnName.isEmpty())
         {
-            return false;
+            return null;
         }
-        if (null == accessor)
+        for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet())
         {
-            return this.accessors.remove(column) != null;
+            final ColumnMeta column = entry.getKey();
+            if (columnName.equalsIgnoreCase(column.getName()) || columnName.equalsIgnoreCase(column.getProperty()))
+            {
+                return entry.getValue();
+            }
         }
-        this.accessors.put(column, accessor);
-        return true;
+        return null;
     }
 
 
@@ -136,6 +143,102 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
     }
 
 
+    public boolean setAccessor(final ColumnMeta column, final ColumnAccessor accessor)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        if (null == accessor)
+        {
+            return this.accessors.remove(column) != null;
+        }
+        else
+        {
+            this.accessors.put(column, accessor);
+            return true;
+        }
+    }
+
+
+    boolean putColumns(final TableMeta table, final Map<ColumnMeta, ColumnAccessor> map)
+    {
+        if (null == map || map.isEmpty())
+        {
+            return false;
+        }
+        if (!this.tables.contains(table))
+        {
+            return false;
+        }
+        for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : map.entrySet())
+        {
+            final ColumnMeta column = entry.getKey();
+            final ColumnAccessor accessor = entry.getValue();
+            table.addColumn(column);
+            if (accessor != null)
+            {
+                this.setAccessor(column, accessor);
+            }
+        }
+        return true;
+    }
+
+
+    @Override
+    public Iterator<TableMeta> iterator()
+    {
+        return Collections.unmodifiableCollection(this.tables).iterator();
+    }
+
+
+    public TableMeta getTable(final String tableName)
+    {
+        if (null == tableName || tableName.isEmpty())
+        {
+            return null;
+        }
+        for (final TableMeta table : this.tables)
+        {
+            if (tableName.equalsIgnoreCase(table.getName()))
+            {
+                return table;
+            }
+        }
+        return null;
+    }
+
+
+    protected boolean addTable(final TableMeta tbl)
+    {
+        if (null == tbl)
+        {
+            return false;
+        }
+        return this.tables.add(tbl);
+    }
+
+
+    protected boolean removeTable(final TableMeta tbl)
+    {
+        if (null == tbl)
+        {
+            return false;
+        }
+        return this.tables.remove(tbl);
+    }
+
+
+    protected void setId(final IdAccessor id)
+    {
+        if (null == id)
+        {
+            throw new NullArgumentException("id accessor");
+        }
+        this.id = id;
+    }
+
+
     public IdAccessor getId()
     {
         return this.id;
@@ -148,69 +251,9 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
     }
 
 
-    public String getTable()
-    {
-        return this.table;
-    }
-
-
-    public Class<T> getType()
+    public Class<?> getType()
     {
         return this.type;
-    }
-
-
-    public boolean hasColumn(final String nameOrProperty)
-    {
-        return this.getColumn(nameOrProperty) != null;
-    }
-
-
-    public Collection<ColumnMeta> getColumns()
-    {
-        return Collections.unmodifiableCollection(this.columns);
-    }
-
-
-    public Collection<ColumnMeta> getPrimaryKeys()
-    {
-        final List<ColumnMeta> keys = new ArrayList<>(4);
-        for (final ColumnMeta column : this.columns)
-        {
-            if (column.isPrimaryKey())
-            {
-                keys.add(column);
-            }
-        }
-        return Collections.unmodifiableList(keys);
-    }
-
-
-    public ColumnMeta getColumn(final String nameOrProperty)
-    {
-        if (null == nameOrProperty || nameOrProperty.isEmpty())
-        {
-            return null;
-        }
-        for (final ColumnMeta meta : this)
-        {
-            if (nameOrProperty.equalsIgnoreCase(meta.getName()))
-            {
-                return meta;
-            }
-            if (nameOrProperty.equalsIgnoreCase(meta.getProperty()))
-            {
-                return meta;
-            }
-        }
-        return null;
-    }
-
-
-    @Override
-    public Iterator<ColumnMeta> iterator()
-    {
-        return Collections.unmodifiableCollection(this.columns).iterator();
     }
 
 
@@ -219,7 +262,7 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
     {
         if (null == meta)
         {
-            return 1;
+            return -1;
         }
         return this.name.compareToIgnoreCase(meta.name);
     }
@@ -232,36 +275,4 @@ public class EntityMeta<T> implements Iterable<ColumnMeta>, Comparable<EntityMet
     }
 
 
-    @Override
-    public boolean equals(Object o)
-    {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        EntityMeta that = (EntityMeta) o;
-
-        if (accessors != null ? !accessors.equals(that.accessors) : that.accessors != null) return false;
-        if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
-        if (generators != null ? !generators.equals(that.generators) : that.generators != null) return false;
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (table != null ? !table.equals(that.table) : that.table != null) return false;
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
-
-        return true;
-    }
-
-
-    @Override
-    public int hashCode()
-    {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (table != null ? table.hashCode() : 0);
-        result = 31 * result + (type != null ? type.hashCode() : 0);
-        result = 31 * result + (id != null ? id.hashCode() : 0);
-        result = 31 * result + (columns != null ? columns.hashCode() : 0);
-        result = 31 * result + (accessors != null ? accessors.hashCode() : 0);
-        result = 31 * result + (generators != null ? generators.hashCode() : 0);
-        return result;
-    }
 }

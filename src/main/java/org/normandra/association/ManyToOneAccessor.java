@@ -11,16 +11,16 @@ import org.normandra.meta.EntityMeta;
  * User: bowen
  * Date: 2/9/14
  */
-public class ManyToOneAccessor<T> implements AssociationAccessor
+public class ManyToOneAccessor implements AssociationAccessor
 {
-    private final EntityMeta<T> meta;
+    private final EntityMeta meta;
 
     private final Object key;
 
     private final EntitySession session;
 
 
-    public ManyToOneAccessor(final EntityMeta<T> meta, final Object key, final EntitySession session)
+    public ManyToOneAccessor(final EntityMeta meta, final Object key, final EntitySession session)
     {
         if (null == meta)
         {

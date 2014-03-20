@@ -31,7 +31,7 @@ public class MemoryCache implements EntityCache
 
 
     @Override
-    public <T> T get(final EntityMeta<T> meta, final Serializable key)
+    public Object get(final EntityMeta meta, final Serializable key)
     {
         if (null == meta || null == key)
         {
@@ -55,9 +55,9 @@ public class MemoryCache implements EntityCache
 
 
     @Override
-    public <T> boolean put(final EntityMeta<T> meta, final T instance)
+    public boolean put(final EntityMeta meta, final Object instance)
     {
-        if (null == meta || null == instance)
+        if (null == meta || null == meta.getId() || null == instance)
         {
             return false;
         }

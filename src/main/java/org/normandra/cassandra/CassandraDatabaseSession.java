@@ -10,8 +10,6 @@ import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.functors.InstanceofPredicate;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
@@ -22,6 +20,7 @@ import org.normandra.generator.IdGenerator;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.TableMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -134,7 +134,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public <T> boolean exists(final EntityMeta<T> meta, final Object key) throws NormandraException
+    public boolean exists(final EntityMeta meta, final Object key) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -153,9 +153,10 @@ public class CassandraDatabaseSession implements DatabaseSession
             {
                 namelist.add(column);
             }
+            final TableMeta table = meta.getTables().iterator().next();
             final String[] names = namelist.toArray(new String[namelist.size()]);
             final Select statement = QueryBuilder.select(names)
-                    .from(this.keyspaceName, meta.getTable())
+                    .from(this.keyspaceName, table.getName())
                     .limit(1);
             boolean hasWhere = false;
             for (final Map.Entry<String, Object> entry : columns.entrySet())
@@ -193,7 +194,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public <T> Object discriminator(final EntityMeta<T> meta, final Object key) throws NormandraException
+    public Object discriminator(final EntityMeta meta, final Object key) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -204,7 +205,7 @@ public class CassandraDatabaseSession implements DatabaseSession
             return null;
         }
 
-        final DiscriminatorMeta descrim = (DiscriminatorMeta) CollectionUtils.find(meta.getColumns(), InstanceofPredicate.getInstance(DiscriminatorMeta.class));
+        final DiscriminatorMeta descrim = meta.getDiscriminator();
         if (null == descrim)
         {
             return null;
@@ -212,9 +213,25 @@ public class CassandraDatabaseSession implements DatabaseSession
 
         try
         {
+            // find table that holds discriminator
+            TableMeta descrimTable = null;
+            for (final TableMeta table : meta)
+            {
+                if (table.hasColumn(descrim.getName()))
+                {
+                    descrimTable = table;
+                    break;
+                }
+            }
+            if (null == descrimTable)
+            {
+                return null;
+            }
+
+            // query table
             final String[] names = new String[]{descrim.getName()};
             final Select statement = QueryBuilder.select(names)
-                    .from(this.keyspaceName, meta.getTable())
+                    .from(this.keyspaceName, descrimTable.getName())
                     .limit(1);
             for (final Map.Entry<String, Object> entry : meta.getId().fromKey(key).entrySet())
             {
@@ -232,7 +249,7 @@ public class CassandraDatabaseSession implements DatabaseSession
             {
                 return null;
             }
-            return CassandraUtils.unpack(row, 0, descrim);
+            return CassandraUtils.unpack(row, descrim.getName(), descrim);
         }
         catch (final Exception e)
         {
@@ -242,7 +259,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public <T> T get(final EntityMeta<T> meta, final Object key) throws NormandraException
+    public Object get(final EntityMeta meta, final Object key) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -265,55 +282,72 @@ public class CassandraDatabaseSession implements DatabaseSession
 
         try
         {
-            final List<ColumnMeta> columns = new ArrayList<>(meta.getColumns());
-            final String[] names = new String[columns.size()];
-            for (int i = 0; i < columns.size(); i++)
+            // query each table as necessary
+            final Map<TableMeta, Row> rows = new TreeMap<>();
+            for (final TableMeta table : meta)
             {
-                names[i] = columns.get(i).getName();
+                // get columns to query
+                final List<ColumnMeta> columns = new ArrayList<>(table.getColumns());
+                final String[] names = new String[columns.size()];
+                for (int i = 0; i < columns.size(); i++)
+                {
+                    names[i] = columns.get(i).getName();
+                }
+
+                // setup select statement
+                final Select statement = QueryBuilder.select(names)
+                        .from(this.keyspaceName, table.getName())
+                        .limit(1);
+                boolean hasWhere = false;
+                for (final Map.Entry<String, Object> entry : meta.getId().fromKey(key).entrySet())
+                {
+                    final String name = entry.getKey();
+                    final Object value = entry.getValue();
+                    statement.where(QueryBuilder.eq(name, value));
+                    hasWhere = true;
+                }
+                if (!hasWhere)
+                {
+                    logger.warn("Unable to #get value without key - empty where statement for type [" + meta + "].");
+                    return null;
+                }
+
+                // add results
+                final ResultSet results = this.session.execute(statement);
+                final Row row = results != null ? results.one() : null;
+                if (row != null)
+                {
+                    rows.put(table, row);
+                }
             }
-            final Select statement = QueryBuilder.select(names)
-                    .from(this.keyspaceName, meta.getTable())
-                    .limit(1);
-            boolean hasWhere = false;
-            for (final Map.Entry<String, Object> entry : meta.getId().fromKey(key).entrySet())
+            if (rows.isEmpty())
             {
-                final String name = entry.getKey();
-                final Object value = entry.getValue();
-                statement.where(QueryBuilder.eq(name, value));
-                hasWhere = true;
-            }
-            if (!hasWhere)
-            {
-                logger.warn("Unable to #get value without key - empty where statement for type [" + meta + "].");
                 return null;
             }
 
-            final ResultSet results = this.session.execute(statement);
-            if (null == results)
-            {
-                return null;
-            }
-            final Row row = results.one();
-            if (null == row)
-            {
-                return null;
-            }
-
-            final T entity = meta.getType().newInstance();
+            // create new instance, copy values
+            final Object entity = meta.getType().newInstance();
             if (null == entity)
             {
                 return null;
             }
-            for (int i = 0; i < names.length; i++)
+            for (final Map.Entry<TableMeta, Row> entry : rows.entrySet())
             {
-                final ColumnMeta column = columns.get(i);
-                final ColumnAccessor accessor = meta.getAccessor(column);
-                if (accessor != null)
+                final TableMeta table = entry.getKey();
+                final Row row = entry.getValue();
+                final ColumnDefinitions defs = row.getColumnDefinitions();
+                for (final ColumnDefinitions.Definition def : defs.asList())
                 {
-                    final Object value = CassandraUtils.unpack(row, i, column);
-                    if (value != null)
+                    final String columnName = def.getName();
+                    final ColumnMeta column = table.getColumn(columnName);
+                    final ColumnAccessor accessor = meta.getAccessor(columnName);
+                    if (accessor != null)
                     {
-                        accessor.setValue(entity, value, this);
+                        final Object value = CassandraUtils.unpack(row, columnName, column);
+                        if (value != null)
+                        {
+                            accessor.setValue(entity, value, this);
+                        }
                     }
                 }
             }
@@ -328,7 +362,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public <T> void delete(final EntityMeta<T> meta, final T element) throws NormandraException
+    public void delete(final EntityMeta meta, final Object element) throws NormandraException
     {
         if (null == element)
         {
@@ -341,24 +375,46 @@ public class CassandraDatabaseSession implements DatabaseSession
 
         try
         {
-            final Delete statement = QueryBuilder.delete().all().from(this.keyspaceName, meta.getTable());
-            for (final ColumnMeta column : meta.getColumns())
+            final List<Delete> deletes = new ArrayList<>();
+            for (final TableMeta table : meta)
             {
-                final ColumnAccessor accessor = meta.getAccessor(column);
-                if (accessor != null && column.isPrimaryKey())
+                boolean hasValue = false;
+                final Delete statement = QueryBuilder.delete().all().from(this.keyspaceName, table.getName());
+                for (final ColumnMeta column : table.getPrimaryKeys())
                 {
                     final String name = column.getName();
-                    final Object value = accessor.getValue(element);
-                    statement.where(QueryBuilder.eq(name, value));
+                    final ColumnAccessor accessor = meta.getAccessor(column);
+                    final Object value = accessor != null ? accessor.getValue(element) : null;
+                    if (value != null)
+                    {
+                        hasValue = true;
+                        statement.where(QueryBuilder.eq(name, value));
+                    }
                 }
+                if (hasValue)
+                {
+                    deletes.add(statement);
+                }
+            }
+            if (deletes.isEmpty())
+            {
+                throw new NormandraException("No column values found - cannot delete entity.");
             }
             if (this.activeUnitOfWork.get())
             {
-                this.statements.add(statement);
+                this.statements.addAll(deletes);
             }
             else
             {
-                this.session.execute(statement);
+                if (deletes.size() == 1)
+                {
+                    this.session.execute(deletes.get(0));
+                }
+                else
+                {
+                    final RegularStatement[] statements = deletes.toArray(new RegularStatement[deletes.size()]);
+                    this.session.execute(QueryBuilder.batch(statements));
+                }
             }
         }
         catch (final Exception e)
@@ -369,7 +425,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public <T> void save(final EntityMeta<T> meta, final T element) throws NormandraException
+    public void save(final EntityMeta meta, final Object element) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -386,45 +442,60 @@ public class CassandraDatabaseSession implements DatabaseSession
 
         try
         {
-            boolean hasValue = false;
-            Insert statement = QueryBuilder.insertInto(this.keyspaceName, meta.getTable());
-            final Collection<ColumnMeta> columns = meta.getColumns();
-            for (final ColumnMeta column : columns)
+            final List<Insert> inserts = new ArrayList<>();
+            for (final TableMeta table : meta)
             {
-                final ColumnAccessor accessor = meta.getAccessor(column);
-                final IdGenerator generator = meta.getGenerator(column);
-                Object value = null;
-                if (generator != null && accessor != null && accessor.isEmpty(element))
+                boolean hasValue = false;
+                Insert statement = QueryBuilder.insertInto(this.keyspaceName, table.getName());
+                final Collection<ColumnMeta> columns = table.getColumns();
+                for (final ColumnMeta column : columns)
                 {
-                    final Object generated = generator.generate(meta);
-                    if (generated != null)
+                    final ColumnAccessor accessor = meta.getAccessor(column);
+                    final IdGenerator generator = meta.getGenerator(column);
+                    Object value = null;
+                    if (generator != null && accessor != null && accessor.isEmpty(element))
                     {
-                        accessor.setValue(element, generated, this);
+                        final Object generated = generator.generate(meta);
+                        if (generated != null)
+                        {
+                            accessor.setValue(element, generated, this);
+                        }
+                        value = generated;
                     }
-                    value = generated;
+                    else if (accessor != null)
+                    {
+                        value = accessor.getValue(element);
+                    }
+                    if (value != null)
+                    {
+                        statement = statement.value(column.getName(), value);
+                        hasValue = true;
+                    }
                 }
-                else if (accessor != null)
+                if (hasValue)
                 {
-                    value = accessor.getValue(element);
-                }
-
-                if (value != null)
-                {
-                    statement = statement.value(column.getName(), value);
-                    hasValue = true;
+                    inserts.add(statement);
                 }
             }
-            if (!hasValue)
+            if (inserts.isEmpty())
             {
                 throw new NormandraException("No column values found - cannot save empty entity.");
             }
             if (this.activeUnitOfWork.get())
             {
-                this.statements.add(statement);
+                this.statements.addAll(inserts);
             }
             else
             {
-                this.session.execute(statement);
+                if (inserts.size() == 1)
+                {
+                    this.session.execute(inserts.get(0));
+                }
+                else
+                {
+                    final RegularStatement[] statements = inserts.toArray(new RegularStatement[inserts.size()]);
+                    this.session.execute(QueryBuilder.batch(statements));
+                }
             }
             this.cache.put(meta, element);
         }

@@ -4,11 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -32,67 +28,47 @@ public class DatabaseMeta implements Iterable<EntityMeta>
     }
 
 
-    public Set<String> getTables()
+    public Collection<String> getTables()
     {
-        final Set<String> list = new TreeSet<>();
+        final Set<String> tables = new TreeSet<>();
         for (final EntityMeta meta : this.entities)
         {
-            list.add(meta.getTable());
-        }
-        return Collections.unmodifiableSet(list);
-    }
-
-
-    public Map<String, Collection<EntityMeta>> getEntities()
-    {
-        final Map<String, Collection<EntityMeta>> map = new TreeMap<>();
-        for (final EntityMeta meta : this.entities)
-        {
-            final String table = meta.getTable();
-            Collection<EntityMeta> list = map.get(table);
-            if (null == list)
+            for (final TableMeta table : meta)
             {
-                list = new LinkedList<>();
-                map.put(table, list);
+                tables.add(table.getName());
             }
-            list.add(meta);
         }
-        return Collections.unmodifiableMap(map);
+        return Collections.unmodifiableCollection(tables);
     }
 
 
-    public EntityMeta getEntity(final String table)
+    public Collection<EntityMeta> getEntities()
     {
-        if (null == table || table.isEmpty())
+        return Collections.unmodifiableCollection(this.entities);
+    }
+
+
+    public EntityMeta getEntity(final String name)
+    {
+        if (null == name || name.isEmpty())
         {
             return null;
         }
         for (final EntityMeta meta : this.entities)
         {
-            if (table.equalsIgnoreCase(meta.getTable()))
+            if (name.equalsIgnoreCase(meta.getName()))
             {
                 return meta;
             }
-        }
-        return null;
-    }
-
-
-    public Collection<EntityMeta> getEntities(final String table)
-    {
-        if (null == table || table.isEmpty())
-        {
-            return Collections.emptyList();
-        }
-        final List<EntityMeta> list = new LinkedList<>();
-        for (final EntityMeta meta : this.entities)
-        {
-            if (table.equalsIgnoreCase(meta.getTable()))
+            for (final TableMeta table : meta)
             {
-                list.add(meta);
+                if (name.equalsIgnoreCase(table.getName()))
+                {
+                    return meta;
+                }
             }
         }
-        return Collections.unmodifiableCollection(list);
+        return null;
     }
 
 

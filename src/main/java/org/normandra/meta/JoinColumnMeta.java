@@ -24,7 +24,7 @@ public class JoinColumnMeta<T> extends ColumnMeta<T>
     }
 
 
-    public EntityMeta<?> getEntity()
+    public EntityMeta getEntity()
     {
         return this.entity;
     }

@@ -10,6 +10,6 @@ import org.normandra.meta.EntityMeta;
  */
 public interface EntitySession
 {
-    <T> boolean exists(EntityMeta<T> meta, Object key) throws NormandraException;
-    <T> T get(EntityMeta<T> meta, Object key) throws NormandraException;
+    boolean exists(EntityMeta meta, Object key) throws NormandraException;
+    Object get(EntityMeta meta, Object key) throws NormandraException;
 }

@@ -25,7 +25,7 @@ import java.util.UUID;
  */
 public class CassandraUtils
 {
-    public static Object unpack(final Row row, final int column, final ColumnMeta<?> meta) throws IOException, ClassNotFoundException
+    public static Object unpack(final Row row, final String column, final ColumnMeta<?> meta) throws IOException, ClassNotFoundException
     {
         if (row.isNull(column))
         {
@@ -79,7 +79,7 @@ public class CassandraUtils
     }
 
 
-    private static Object unpackSerialized(final Row row, final int column, final ColumnMeta<?> meta) throws IOException, ClassNotFoundException
+    private static Object unpackSerialized(final Row row, final String column, final ColumnMeta<?> meta) throws IOException, ClassNotFoundException
     {
         final ByteBuffer buffer = row.getBytes(column);
         if (null == buffer)
@@ -100,7 +100,7 @@ public class CassandraUtils
     }
 
 
-    private static Object unpackCollection(final Row row, final int column, final CollectionMeta<?> meta)
+    private static Object unpackCollection(final Row row, final String column, final CollectionMeta<?> meta)
     {
         final Class<?> clazz = meta.getType();
         if (Set.class.isAssignableFrom(clazz))

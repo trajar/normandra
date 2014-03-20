@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
@@ -26,6 +25,8 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -95,27 +96,30 @@ public class AnnotationParser
 
     public Set<EntityMeta> read()
     {
-        final Set<EntityMeta> list = new TreeSet<>();
+        // read first pass for all entities
         for (final Class<?> clazz : this.classes)
         {
-            final EntityMeta<?> meta = this.readEntity(clazz);
-            if (meta != null)
-            {
-                list.add(meta);
-            }
+            this.readEntity(clazz);
         }
-        return Collections.unmodifiableSet(list);
+        // ensure we read second pass
+        final TreeSet<EntityMeta> set = new TreeSet<>(this.entities.values());
+        for (final EntityMeta entity : set)
+        {
+            this.readSecondPass(entity);
+        }
+        // done
+        return Collections.unmodifiableSet(set);
     }
 
 
-    private <T> EntityMeta<T> readEntity(final Class<T> entityClass)
+    private <T> EntityMeta readEntity(final Class<T> entityClass)
     {
         if (!this.classes.contains(entityClass))
         {
             return null;
         }
 
-        final EntityMeta<T> existing = this.entities.get(entityClass);
+        final EntityMeta existing = this.entities.get(entityClass);
         if (existing != null)
         {
             return existing;
@@ -137,12 +141,11 @@ public class AnnotationParser
 
         // create entity first - to help resolve cyclical relationships
         final String name = this.getEntity(entityClass);
-        final String table = this.getTable(entityClass);
-        final EntityMeta<T> meta = new EntityMeta<>(name, table, entityClass);
+        final EntityMeta meta = new EntityMeta(name, entityClass);
         this.entities.put(entityClass, meta);
 
         // configure entity
-        this.readColumns(meta);
+        this.readFirstPass(meta);
         this.readIdAccessor(meta);
 
         // done
@@ -172,37 +175,73 @@ public class AnnotationParser
     }
 
 
-    protected String getTable(final Class<?> entityClass)
+    protected String getTable(final EntityMeta entity, final Class<?> clazz)
     {
-        for (final Class<?> clazz : this.getHierarchy(entityClass))
+        // get default table name for entity
+        String tableName = CaseUtils.camelToSnakeCase(entity.getType().getSimpleName());
+        for (final Class<?> hierarchyClass : this.getHierarchy(entity.getType()))
         {
-            final Table table = clazz.getAnnotation(Table.class);
-            final String name = table != null ? table.name() : null;
-            if (name != null && !name.isEmpty())
+            final Table table = hierarchyClass.getAnnotation(Table.class);
+            if (table != null)
             {
-                return table.name();
+                tableName = table.name();
+                break;
             }
         }
-        return CaseUtils.camelToSnakeCase(entityClass.getSimpleName());
+        if (clazz.equals(entity.getType()))
+        {
+            return tableName;
+        }
+
+        // first determine if we have an inherited entity split across a table
+        final List<Inheritance> annotations = this.findAnnotations(entity.getClass(), Inheritance.class);
+        if (null == annotations || annotations.isEmpty())
+        {
+            return tableName;
+        }
+        final Inheritance inheritance = annotations.get(0);
+        if (null == inheritance || null == inheritance.strategy() || !InheritanceType.JOINED.equals(inheritance.strategy()))
+        {
+            return tableName;
+        }
+
+        // determine if we are looking at base table
+        String baseName = tableName;
+        for (final Class<?> hierarchyClass : this.getHierarchy(entity.getType()))
+        {
+            final Table table = hierarchyClass.getAnnotation(Table.class);
+            if (table != null)
+            {
+                baseName = table.name();
+            }
+            if (hierarchyClass.equals(clazz))
+            {
+                return baseName;
+            }
+        }
+        return baseName;
     }
 
 
     public Map<Field, GeneratedValue> getGenerators(final Class<?> entityClass)
     {
         final Map<Field, GeneratedValue> map = new HashMap<>();
-        for (final Field field : this.getFields(entityClass))
+        for (final Class<?> clazz : this.getHierarchy(entityClass))
         {
-            final GeneratedValue annotation = field.getAnnotation(GeneratedValue.class);
-            if (annotation != null)
+            for (final Field field : this.getFields(clazz))
             {
-                map.put(field, annotation);
+                final GeneratedValue annotation = field.getAnnotation(GeneratedValue.class);
+                if (annotation != null)
+                {
+                    map.put(field, annotation);
+                }
             }
         }
         return Collections.unmodifiableMap(map);
     }
 
 
-    public <T extends Annotation> List<T> getAnnotations(final Class<?> entityClass, final Class<T> clazz)
+    public <T extends Annotation> List<T> findAnnotations(final Class<?> entityClass, final Class<T> clazz)
     {
         final List<T> list = new ArrayList<>();
         for (final Field field : this.getFields(entityClass))
@@ -225,96 +264,126 @@ public class AnnotationParser
     }
 
 
-    private <T> int readColumns(final EntityMeta<T> entity)
+    /**
+     * read secondary attributes, associations
+     */
+    private boolean readSecondPass(final EntityMeta entity)
     {
-        final Class<?> entityClass = entity.getType();
-        final List<Field> fields = this.getFields(entityClass);
-        if (null == fields || fields.isEmpty())
+        if (null == entity)
+        {
+            return false;
+        }
+
+        // read secondary columns
+        return this.readFields(entity, this.jpaAnnotations()) > 0;
+    }
+
+
+    /**
+     * read core id / primary key attributes
+     */
+    private boolean readFirstPass(final EntityMeta entity)
+    {
+        if (null == entity)
+        {
+            return false;
+        }
+
+        // read all id columns
+        final List<Class<? extends Annotation>> list = new ArrayList<>(2);
+        list.add(EmbeddedId.class);
+        list.add(Id.class);
+        this.readFields(entity, list);
+
+        // read hierarchy type discriminator (if applicable)
+        final Class<?> entityClazz = entity.getType();
+        final DiscriminatorMeta discriminator = this.getDiscriminator(entityClazz);
+        if (discriminator != null)
+        {
+            // find class that has table
+            String tableName = this.getTable(entity, entityClazz);
+            for (final Class<?> clazz : this.getHierarchy(entityClazz))
+            {
+                final Inheritance inheritance = clazz.getAnnotation(Inheritance.class);
+                if (inheritance != null && !InheritanceType.TABLE_PER_CLASS.equals(inheritance.strategy()))
+                {
+                    tableName = this.getTable(entity, clazz);
+                    break;
+                }
+            }
+            TableMeta table = entity.getTable(tableName);
+            if (null == table)
+            {
+                table = new TableMeta(tableName);
+                entity.addTable(table);
+            }
+            table.addColumn(discriminator);
+            entity.setAccessor(discriminator, new ReadOnlyColumnAccessor(discriminator.getValue()));
+        }
+
+        return true;
+    }
+
+
+    private int readFields(final EntityMeta entity, final Collection<Class<? extends Annotation>> annotations)
+    {
+        if (null == entity)
         {
             return 0;
         }
 
-        final DiscriminatorMeta discriminator = this.getDiscriminator(entityClass);
-        if (discriminator != null)
+        int num = 0;
+        for (final Class<?> clazz : this.getHierarchy(entity.getType()))
         {
-            entity.addColumn(discriminator);
-            entity.setAccessor(discriminator, new ReadOnlyColumnAccessor(discriminator.getValue()));
-        }
-
-        for (final Field field : fields)
-        {
-            final Map<ColumnMeta, ColumnAccessor> map = this.configureField(field);
-            for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : map.entrySet())
+            // ensure table exists
+            final String tableName = this.getTable(entity, clazz);
+            TableMeta table = entity.getTable(tableName);
+            if (null == table)
             {
-                final ColumnMeta column = entry.getKey();
-                entity.addColumn(column);
-                final ColumnAccessor accessor = entry.getValue();
-                if (accessor != null)
+                table = new TableMeta(tableName);
+                entity.addTable(table);
+            }
+
+            // read fields
+            for (final Field field : this.getFields(clazz, annotations))
+            {
+                final String name = this.getColumnName(field);
+                if (!table.hasColumn(name))
                 {
-                    entity.setAccessor(column, accessor);
-                }
-            }
-            if (!map.isEmpty())
-            {
-                logger.debug("Configured metadata for [" + field + "] in [" + entityClass + "].");
-            }
-            else
-            {
-                logger.warn("Unable to configure metadata for [" + field + "] in [" + entityClass + "].");
-            }
-        }
-
-        return entity.getColumns().size();
-    }
-
-
-    private List<Field> getFields(final Class<?> entityClass)
-    {
-        final List<Field> list = new ArrayList<>();
-        for (final Class<?> clazz : this.getHierarchyReverse(entityClass))
-        {
-            final Field[] fields = clazz.getDeclaredFields();
-            if (fields != null && fields.length > 0)
-            {
-                for (final Field field : fields)
-                {
-                    if (!Modifier.isTransient(field.getModifiers()))
+                    if (this.configureField(entity, table, field))
                     {
-                        if (field.isAnnotationPresent(Column.class) ||
-                                field.isAnnotationPresent(EmbeddedId.class) ||
-                                field.isAnnotationPresent(Id.class) ||
-                                field.isAnnotationPresent(ElementCollection.class) ||
-                                field.isAnnotationPresent(JoinColumn.class) ||
-                                field.isAnnotationPresent(OneToMany.class) ||
-                                field.isAnnotationPresent(ManyToOne.class) ||
-                                field.isAnnotationPresent(ManyToMany.class) ||
-                                field.isAnnotationPresent(OneToOne.class))
-                        {
-                            list.add(field);
-                        }
+                        logger.debug("Configured metadata for [" + field + "] in [" + entity + "].");
+                        num++;
+                    }
+                    else
+                    {
+                        logger.warn("Unable to configure metadata for [" + field + "] in [" + entity + "].");
                     }
                 }
             }
         }
-        return list;
+        return num;
     }
 
 
-    private <T> boolean readIdAccessor(final EntityMeta<T> entity)
+    private boolean readIdAccessor(final EntityMeta entity)
     {
         // find id fields
         final Class<?> entityClass = entity.getType();
         final List<Field> embeddedKeys = new ArrayList<>();
         final List<Field> regularKeys = new ArrayList<>();
-        for (final Field field : this.getFields(entityClass))
+        for (final Class<?> clazz : this.getHierarchy(entityClass))
         {
-            if (field.getAnnotation(EmbeddedId.class) != null)
+            for (final Field field : this.getFields(clazz))
             {
-                embeddedKeys.add(field);
-            }
-            else if (field.getAnnotation(Id.class) != null)
-            {
-                regularKeys.add(field);
+                if (field.getAnnotation(EmbeddedId.class) != null)
+                {
+                    embeddedKeys.add(field);
+                }
+                else if (field.getAnnotation(Id.class) != null)
+                {
+                    regularKeys.add(field);
+                }
             }
         }
 
@@ -424,54 +493,50 @@ public class AnnotationParser
     }
 
 
-    private Map<ColumnMeta, ColumnAccessor> configureField(final Field field)
+    private boolean configureField(final EntityMeta entity, final TableMeta table, final Field field)
     {
         // basic column info
         final String name = this.getColumnName(field);
         final Class<?> type = field.getType();
 
         // primary key
-        if (field.getAnnotation(EmbeddedId.class) != null)
+        if (field.isAnnotationPresent(Id.class) || field.isAnnotationPresent(EmbeddedId.class))
         {
-            return this.configureId(field, true);
-        }
-        else if (field.getAnnotation(Id.class) != null)
-        {
-            return this.configureId(field, true);
+            return entity.putColumns(table, this.configureId(field, true));
         }
 
         // regular column
         if (field.isAnnotationPresent(ElementCollection.class))
         {
-            return this.configureElementCollection(field, name, field.getName());
+            return entity.putColumns(table, this.configureElementCollection(field, name, field.getName()));
         }
 
         // associations and join columns
         if (field.isAnnotationPresent(OneToOne.class))
         {
-            return this.configureOneToOne(field, name, field.getName());
+            return entity.putColumns(table, this.configureOneToOne(field, name, field.getName()));
         }
         else if (field.isAnnotationPresent(ManyToOne.class))
         {
-            return this.configureManyToOne(field, name, field.getName());
+            return entity.putColumns(table, this.configureManyToOne(field, name, field.getName()));
         }
         else if (field.isAnnotationPresent(OneToMany.class))
         {
-            return this.configureOneToMany(field, name, field.getName());
+            return entity.putColumns(table, this.configureOneToMany(field, name, field.getName()));
         }
 
         // regular column
         if (field.getAnnotation(Column.class) != null)
         {
-            final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
             final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
             final ColumnMeta column = new ColumnMeta(name, field.getName(), type, false);
-            map.put(column, accessor);
-            return Collections.unmodifiableMap(map);
+            table.addColumn(column);
+            entity.setAccessor(column, accessor);
+            return true;
         }
 
-        // not jpa column
-        return Collections.emptyMap();
+        // unsupported column
+        return false;
     }
 
 
@@ -484,7 +549,7 @@ public class AnnotationParser
         {
             // create table column for this relationship
             final Class<?> type = field.getType();
-            final EntityMeta<?> entity = this.readEntity(type);
+            final EntityMeta entity = this.readEntity(type);
             if (null == entity)
             {
                 throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
@@ -509,7 +574,7 @@ public class AnnotationParser
         final ManyToOne manyToOne = field.getAnnotation(ManyToOne.class);
         final boolean lazy = FetchType.LAZY.equals(manyToOne.fetch());
         final Class<?> type = field.getType();
-        final EntityMeta<?> entity = this.readEntity(type);
+        final EntityMeta entity = this.readEntity(type);
         if (null == entity)
         {
             throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
@@ -545,7 +610,7 @@ public class AnnotationParser
             return Collections.emptyMap();
         }
 
-        final EntityMeta<?> entity = this.readEntity(type);
+        final EntityMeta entity = this.readEntity(type);
         if (null == entity)
         {
             throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
@@ -606,45 +671,103 @@ public class AnnotationParser
 
     protected DiscriminatorMeta getDiscriminator(final Class<?> entityClass)
     {
+        // first look for discriminator annotation
+        DiscriminatorColumn column = null;
         for (final Class<?> clazz : this.getHierarchy(entityClass))
         {
-            if (!Modifier.isAbstract(clazz.getModifiers()))
+            column = clazz.getAnnotation(DiscriminatorColumn.class);
+            if (column != null)
             {
-                final DiscriminatorColumn column = clazz.getAnnotation(DiscriminatorColumn.class);
-                if (column != null)
+                break;
+            }
+        }
+        if (null == column || null == column.discriminatorType())
+        {
+            return null;
+        }
+
+        // next get discriminator value
+        String discriminator = CaseUtils.camelToSnakeCase(entityClass.getSimpleName());
+        for (final Class<?> clazz : this.getHierarchy(entityClass))
+        {
+            final DiscriminatorValue value = clazz.getAnnotation(DiscriminatorValue.class);
+            if (value != null)
+            {
+                discriminator = value.value();
+                break;
+            }
+        }
+        final String name = column.name();
+        final String property = "DiscriminatorColumn";
+        switch (column.discriminatorType())
+        {
+            case CHAR:
+                return new DiscriminatorMeta<>(name, property, discriminator.charAt(0), Character.class);
+            case INTEGER:
+                return new DiscriminatorMeta<>(name, property, Integer.parseInt(discriminator), Integer.class);
+            case STRING:
+            default:
+                return new DiscriminatorMeta<>(name, property, discriminator, String.class);
+        }
+    }
+
+
+    private List<Field> getFields(final Class<?> clazz, final Collection<Class<? extends Annotation>> annotations)
+    {
+        if (null == clazz)
+        {
+            return Collections.emptyList();
+        }
+
+        final Field[] fields = clazz.getDeclaredFields();
+        if (null == fields || fields.length <= 0)
+        {
+            return Collections.emptyList();
+        }
+
+        final List<Field> list = new ArrayList<>(fields.length);
+        for (final Field field : fields)
+        {
+            if (!Modifier.isTransient(field.getModifiers()))
+            {
+                for (final Class<? extends Annotation> annotation : annotations)
                 {
-                    final String name = column.name();
-                    final String property = "DiscriminatorColumn";
-                    final DiscriminatorType type = column.discriminatorType();
-                    final DiscriminatorValue value = clazz.getAnnotation(DiscriminatorValue.class);
-                    String discriminator = value != null ? value.value() : "";
-                    if (null == discriminator || discriminator.isEmpty())
+                    if (field.isAnnotationPresent(annotation))
                     {
-                        discriminator = CaseUtils.camelToSnakeCase(entityClass.getSimpleName());
-                    }
-                    if (type != null)
-                    {
-                        switch (type)
-                        {
-                            case CHAR:
-                                return new DiscriminatorMeta<>(name, property, discriminator.charAt(0), Character.class);
-                            case INTEGER:
-                                return new DiscriminatorMeta<>(name, property, Integer.parseInt(discriminator), Integer.class);
-                            case STRING:
-                            default:
-                                return new DiscriminatorMeta<>(name, property, discriminator, String.class);
-                        }
+                        list.add(field);
                     }
                 }
             }
         }
-        return null;
+        return list;
+    }
+
+
+    private List<Field> getFields(final Class<?> clazz)
+    {
+        return this.getFields(clazz, this.jpaAnnotations());
+    }
+
+
+    private Collection<Class<? extends Annotation>> jpaAnnotations()
+    {
+        final List<Class<? extends Annotation>> list = new ArrayList<>();
+        list.add(Column.class);
+        list.add(EmbeddedId.class);
+        list.add(Id.class);
+        list.add(ElementCollection.class);
+        list.add(JoinColumn.class);
+        list.add(OneToMany.class);
+        list.add(ManyToOne.class);
+        list.add(ManyToMany.class);
+        list.add(OneToOne.class);
+        return Collections.unmodifiableList(list);
     }
 
 
     private List<Class<?>> getHierarchy(final Class<?> entityClass)
     {
-        if (null == entityClass)
+        if (null == entityClass || Object.class.equals(entityClass))
         {
             return Collections.emptyList();
         }
@@ -656,18 +779,6 @@ public class AnnotationParser
             list.add(parent);
             parent = parent.getSuperclass();
         }
-        return Collections.unmodifiableList(list);
-    }
-
-
-    private List<Class<?>> getHierarchyReverse(final Class<?> entityClass)
-    {
-        if (null == entityClass)
-        {
-            return Collections.emptyList();
-        }
-        final List<Class<?>> list = new ArrayList<>(this.getHierarchy(entityClass));
-        Collections.reverse(list);
         return Collections.unmodifiableList(list);
     }
 }

@@ -23,17 +23,17 @@ public interface DatabaseSession extends EntitySession
     /**
      * query entity discriminator based on key value
      */
-    <T> Object discriminator(EntityMeta<T> meta, Object key) throws NormandraException;
+    Object discriminator(EntityMeta meta, Object key) throws NormandraException;
 
     /**
      * save entity instance (update, insert)
      */
-    <T> void save(EntityMeta<T> meta, T element) throws NormandraException;
+    void save(EntityMeta meta, Object element) throws NormandraException;
 
     /**
      * remove entity instance (delete)
      */
-    <T> void delete(EntityMeta<T> meta, T element) throws NormandraException;
+    void delete(EntityMeta meta, Object element) throws NormandraException;
 
     /**
      * being unit of work

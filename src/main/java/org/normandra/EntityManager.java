@@ -1,7 +1,5 @@
 package org.normandra;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.functors.InstanceofPredicate;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.DiscriminatorMeta;
@@ -26,7 +24,7 @@ public class EntityManager
 
     private final DatabaseMeta meta;
 
-    private final Map<Class<?>, EntityMeta<?>> classMap;
+    private final Map<Class, EntityMeta> classMap;
 
 
     protected EntityManager(final DatabaseSession db, final DatabaseMeta meta)
@@ -95,7 +93,12 @@ public class EntityManager
         {
             // simple entity
             final EntityMeta meta = list.get(0);
-            return (T) this.database.get(meta, key);
+            final Object obj = this.database.get(meta, key);
+            if (null == obj)
+            {
+                return null;
+            }
+            return clazz.cast(obj);
         }
         else
         {
@@ -107,11 +110,16 @@ public class EntityManager
             }
             for (final EntityMeta meta : list)
             {
-                final DiscriminatorMeta descrim = (DiscriminatorMeta) CollectionUtils.find(meta.getColumns(), InstanceofPredicate.getInstance(DiscriminatorMeta.class));
+                final DiscriminatorMeta descrim = meta.getDiscriminator();
                 final Object type = descrim.getValue();
                 if (typeDescriminator.equals(type))
                 {
-                    return (T) this.database.get(meta, key);
+                    final Object obj = this.database.get(meta, key);
+                    if (null == obj)
+                    {
+                        return null;
+                    }
+                    return clazz.cast(obj);
                 }
             }
             return null;
@@ -145,7 +153,7 @@ public class EntityManager
             return Arrays.asList(existing);
         }
         final List<EntityMeta> list = new ArrayList<>();
-        for (final Map.Entry<Class<?>, EntityMeta<?>> entry : this.classMap.entrySet())
+        for (final Map.Entry<Class, EntityMeta> entry : this.classMap.entrySet())
         {
             final Class<?> entityClass = entry.getKey();
             final EntityMeta entityMeta = entry.getValue();

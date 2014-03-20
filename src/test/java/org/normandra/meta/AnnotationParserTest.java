@@ -4,7 +4,6 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.normandra.entities.CatEntity;
 import org.normandra.entities.ClassEntity;
-import org.normandra.entities.SimpleEntity;
 import org.normandra.entities.StudentEntity;
 
 import java.util.ArrayList;
@@ -19,24 +18,17 @@ import java.util.List;
 public class AnnotationParserTest
 {
     @Test
-    public void testSimple()
-    {
-        final AnnotationParser parser = new AnnotationParser(SimpleEntity.class);
-        Assert.assertTrue(parser.isEntity(SimpleEntity.class));
-        Assert.assertEquals("SimpleEntity", parser.getEntity(SimpleEntity.class));
-        Assert.assertEquals("simple_entity", parser.getTable(SimpleEntity.class));
-    }
-
-
-    @Test
     public void testInheritance()
     {
         AnnotationParser parser = new AnnotationParser(CatEntity.class);
         Assert.assertTrue(parser.isEntity(CatEntity.class));
         Assert.assertEquals("CatEntity", parser.getEntity(CatEntity.class));
-        Assert.assertEquals("animal", parser.getTable(CatEntity.class));
         EntityMeta meta = parser.read().iterator().next();
-        Assert.assertTrue(meta.hasColumn("type"));
+        Assert.assertEquals(1, meta.getTables().size());
+        TableMeta table = meta.getTables().iterator().next();
+        Assert.assertEquals("animal", table.getName());
+        Assert.assertTrue(table.hasColumn("type"));
+        Assert.assertTrue(table.getColumn("type") instanceof DiscriminatorMeta);
     }
 
 
@@ -48,11 +40,12 @@ public class AnnotationParserTest
         Assert.assertTrue(parser.isEntity(StudentEntity.class));
         List<EntityMeta> entities = new ArrayList<>(parser.read());
         Assert.assertEquals(2, entities.size());
-        final EntityMeta student = entities.get(1);
+        EntityMeta student = entities.get(1);
+        TableMeta table = student.getTables().iterator().next();
         Assert.assertEquals(StudentEntity.class, student.getType());
-        Assert.assertTrue(student.hasColumn("class_id"));
-        Assert.assertEquals(Long.class, student.getColumn("class_id").getType());
-        Assert.assertTrue(student.getColumn("class_id") instanceof JoinColumnMeta);
-        Assert.assertEquals(entities.get(0), ((JoinColumnMeta)student.getColumn("class_id")).getEntity());
+        Assert.assertTrue(table.hasColumn("class_id"));
+        Assert.assertEquals(Long.class, table.getColumn("class_id").getType());
+        Assert.assertTrue(table.getColumn("class_id") instanceof JoinColumnMeta);
+        Assert.assertEquals(entities.get(0), ((JoinColumnMeta) table.getColumn("class_id")).getEntity());
     }
 }

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -19,20 +20,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 2/2/14
  */
-public class LazyAssociationHandler<T> implements MethodHandler
+public class LazyAssociationHandler implements MethodHandler
 {
     private static final Logger logger = LoggerFactory.getLogger(LazyAssociationHandler.class);
 
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
-    private final EntityMeta<T> meta;
+    private final EntityMeta meta;
 
     private final AssociationAccessor accessor;
 
     private final DatabaseSession session;
 
 
-    public LazyAssociationHandler(final EntityMeta<T> meta, final AssociationAccessor accessor, final DatabaseSession session)
+    public LazyAssociationHandler(final EntityMeta meta, final AssociationAccessor accessor, final DatabaseSession session)
     {
         if (null == meta)
         {
@@ -57,14 +58,14 @@ public class LazyAssociationHandler<T> implements MethodHandler
     {
         if (!this.loaded.get())
         {
-            final T selfcasted = this.meta.getType().cast(self);
+            final Object selfcasted = this.meta.getType().cast(self);
             this.load(selfcasted);
         }
         return proceed.invoke(self, args);
     }
 
 
-    synchronized private boolean load(final T self) throws NormandraException
+    synchronized private boolean load(final Object self) throws NormandraException
     {
         if (this.loaded.get())
         {
@@ -79,12 +80,12 @@ public class LazyAssociationHandler<T> implements MethodHandler
             return false;
         }
 
-        final T entity = this.meta.getType().cast(value);
+        final Object entity = this.meta.getType().cast(value);
         logger.info("Lazy association fetched, copying entity values from instance [" + entity + "].");
-        for (final ColumnMeta column : this.meta)
+        for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.meta.getAccessors())
         {
-            final ColumnAccessor accessor = this.meta.getAccessor(column);
-            final Object columnValue = accessor != null ? accessor.getValue(entity) : null;
+            final ColumnAccessor accessor = entry.getValue();
+            final Object columnValue = accessor.getValue(entity);
             if (columnValue != null)
             {
                 accessor.setValue(self, columnValue, this.session);

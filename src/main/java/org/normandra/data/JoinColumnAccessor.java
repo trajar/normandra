@@ -15,12 +15,12 @@ import java.lang.reflect.Field;
  */
 public class JoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
-    private final EntityMeta<?> entity;
+    private final EntityMeta entity;
 
     private final boolean lazy;
 
 
-    public JoinColumnAccessor(final Field field, final EntityMeta<?> meta, final boolean lazy)
+    public JoinColumnAccessor(final Field field, final EntityMeta meta, final boolean lazy)
     {
         super(field);
         this.entity = meta;

@@ -13,6 +13,6 @@ import java.io.Serializable;
 public interface EntityCache
 {
     void clear();
-    <T> T get(EntityMeta<T> meta, Serializable key);
-    <T> boolean put(EntityMeta<T> meta, T entity);
+    Object get(EntityMeta meta, Serializable key);
+    boolean put(EntityMeta meta, Object entity);
 }

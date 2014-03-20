@@ -81,7 +81,7 @@ public class CassandraSaveTest extends BaseCassandraTest
     public void testSimple() throws Exception
     {
         final Map<Class, EntityMeta> entityMap = this.setupEntities(SimpleEntity.class);
-        final EntityMeta<SimpleEntity> meta = entityMap.values().iterator().next();
+        final EntityMeta meta = entityMap.values().iterator().next();
         final SimpleEntity entity = new SimpleEntity("test", Arrays.asList("foo", "bar"));
         this.session.save(meta, entity);
         Assert.assertEquals(1, entity.getId());
@@ -90,9 +90,9 @@ public class CassandraSaveTest extends BaseCassandraTest
         Assert.assertTrue(this.session.exists(meta, 1L));
         Assert.assertTrue(this.session.exists(meta, 1));
 
-        final SimpleEntity notfound = this.session.get(meta, 0);
+        final SimpleEntity notfound = (SimpleEntity) this.session.get(meta, 0);
         Assert.assertNull(notfound);
-        final SimpleEntity existing = this.session.get(meta, 1);
+        final SimpleEntity existing = (SimpleEntity) this.session.get(meta, 1);
         Assert.assertNotNull(existing);
         Assert.assertEquals(1, existing.getId());
 

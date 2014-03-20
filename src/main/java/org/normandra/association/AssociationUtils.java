@@ -21,14 +21,14 @@ public class AssociationUtils
     private final static Map<Class<?>, Class<?>> proxies = new ConcurrentHashMap<>();
 
 
-    public static <T> T proxy(final EntityMeta<T> meta, final Object key, final DatabaseSession session) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
+    public static Object proxy(final EntityMeta meta, final Object key, final DatabaseSession session) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
     {
         if (null == meta)
         {
             return null;
         }
 
-        final Class<T> clazz = meta.getType();
+        final Class<?> clazz = meta.getType();
         Class<?> proxy = proxies.get(clazz);
         if (null == proxy)
         {
@@ -45,8 +45,8 @@ public class AssociationUtils
             return null;
         }
 
-        final AssociationAccessor accessor = new ManyToOneAccessor<>(meta, key, session);
-        final MethodHandler handler = new LazyAssociationHandler<>(meta, accessor, session);
+        final AssociationAccessor accessor = new ManyToOneAccessor(meta, key, session);
+        final MethodHandler handler = new LazyAssociationHandler(meta, accessor, session);
         ((ProxyObject) instance).setHandler(handler);
         return clazz.cast(instance);
     }

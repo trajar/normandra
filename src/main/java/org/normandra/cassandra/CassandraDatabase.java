@@ -17,6 +17,7 @@ import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.TableMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,13 +97,11 @@ public class CassandraDatabase implements Database, SessionAccessor
         }
 
         // create all entity tables
-        for (final Map.Entry<String, Collection<EntityMeta>> entry : meta.getEntities().entrySet())
+        for (final String table : meta.getTables())
         {
-            final String table = entry.getKey();
-            final Collection<EntityMeta> list = entry.getValue();
             try
             {
-                this.refreshEntityTable(table, list);
+                this.refreshEntityTable(table, meta);
             }
             catch (final Exception e)
             {
@@ -122,9 +121,9 @@ public class CassandraDatabase implements Database, SessionAccessor
                 final String type = generator.generator();
                 String tableName = "id_generator";
                 String keyColumn = "id";
-                String keyValue = entity.getTable();
+                String keyValue = entity.getTables().size() == 1  ? entity.getTables().iterator().next().getName() : entity.getName();
                 String valueColumn = "value";
-                for (final TableGenerator table : parser.getAnnotations(entityType, TableGenerator.class))
+                for (final TableGenerator table : parser.findAnnotations(entityType, TableGenerator.class))
                 {
                     if (type.equalsIgnoreCase(table.name()))
                     {
@@ -156,12 +155,16 @@ public class CassandraDatabase implements Database, SessionAccessor
                     throw new NormandraException("Unable to refresh table id generator [" + generator.generator() + "].", e);
                 }
 
-                final ColumnMeta column = entity.getColumn(field.getName());
-                if (column != null)
+                final String fieldName = field.getName();
+                for (final TableMeta table : entity)
                 {
-                    final CounterIdGenerator counter = new CounterIdGenerator(tableName, keyColumn, valueColumn, keyValue, this);
-                    entity.setGenerator(column, counter);
-                    logger.info("Set counter id generator for [" + column + "] on entity [" + entity + "].");
+                    final ColumnMeta column = table.getColumn(fieldName);
+                    if (column != null)
+                    {
+                        final CounterIdGenerator counter = new CounterIdGenerator(tableName, keyColumn, valueColumn, keyValue, this);
+                        entity.setGenerator(column, counter);
+                        logger.info("Set counter id generator for [" + column + "] on entity [" + entity + "].");
+                    }
                 }
             }
         }
@@ -196,49 +199,52 @@ public class CassandraDatabase implements Database, SessionAccessor
     }
 
 
-    private void refreshEntityTable(final String table, final Collection<EntityMeta> entities)
+    private void refreshEntityTable(final String tableName, final DatabaseMeta meta)
     {
-        final List<Statement> statements = new ArrayList<>();
-
         // drop table as required
-        if (DatabaseConstruction.RECREATE.equals(this.constructionMode) && this.hasTable(table))
+        final List<Statement> statements = new ArrayList<>();
+        if (DatabaseConstruction.RECREATE.equals(this.constructionMode) && this.hasTable(tableName))
         {
             final StringBuilder cql = new StringBuilder();
-            cql.append("DROP TABLE ").append(table).append(";");
+            cql.append("DROP TABLE ").append(tableName).append(";");
             statements.add(new SimpleStatement(cql.toString()));
         }
 
-        // create table schema
         final Set<ColumnMeta> uniqueSet = new TreeSet<>();
         final Collection<ColumnMeta> primaryColumns = new ArrayList<>();
         final Collection<ColumnMeta> allColumns = new ArrayList<>();
-        for (final EntityMeta<?> entity : entities)
+        for (final EntityMeta entity : meta)
         {
-            for (final ColumnMeta column : entity)
+            final TableMeta table = entity.getTable(tableName);
+            if (table != null)
             {
-                if (!uniqueSet.contains(column))
+                for (final ColumnMeta column : table)
                 {
-                    uniqueSet.add(column);
-                    allColumns.add(column);
-                    if (column.isPrimaryKey())
+                    if (!uniqueSet.contains(column))
                     {
-                        primaryColumns.add(column);
+                        uniqueSet.add(column);
+                        allColumns.add(column);
+                        if (column.isPrimaryKey())
+                        {
+                            primaryColumns.add(column);
+                        }
                     }
                 }
             }
         }
+
         if (DatabaseConstruction.UPDATE.equals(this.constructionMode))
         {
             // ensure we create base database with all keys - then update/add columns in separate comment
-            statements.add(defineTable(table, primaryColumns));
+            statements.add(defineTable(tableName, primaryColumns));
             for (final ColumnMeta column : allColumns)
             {
                 final String name = column.getName();
-                if (!column.isPrimaryKey() && !this.hasColumn(table, name))
+                if (!column.isPrimaryKey() && !this.hasColumn(tableName, name))
                 {
                     final StringBuilder cql = new StringBuilder();
                     final String type = CassandraUtils.columnType(column);
-                    cql.append("ALTER TABLE ").append(table).append(IOUtils.LINE_SEPARATOR);
+                    cql.append("ALTER TABLE ").append(tableName).append(IOUtils.LINE_SEPARATOR);
                     cql.append("ADD ").append(name).append(" ").append(type).append(";");
                     statements.add(new SimpleStatement(cql.toString()));
                 }
@@ -247,7 +253,7 @@ public class CassandraDatabase implements Database, SessionAccessor
         else
         {
             // create table and column definitions in one command
-            statements.add(defineTable(table, allColumns));
+            statements.add(defineTable(tableName, allColumns));
         }
 
         // execute statements
