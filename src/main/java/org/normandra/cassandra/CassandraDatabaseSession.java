@@ -24,18 +24,19 @@ import org.normandra.meta.TableMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a cassandra database session
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/1/14
  */
@@ -83,6 +84,18 @@ public class CassandraDatabaseSession implements DatabaseSession
     public boolean isClosed()
     {
         return this.closed.get();
+    }
+
+
+    public String getKeyspace()
+    {
+        return this.keyspaceName;
+    }
+
+
+    public Session getSession()
+    {
+        return this.session;
     }
 
 
@@ -265,99 +278,20 @@ public class CassandraDatabaseSession implements DatabaseSession
         {
             throw new IllegalStateException("Session is closed.");
         }
-        if (null == meta || null == key)
+        final CassandraEntityQuery query = new CassandraEntityQuery(this, this.cache);
+        return query.query(meta, key);
+    }
+
+
+    @Override
+    public List<Object> get(final EntityMeta meta, final Object... keys) throws NormandraException
+    {
+        if (this.isClosed())
         {
-            return null;
+            throw new IllegalStateException("Session is closed.");
         }
-
-        if (key instanceof Serializable)
-        {
-            // check cache
-            final Object existing = this.cache.get(meta, (Serializable) key);
-            if (existing != null)
-            {
-                return meta.getType().cast(existing);
-            }
-        }
-
-        try
-        {
-            // query each table as necessary
-            final Map<TableMeta, Row> rows = new TreeMap<>();
-            for (final TableMeta table : meta)
-            {
-                // get columns to query
-                final List<ColumnMeta> columns = new ArrayList<>(table.getColumns());
-                final String[] names = new String[columns.size()];
-                for (int i = 0; i < columns.size(); i++)
-                {
-                    names[i] = columns.get(i).getName();
-                }
-
-                // setup select statement
-                final Select statement = QueryBuilder.select(names)
-                        .from(this.keyspaceName, table.getName())
-                        .limit(1);
-                boolean hasWhere = false;
-                for (final Map.Entry<String, Object> entry : meta.getId().fromKey(key).entrySet())
-                {
-                    final String name = entry.getKey();
-                    final Object value = entry.getValue();
-                    statement.where(QueryBuilder.eq(name, value));
-                    hasWhere = true;
-                }
-                if (!hasWhere)
-                {
-                    logger.warn("Unable to #get value without key - empty where statement for type [" + meta + "].");
-                    return null;
-                }
-
-                // add results
-                final ResultSet results = this.session.execute(statement);
-                final Row row = results != null ? results.one() : null;
-                if (row != null)
-                {
-                    rows.put(table, row);
-                }
-            }
-            if (rows.isEmpty())
-            {
-                return null;
-            }
-
-            // create new instance, copy values
-            final Object entity = meta.getType().newInstance();
-            if (null == entity)
-            {
-                return null;
-            }
-            for (final Map.Entry<TableMeta, Row> entry : rows.entrySet())
-            {
-                final TableMeta table = entry.getKey();
-                final Row row = entry.getValue();
-                final ColumnDefinitions defs = row.getColumnDefinitions();
-                for (final ColumnDefinitions.Definition def : defs.asList())
-                {
-                    final String columnName = def.getName();
-                    final ColumnMeta column = table.getColumn(columnName);
-                    final ColumnAccessor accessor = meta.getAccessor(columnName);
-                    if (accessor != null)
-                    {
-                        final Object value = CassandraUtils.unpack(row, columnName, column);
-                        if (value != null)
-                        {
-                            accessor.setValue(entity, value, this);
-                        }
-                    }
-                }
-            }
-            this.cache.put(meta, entity);
-            return entity;
-        }
-        catch (final Exception e)
-        {
-            throw new NormandraException("Unable to get entity [" + meta + "] by key [" + key + "].", e);
-        }
+        final CassandraEntityQuery query = new CassandraEntityQuery(this, this.cache);
+        return query.query(meta, keys);
     }
 
 
@@ -442,17 +376,13 @@ public class CassandraDatabaseSession implements DatabaseSession
 
         try
         {
-            final List<Insert> inserts = new ArrayList<>();
+            // generate any primary ids
             for (final TableMeta table : meta)
             {
-                boolean hasValue = false;
-                Insert statement = QueryBuilder.insertInto(this.keyspaceName, table.getName());
-                final Collection<ColumnMeta> columns = table.getColumns();
-                for (final ColumnMeta column : columns)
+                for (final ColumnMeta column : table.getColumns())
                 {
                     final ColumnAccessor accessor = meta.getAccessor(column);
                     final IdGenerator generator = meta.getGenerator(column);
-                    Object value = null;
                     if (generator != null && accessor != null && accessor.isEmpty(element))
                     {
                         final Object generated = generator.generate(meta);
@@ -460,21 +390,110 @@ public class CassandraDatabaseSession implements DatabaseSession
                         {
                             accessor.setValue(element, generated, this);
                         }
-                        value = generated;
-                    }
-                    else if (accessor != null)
-                    {
-                        value = accessor.getValue(element);
-                    }
-                    if (value != null)
-                    {
-                        statement = statement.value(column.getName(), value);
-                        hasValue = true;
                     }
                 }
-                if (hasValue)
+            }
+            // generate insert/update statements
+            final List<Insert> inserts = new ArrayList<>();
+            final List<Delete> deletes = new ArrayList<>();
+            for (final TableMeta table : meta)
+            {
+                if (table.getPrimaryKeys().size() == meta.getPrimaryKeys().size())
                 {
-                    inserts.add(statement);
+                    // this table has the same number of keys
+                    Insert statement = QueryBuilder.insertInto(this.keyspaceName, table.getName());
+                    boolean hasValue = false;
+                    for (final ColumnMeta column : table.getColumns())
+                    {
+                        final ColumnAccessor accessor = meta.getAccessor(column);
+                        if (accessor.isLoaded(element))
+                        {
+                            final Object value = accessor != null ? accessor.getValue(element) : null;
+                            if (value != null)
+                            {
+                                statement = statement.value(column.getName(), value);
+                                hasValue = true;
+                            }
+                            else
+                            {
+                                final Delete delete = QueryBuilder.delete(column.getName()).from(this.keyspaceName, table.getName());
+                                for (final ColumnMeta key : table.getPrimaryKeys())
+                                {
+                                    final ColumnAccessor keyAccessor = meta.getAccessor(key);
+                                    final Object keyValue = keyAccessor != null ? keyAccessor.getValue(element) : null;
+                                    if (keyValue != null)
+                                    {
+                                        delete.where(QueryBuilder.eq(key.getName(), keyValue));
+                                    }
+
+                                }
+                                deletes.add(delete);
+                            }
+                        }
+                    }
+                    if (hasValue)
+                    {
+                        inserts.add(statement);
+                    }
+                }
+                else
+                {
+                    // this table as an extra set of keys, likely as a join table
+                    final Map<ColumnMeta, Object> keys = new TreeMap<>();
+                    for (final ColumnMeta column : meta.getPrimaryKeys())
+                    {
+                        if (table.hasColumn(column.getName()))
+                        {
+                            final ColumnAccessor accessor = meta.getAccessor(column);
+                            final Object value = accessor != null ? accessor.getValue(element) : null;
+                            if (value != null)
+                            {
+                                keys.put(column, value);
+                            }
+                        }
+                    }
+                    final Set<ColumnMeta> extraKeys = new TreeSet<>(table.getPrimaryKeys());
+                    extraKeys.removeAll(meta.getPrimaryKeys());
+                    for (final ColumnMeta column : extraKeys)
+                    {
+                        final ColumnAccessor accessor = meta.getAccessor(column);
+                        if (accessor.isLoaded(element))
+                        {
+                            final Object value = accessor != null ? accessor.getValue(element) : null;
+                            if (value instanceof Collection)
+                            {
+                                for (final Object item : ((Collection) value))
+                                {
+                                    Insert statement = QueryBuilder.insertInto(this.keyspaceName, table.getName());
+                                    for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
+                                    {
+                                        statement = statement.value(entry.getKey().getName(), entry.getValue());
+                                    }
+                                    statement = statement.value(column.getName(), item);
+                                    inserts.add(statement);
+                                }
+                            }
+                            else if (value != null)
+                            {
+                                Insert statement = QueryBuilder.insertInto(this.keyspaceName, table.getName());
+                                for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
+                                {
+                                    statement = statement.value(entry.getKey().getName(), entry.getValue());
+                                }
+                                statement = statement.value(column.getName(), value);
+                                inserts.add(statement);
+                            }
+                            else
+                            {
+                                final Delete delete = QueryBuilder.delete(column.getName()).from(this.keyspaceName, table.getName());
+                                for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
+                                {
+                                    delete.where(QueryBuilder.eq(entry.getKey().getName(), entry.getValue()));
+                                }
+                                deletes.add(delete);
+                            }
+                        }
+                    }
                 }
             }
             if (inserts.isEmpty())
@@ -484,6 +503,7 @@ public class CassandraDatabaseSession implements DatabaseSession
             if (this.activeUnitOfWork.get())
             {
                 this.statements.addAll(inserts);
+                this.statements.addAll(deletes);
             }
             else
             {
@@ -493,7 +513,10 @@ public class CassandraDatabaseSession implements DatabaseSession
                 }
                 else
                 {
-                    final RegularStatement[] statements = inserts.toArray(new RegularStatement[inserts.size()]);
+                    final List<RegularStatement> batch = new ArrayList<>(inserts.size() + deletes.size());
+                    batch.addAll(inserts);
+                    batch.addAll(deletes);
+                    final RegularStatement[] statements = batch.toArray(new RegularStatement[batch.size()]);
                     this.session.execute(QueryBuilder.batch(statements));
                 }
             }

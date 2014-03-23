@@ -5,19 +5,23 @@ import org.normandra.data.ColumnAccessor;
 import org.normandra.data.IdAccessor;
 import org.normandra.data.NullIdAccessor;
 import org.normandra.generator.IdGenerator;
+import org.normandra.generator.UUIDGenerator;
 import org.normandra.util.ArraySet;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.UUID;
 
 /**
  * entity meta-data
- * <p/>
+ * <p>
  * User: bowen
  * Date: 9/1/13
  */
@@ -72,7 +76,10 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         final Set<ColumnMeta> columns = new ArraySet<>();
         for (final TableMeta table : this.tables)
         {
-            columns.addAll(table.getPrimaryKeys());
+            if (!table.isSecondary())
+            {
+                columns.addAll(table.getPrimaryKeys());
+            }
         }
         return Collections.unmodifiableSet(columns);
     }
@@ -81,6 +88,34 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     public Collection<TableMeta> getTables()
     {
         return Collections.unmodifiableCollection(this.tables);
+    }
+
+
+    public Collection<TableMeta> getPrimaryTables()
+    {
+        final List<TableMeta> list = new ArrayList<>(this.tables.size());
+        for (final TableMeta table : this.tables)
+        {
+            if (!table.isSecondary())
+            {
+                list.add(table);
+            }
+        }
+        return Collections.unmodifiableCollection(list);
+    }
+
+
+    public Collection<TableMeta> getSecondaryTables()
+    {
+        final List<TableMeta> list = new ArrayList<>(this.tables.size());
+        for (final TableMeta table : this.tables)
+        {
+            if (table.isSecondary())
+            {
+                list.add(table);
+            }
+        }
+        return Collections.unmodifiableCollection(list);
     }
 
 
@@ -118,7 +153,7 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     }
 
 
-    public IdGenerator<?> getGenerator(final ColumnMeta column)
+    public IdGenerator getGenerator(final ColumnMeta column)
     {
         if (null == column)
         {
@@ -128,7 +163,7 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     }
 
 
-    public boolean setGenerator(final ColumnMeta column, final IdGenerator<?> generator)
+    public boolean setGenerator(final ColumnMeta column, final IdGenerator generator)
     {
         if (null == column)
         {
@@ -175,7 +210,13 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         {
             final ColumnMeta column = entry.getKey();
             final ColumnAccessor accessor = entry.getValue();
-            table.addColumn(column);
+            if (table.addColumn(column))
+            {
+                if (column.isPrimaryKey() && column.getType().equals(UUID.class))
+                {
+                    this.setGenerator(column, UUIDGenerator.getInstance());
+                }
+            }
             if (accessor != null)
             {
                 this.setAccessor(column, accessor);

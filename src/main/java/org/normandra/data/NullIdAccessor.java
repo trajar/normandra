@@ -39,4 +39,11 @@ public class NullIdAccessor implements IdAccessor
     {
         return Collections.emptyMap();
     }
+
+
+    @Override
+    public Object toKey(Map<String, Object> map) throws NormandraException
+    {
+        return null;
+    }
 }

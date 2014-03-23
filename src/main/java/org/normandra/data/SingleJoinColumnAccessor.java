@@ -8,19 +8,19 @@ import org.normandra.meta.EntityMeta;
 import java.lang.reflect.Field;
 
 /**
- * a data accessor for a single row (one to one, many to one)
- * <p/>
+ * a data accessor for a single join association
+ * <p>
  * User: bowen
  * Date: 2/1/14
  */
-public class JoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
+public class SingleJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
     private final EntityMeta entity;
 
     private final boolean lazy;
 
 
-    public JoinColumnAccessor(final Field field, final EntityMeta meta, final boolean lazy)
+    public SingleJoinColumnAccessor(final Field field, final EntityMeta meta, final boolean lazy)
     {
         super(field);
         this.entity = meta;
@@ -38,6 +38,29 @@ public class JoinColumnAccessor extends FieldColumnAccessor implements ColumnAcc
         catch (final Exception e)
         {
             throw new NormandraException("Unable to get join-column.", e);
+        }
+    }
+
+
+    @Override
+    public boolean isLoaded(final Object entity) throws NormandraException
+    {
+        try
+        {
+            final Object association = this.get(entity);
+            if (null == association)
+            {
+                return true;
+            }
+            if (!AssociationUtils.isProxy(association))
+            {
+                return true;
+            }
+            return AssociationUtils.isLoaded(association);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to determine if entity/proxy column [" + this.getField().getName() + "] is loaded.", e);
         }
     }
 
@@ -84,7 +107,7 @@ public class JoinColumnAccessor extends FieldColumnAccessor implements ColumnAcc
                 final Object associated;
                 if (this.lazy)
                 {
-                    associated = AssociationUtils.proxy(this.entity, key, session);
+                    associated = AssociationUtils.createProxy(this.entity, key, session);
                 }
                 else
                 {

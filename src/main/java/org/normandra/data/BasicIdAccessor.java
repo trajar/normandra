@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * a simple id accessor based on a single primary key
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/15/14
  */
@@ -58,6 +58,17 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
         final Map<String, Object> map = new HashMap<>(1);
         map.put(this.primary, key);
         return Collections.unmodifiableMap(map);
+    }
+
+
+    @Override
+    public Object toKey(final Map<String, Object> map) throws NormandraException
+    {
+        if (null == map || map.isEmpty())
+        {
+            return null;
+        }
+        return map.get(this.primary);
     }
 
 

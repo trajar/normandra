@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * generic student entity
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/14/14
  */
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class StudentEntity
 {
     @Id
-    private UUID id = UUID.randomUUID();
+    private UUID id;
 
     @Column
     private String name;

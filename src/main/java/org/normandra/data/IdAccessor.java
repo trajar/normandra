@@ -14,4 +14,5 @@ public interface IdAccessor
 {
     Object fromEntity(Object entity) throws NormandraException;
     Map<String, Object> fromKey(Object key) throws NormandraException;
+    Object toKey(Map<String, Object> map) throws NormandraException;
 }

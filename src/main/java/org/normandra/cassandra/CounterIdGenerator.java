@@ -15,7 +15,7 @@ import org.normandra.meta.EntityMeta;
  * User: bowen
  * Date: 1/26/14
  */
-public class CounterIdGenerator implements IdGenerator<Long>
+public class CounterIdGenerator implements IdGenerator
 {
     private static final Object lock = new Object();
 

@@ -5,7 +5,7 @@ import org.normandra.NormandraException;
 
 /**
  * a constant read-only accessor
- * <p/>
+ * <p>
  * User: bowen
  * Date: 1/15/14
  */
@@ -17,6 +17,13 @@ public class ReadOnlyColumnAccessor implements ColumnAccessor
     public ReadOnlyColumnAccessor(final Object value)
     {
         this.value = value;
+    }
+
+
+    @Override
+    public boolean isLoaded(final Object entity) throws NormandraException
+    {
+        return true;
     }
 
 

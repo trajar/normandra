@@ -6,7 +6,7 @@ import java.util.Collection;
 
 /**
  * collection column meta-data
- * <p/>
+ * <p>
  * User: bowen
  * Date: 9/1/13
  */
@@ -15,9 +15,9 @@ public class CollectionMeta<T extends Collection> extends ColumnMeta<T>
     private final Class<?> generic;
 
 
-    public CollectionMeta(final String name, final String property, final Class<T> clazz, final Class<?> generic)
+    public CollectionMeta(final String name, final String property, final Class<T> clazz, final Class<?> generic, final boolean primary)
     {
-        super(name, property, clazz, false);
+        super(name, property, clazz, primary);
         if (null == generic)
         {
             throw new NullArgumentException("generic");

@@ -11,11 +11,11 @@ import java.util.Collections;
 
 /**
  * simple column accessor for non-entity types
- * <p/>
+ * <p>
  * User: bowen
  * Date: 1/19/14
  */
-abstract public class CollectionColumnAccessor<T extends Collection> extends FieldColumnAccessor implements ColumnAccessor
+abstract public class CollectionColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
     private final Class<?> generic;
 
@@ -28,6 +28,13 @@ abstract public class CollectionColumnAccessor<T extends Collection> extends Fie
             throw new NullArgumentException("generic");
         }
         this.generic = generic;
+    }
+
+
+    @Override
+    public boolean isLoaded(final Object entity) throws NormandraException
+    {
+        return true;
     }
 
 
@@ -82,7 +89,7 @@ abstract public class CollectionColumnAccessor<T extends Collection> extends Fie
             }
             if (obj instanceof Collection)
             {
-                return new ArrayList<Object>((Collection) obj);
+                return new ArrayList<>((Collection) obj);
             }
             else
             {

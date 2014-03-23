@@ -7,9 +7,11 @@ import org.junit.Test;
 import org.normandra.data.CompositeIdAccessor;
 import org.normandra.data.NullIdAccessor;
 import org.normandra.entities.CatEntity;
+import org.normandra.entities.ClassEntity;
 import org.normandra.entities.CompositeIndexEntity;
 import org.normandra.entities.DogEntity;
 import org.normandra.entities.SimpleEntity;
+import org.normandra.entities.StudentEntity;
 import org.normandra.entities.StudentIndexEntity;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
@@ -24,7 +26,7 @@ import java.util.List;
 
 /**
  * cassandra unit tests
- * <p/>
+ * <p>
  * User: bowen
  * Date: 9/7/13
  */
@@ -144,5 +146,33 @@ public class CassandraSchemaTest extends BaseCassandraTest
         Assert.assertEquals(2, compositeTable.getPrimaryKeys().size());
         Assert.assertNotNull(composite.getId());
         Assert.assertTrue(composite.getId() instanceof CompositeIdAccessor);
+    }
+
+
+    @Test
+    public void testJoinTable() throws Exception
+    {
+        final AnnotationParser parser = new AnnotationParser(StudentEntity.class, ClassEntity.class);
+        final Collection<EntityMeta> list = parser.read();
+        Assert.assertFalse(list.isEmpty());
+        Assert.assertEquals(2, list.size());
+
+        final DatabaseMeta meta = new DatabaseMeta(list);
+        this.database.refresh(meta);
+
+        Assert.assertTrue(meta.getTables().contains("classroom"));
+        Assert.assertTrue(meta.getTables().contains("classroom_student_xref"));
+
+        final EntityMeta classroomMeta = meta.getEntity("classroom");
+        Assert.assertNotNull(classroomMeta);
+        Assert.assertNotNull(classroomMeta.getTable("classroom"));
+        Assert.assertNotNull(classroomMeta.getTable("classroom_student_xref"));
+
+        final TableMeta joinMeta = classroomMeta.getTable("classroom_student_xref");
+        Assert.assertTrue(joinMeta.isSecondary());
+        Assert.assertTrue(joinMeta.hasColumn("id"));
+        Assert.assertTrue(joinMeta.hasColumn("student_id"));
+        Assert.assertEquals(2, joinMeta.getColumns().size());
+        Assert.assertEquals(2, joinMeta.getPrimaryKeys().size());
     }
 }

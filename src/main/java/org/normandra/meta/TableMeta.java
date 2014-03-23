@@ -10,24 +10,33 @@ import java.util.List;
 
 /**
  * a generic table meta
- * <p/>
+ * <p>
  * User: bowen
  * Date: 3/14/14
  */
 public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
 {
+    private final boolean secondary;
+
     private final String name;
 
     private final Collection<ColumnMeta> columns = new ArraySet<>();
 
 
-    public TableMeta(final String table)
+    public TableMeta(final String table, final boolean secondary)
     {
         if (null == table || table.isEmpty())
         {
             throw new IllegalArgumentException("Table cannot be empty/null.");
         }
         this.name = table;
+        this.secondary = secondary;
+    }
+
+
+    public boolean isSecondary()
+    {
+        return this.secondary;
     }
 
 

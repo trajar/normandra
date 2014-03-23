@@ -10,11 +10,11 @@ import java.util.List;
 
 /**
  * concrete list element accessor
- * <p/>
+ * <p>
  * User: bowen
  * Date: 1/19/14
  */
-public class ListColumnAccessor extends CollectionColumnAccessor<List>
+public class ListColumnAccessor extends CollectionColumnAccessor
 {
     public ListColumnAccessor(final Field prop, final Class<?> generic)
     {

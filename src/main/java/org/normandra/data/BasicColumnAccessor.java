@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 
 /**
  * a generic column data accessor
- * <p/>
+ * <p>
  * User: bowen
  * Date: 1/15/14
  */
@@ -28,10 +28,10 @@ public class BasicColumnAccessor extends FieldColumnAccessor implements ColumnAc
         }
         this.clazz = clazz;
         if (this.clazz.equals(long.class) ||
-            this.clazz.equals(int.class) ||
-            this.clazz.equals(char.class) ||
-            this.clazz.equals(short.class) ||
-            this.clazz.equals(boolean.class))
+                this.clazz.equals(int.class) ||
+                this.clazz.equals(char.class) ||
+                this.clazz.equals(short.class) ||
+                this.clazz.equals(boolean.class))
         {
             this.primitive = true;
         }
@@ -39,6 +39,13 @@ public class BasicColumnAccessor extends FieldColumnAccessor implements ColumnAc
         {
             this.primitive = false;
         }
+    }
+
+
+    @Override
+    public boolean isLoaded(final Object entity) throws NormandraException
+    {
+        return true;
     }
 
 

@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * methods for working with jpa associations
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/2/14
  */
@@ -21,7 +21,37 @@ public class AssociationUtils
     private final static Map<Class<?>, Class<?>> proxies = new ConcurrentHashMap<>();
 
 
-    public static Object proxy(final EntityMeta meta, final Object key, final DatabaseSession session) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
+    public static boolean isLoaded(final Object element)
+    {
+        if (!isProxy(element))
+        {
+            throw new IllegalStateException("Instance [" + element + "] is not a proxy element.");
+        }
+        final ProxyObject proxy = (ProxyObject) element;
+        final LazyAssociationHandler handler = (LazyAssociationHandler) proxy.getHandler();
+        return handler.isLoaded();
+    }
+
+
+    public static boolean isProxy(final Object element)
+    {
+        if (null == element)
+        {
+            return false;
+        }
+        if (element instanceof ProxyObject)
+        {
+            final MethodHandler methodHandler = ((ProxyObject) element).getHandler();
+            if (methodHandler instanceof LazyAssociationHandler)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public static Object createProxy(final EntityMeta meta, final Object key, final DatabaseSession session) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
     {
         if (null == meta)
         {
@@ -46,7 +76,7 @@ public class AssociationUtils
         }
 
         final AssociationAccessor accessor = new ManyToOneAccessor(meta, key, session);
-        final MethodHandler handler = new LazyAssociationHandler(meta, accessor, session);
+        final LazyAssociationHandler handler = new LazyAssociationHandler(meta, accessor, session);
         ((ProxyObject) instance).setHandler(handler);
         return clazz.cast(instance);
     }

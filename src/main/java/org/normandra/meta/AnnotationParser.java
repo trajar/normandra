@@ -5,12 +5,13 @@ import org.normandra.data.BasicColumnAccessor;
 import org.normandra.data.BasicIdAccessor;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.CompositeIdAccessor;
-import org.normandra.data.JoinColumnAccessor;
 import org.normandra.data.ListColumnAccessor;
+import org.normandra.data.ManyJoinColumnAccessor;
 import org.normandra.data.NestedColumnAccessor;
 import org.normandra.data.NullIdAccessor;
 import org.normandra.data.ReadOnlyColumnAccessor;
 import org.normandra.data.SetColumnAccessor;
+import org.normandra.data.SingleJoinColumnAccessor;
 import org.normandra.util.CaseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ import java.util.TreeSet;
 
 /**
  * a class used to parse jpa annotations
- * <p/>
+ * <p>
  * User: bowen
  * Date: 9/1/13
  */
@@ -194,12 +195,7 @@ public class AnnotationParser
         }
 
         // first determine if we have an inherited entity split across a table
-        final List<Inheritance> annotations = this.findAnnotations(entity.getClass(), Inheritance.class);
-        if (null == annotations || annotations.isEmpty())
-        {
-            return tableName;
-        }
-        final Inheritance inheritance = annotations.get(0);
+        final Inheritance inheritance = this.findAnnotation(entity.getClass(), Inheritance.class);
         if (null == inheritance || null == inheritance.strategy() || !InheritanceType.JOINED.equals(inheritance.strategy()))
         {
             return tableName;
@@ -241,23 +237,34 @@ public class AnnotationParser
     }
 
 
+    public <T extends Annotation> T findAnnotation(final Class<?> entityClass, final Class<T> clazz)
+    {
+        final List<T> list = this.findAnnotations(entityClass, clazz);
+        if (null == list || list.isEmpty())
+        {
+            return null;
+        }
+        return list.get(0);
+    }
+
+
     public <T extends Annotation> List<T> findAnnotations(final Class<?> entityClass, final Class<T> clazz)
     {
         final List<T> list = new ArrayList<>();
-        for (final Field field : this.getFields(entityClass))
-        {
-            final T annotation = field.getAnnotation(clazz);
-            if (annotation != null)
-            {
-                list.add(annotation);
-            }
-        }
         for (final Class<?> type : this.getHierarchy(entityClass))
         {
-            final T annotation = type.getAnnotation(clazz);
-            if (annotation != null)
+            final T classAnnotation = type.getAnnotation(clazz);
+            if (classAnnotation != null)
             {
-                list.add(annotation);
+                list.add(classAnnotation);
+            }
+            for (final Field field : this.getFields(type))
+            {
+                final T fieldAnnotation = field.getAnnotation(clazz);
+                if (fieldAnnotation != null)
+                {
+                    list.add(fieldAnnotation);
+                }
             }
         }
         return Collections.unmodifiableList(list);
@@ -314,7 +321,7 @@ public class AnnotationParser
             TableMeta table = entity.getTable(tableName);
             if (null == table)
             {
-                table = new TableMeta(tableName);
+                table = new TableMeta(tableName, false);
                 entity.addTable(table);
             }
             table.addColumn(discriminator);
@@ -340,7 +347,7 @@ public class AnnotationParser
             TableMeta table = entity.getTable(tableName);
             if (null == table)
             {
-                table = new TableMeta(tableName);
+                table = new TableMeta(tableName, false);
                 entity.addTable(table);
             }
 
@@ -522,7 +529,7 @@ public class AnnotationParser
         }
         else if (field.isAnnotationPresent(OneToMany.class))
         {
-            return entity.putColumns(table, this.configureOneToMany(field, name, field.getName()));
+            return this.configureOneToMany(entity, field, name, field.getName());
         }
 
         // regular column
@@ -554,7 +561,7 @@ public class AnnotationParser
             {
                 throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
             }
-            final ColumnAccessor accessor = new JoinColumnAccessor(field, entity, lazy);
+            final ColumnAccessor accessor = new SingleJoinColumnAccessor(field, entity, lazy);
             final ColumnMeta primary = entity.getPrimaryKeys().iterator().next();
             final ColumnMeta column = new JoinColumnMeta(name, property, primary.getType(), entity, false);
             final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
@@ -579,7 +586,7 @@ public class AnnotationParser
         {
             throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
         }
-        final ColumnAccessor accessor = new JoinColumnAccessor(field, entity, lazy);
+        final ColumnAccessor accessor = new SingleJoinColumnAccessor(field, entity, lazy);
         final ColumnMeta primary = entity.getPrimaryKeys().iterator().next();
         final ColumnMeta column = new JoinColumnMeta(name, property, primary.getType(), entity, false);
         final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
@@ -588,14 +595,13 @@ public class AnnotationParser
     }
 
 
-    private Map<ColumnMeta, ColumnAccessor> configureOneToMany(final Field field, final String name, final String property)
+    private boolean configureOneToMany(final EntityMeta parentEntity, final Field field, final String name, final String property)
     {
         // grab basic one-to-many parameters
         final OneToMany oneToMany = field.getAnnotation(OneToMany.class);
         final boolean lazy = FetchType.LAZY.equals(oneToMany.fetch());
-        final Class<?> type = field.getType();
         final Class<?> parameterizedClass;
-        if (oneToMany.targetEntity() != null && void.class.equals(oneToMany.targetEntity()))
+        if (oneToMany.targetEntity() != null && !void.class.equals(oneToMany.targetEntity()))
         {
             parameterizedClass = oneToMany.targetEntity();
         }
@@ -607,13 +613,13 @@ public class AnnotationParser
         }
         if (null == parameterizedClass)
         {
-            return Collections.emptyMap();
+            return false;
         }
 
-        final EntityMeta entity = this.readEntity(type);
-        if (null == entity)
+        final EntityMeta associatedEntity = this.readEntity(parameterizedClass);
+        if (null == associatedEntity)
         {
-            throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
+            throw new IllegalStateException("Type [" + parameterizedClass + "] is not a registered entity.");
         }
 
         // determine if we are using a join table
@@ -621,19 +627,42 @@ public class AnnotationParser
         if (joinTable != null)
         {
             // we query the columns from a auxiliary join table
+            final String tableName;
+            if (joinTable.name().isEmpty())
+            {
+                tableName = CaseUtils.camelToSnakeCase(parentEntity.getName()) + "_" + CaseUtils.camelToSnakeCase(property);
+            }
+            else
+            {
+                tableName = joinTable.name();
+            }
+            TableMeta join = parentEntity.getTable(tableName);
+            if (null == join)
+            {
+                join = new TableMeta(tableName, true);
+                parentEntity.addTable(join);
+            }
+            for (final ColumnMeta primary : parentEntity.getPrimaryKeys())
+            {
+                join.addColumn(primary);
+            }
+            final ColumnMeta primary = associatedEntity.getPrimaryKeys().iterator().next();
+            final ColumnMeta column = new JoinCollectionMeta(name, property, primary.getType(), associatedEntity, true);
+            final ColumnAccessor accessor = new ManyJoinColumnAccessor(field, associatedEntity, lazy);
+            join.addColumn(column);
+            parentEntity.setAccessor(column, accessor);
+            return true;
+        }
+        else if (oneToMany.mappedBy() != null && !oneToMany.mappedBy().trim().isEmpty())
+        {
+            // we query this value via the other side of the relationship (which would require indices)
+            return false;
         }
         else
         {
-            // we query this value via the other side of the relationship (which required indices)
+            // use embedded collection
+            return false;
         }
-
-
-        final ColumnAccessor accessor = new JoinColumnAccessor(field, entity, lazy);
-        final ColumnMeta primary = entity.getPrimaryKeys().iterator().next();
-        final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
-        final ColumnMeta column = new JoinColumnMeta(name, property, primary.getType(), entity, false);
-        map.put(column, accessor);
-        return Collections.unmodifiableMap(map);
     }
 
 
@@ -663,7 +692,7 @@ public class AnnotationParser
             accessor = new ListColumnAccessor(field, parameterizedClass);
         }
         final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
-        final ColumnMeta column = new CollectionMeta(name, property, type, parameterizedClass);
+        final ColumnMeta column = new CollectionMeta(name, property, type, parameterizedClass, false);
         map.put(column, accessor);
         return Collections.unmodifiableMap(map);
     }

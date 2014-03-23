@@ -25,7 +25,7 @@ import java.util.Map;
 
 /**
  * unit test to test persistence
- * <p/>
+ * <p>
  * User: bowen
  * Date: 1/20/14
  */
@@ -144,6 +144,35 @@ public class CassandraSaveTest extends BaseCassandraTest
         Assert.assertEquals(classroom.getId(), student.getClassroom().getId());
         Assert.assertEquals(classroom.getName(), student.getClassroom().getName());
         Assert.assertEquals(classroom.getRoom(), student.getClassroom().getRoom());
+    }
+
+
+    @Test
+    public void testJoinTable() throws Exception
+    {
+        final Map<Class, EntityMeta> entityMap = this.setupEntities(StudentEntity.class, ClassEntity.class);
+
+        final ClassEntity classroom = new ClassEntity("calculus", 101);
+        this.session.save(entityMap.get(ClassEntity.class), classroom);
+        Assert.assertTrue(classroom == this.session.get(entityMap.get(ClassEntity.class), 1L));
+        this.session.clear();
+        Assert.assertEquals(classroom, this.session.get(entityMap.get(ClassEntity.class), 1L));
+
+        classroom.addStudent(new StudentEntity("bob"));
+        classroom.addStudent(new StudentEntity("jane"));
+        this.session.beginWork();
+        for (final StudentEntity student : classroom.getStudents())
+        {
+            this.session.save(entityMap.get(StudentEntity.class), student);
+        }
+        this.session.save(entityMap.get(ClassEntity.class), classroom);
+        this.session.commitWork();
+
+        this.session.clear();
+        final ClassEntity existing = (ClassEntity) this.session.get(entityMap.get(ClassEntity.class), classroom.getId());
+        Assert.assertNotNull(existing);
+        Assert.assertEquals(2, existing.getStudents().size());
+        Assert.assertEquals(classroom, existing);
     }
 
 

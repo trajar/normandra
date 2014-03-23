@@ -1,17 +1,27 @@
 package org.normandra.entities;
 
+import org.normandra.util.ArraySet;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * class entity
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/14/14
  */
+@Table(name = "classroom")
 @Entity
 public class ClassEntity
 {
@@ -25,6 +35,11 @@ public class ClassEntity
     @Column
     private int room;
 
+    @JoinTable(name = "classroom_student_xref")
+    @JoinColumn(name = "student_id")
+    @OneToMany(fetch = FetchType.LAZY)
+    private Collection<StudentEntity> students;
+
 
     public ClassEntity()
     {
@@ -36,6 +51,42 @@ public class ClassEntity
     {
         this.name = name;
         this.room = room;
+    }
+
+
+    public Collection<StudentEntity> getStudents()
+    {
+        if (null == this.students)
+        {
+            return Collections.emptyList();
+        }
+        else
+        {
+            return Collections.unmodifiableCollection(this.students);
+        }
+    }
+
+
+    public boolean addStudent(final StudentEntity entity)
+    {
+        if (null == this.students)
+        {
+            this.students = new ArraySet<>();
+        }
+        return this.students.add(entity);
+    }
+
+
+    public boolean removeStudent(final StudentEntity entity)
+    {
+        if (null == this.students)
+        {
+            return false;
+        }
+        else
+        {
+            return this.students.remove(entity);
+        }
     }
 
 

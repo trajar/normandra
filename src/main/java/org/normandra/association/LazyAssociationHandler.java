@@ -11,18 +11,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * lazy loaded object handler
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/2/14
  */
 public class LazyAssociationHandler implements MethodHandler
 {
     private static final Logger logger = LoggerFactory.getLogger(LazyAssociationHandler.class);
+
+    private static final Collection<String> ignoredMethods = Arrays.asList("setHandler", "getHandler", "toString");
 
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
@@ -53,10 +57,25 @@ public class LazyAssociationHandler implements MethodHandler
     }
 
 
+    public boolean isLoaded()
+    {
+        return this.loaded.get();
+    }
+
+
     @Override
     public Object invoke(final Object self, final Method thisMethod, final Method proceed, final Object[] args) throws Throwable
     {
-        if (!this.loaded.get())
+        boolean skip = false;
+        for (final String ignore : ignoredMethods)
+        {
+            if (thisMethod.getName().equals(ignore) || proceed.getName().equals(ignore))
+            {
+                skip = true;
+                break;
+            }
+        }
+        if (!skip && !this.loaded.get())
         {
             final Object selfcasted = this.meta.getType().cast(self);
             this.load(selfcasted);

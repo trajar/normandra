@@ -10,11 +10,11 @@ import java.util.Set;
 
 /**
  * concrete set element accessor
- * <p/>
+ * <p>
  * User: bowen
  * Date: 1/19/14
  */
-public class SetColumnAccessor extends CollectionColumnAccessor<Set>
+public class SetColumnAccessor extends CollectionColumnAccessor
 {
     public SetColumnAccessor(final Field prop, final Class<?> generic)
     {

@@ -12,6 +12,7 @@ import org.normandra.NormandraException;
 public interface ColumnAccessor
 {
     boolean isEmpty(Object entity) throws NormandraException;
+    boolean isLoaded(Object entity) throws NormandraException;
     Object getValue(Object entity) throws NormandraException;
     boolean setValue(Object entity, Object value, DatabaseSession session) throws NormandraException;
 }
