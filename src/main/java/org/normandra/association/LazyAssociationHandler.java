@@ -4,7 +4,9 @@ import javassist.util.proxy.MethodHandler;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
+import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
+import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
@@ -105,10 +107,8 @@ public class LazyAssociationHandler implements MethodHandler
         {
             final ColumnAccessor accessor = entry.getValue();
             final Object columnValue = accessor.getValue(entity);
-            if (columnValue != null)
-            {
-                accessor.setValue(self, columnValue, this.session);
-            }
+            final DataHolder data = new BasicDataHolder(columnValue);
+            accessor.setValue(self, data, this.session);
         }
 
         this.loaded.getAndSet(true);

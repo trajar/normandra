@@ -157,9 +157,10 @@ public class CassandraSaveTest extends BaseCassandraTest
         Assert.assertTrue(classroom == this.session.get(entityMap.get(ClassEntity.class), 1L));
         this.session.clear();
         Assert.assertEquals(classroom, this.session.get(entityMap.get(ClassEntity.class), 1L));
-
-        classroom.addStudent(new StudentEntity("bob"));
-        classroom.addStudent(new StudentEntity("jane"));
+        final StudentEntity bob = new StudentEntity("bob");
+        final StudentEntity jane = new StudentEntity("jane");
+        classroom.addStudent(bob);
+        classroom.addStudent(jane);
         this.session.beginWork();
         for (final StudentEntity student : classroom.getStudents())
         {
@@ -172,7 +173,8 @@ public class CassandraSaveTest extends BaseCassandraTest
         final ClassEntity existing = (ClassEntity) this.session.get(entityMap.get(ClassEntity.class), classroom.getId());
         Assert.assertNotNull(existing);
         Assert.assertEquals(2, existing.getStudents().size());
-        Assert.assertEquals(classroom, existing);
+        Assert.assertTrue(existing.getStudents().contains(bob));
+        Assert.assertTrue(existing.getStudents().contains(jane));
     }
 
 

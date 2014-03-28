@@ -2,6 +2,8 @@ package org.normandra.data;
 
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
+import org.normandra.association.LazyEntityList;
+import org.normandra.association.LazyEntitySet;
 import org.normandra.meta.EntityMeta;
 import org.normandra.util.ArraySet;
 
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * a one-to-many or many-to-many collection accessor
@@ -101,36 +104,60 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
 
 
     @Override
-    public boolean setValue(final Object entity, final Object value, final DatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
     {
-        if (!(value instanceof Collection))
+        if (this.lazy)
         {
-            throw new NormandraException("Expect collection of primary key values for [" + this.getField() + "] but found [" + value + "].");
-        }
-        try
-        {
-            final Collection keys = (Collection) value;
-            if (keys.isEmpty())
+            try
             {
-                this.set(entity, new ArraySet());
+                // setup lazy loaded collection
+                if(Set.class.isAssignableFrom(this.getField().getType()))
+                {
+                    return this.set(entity, new LazyEntitySet(session, this.entity, data));
+                }
+                else
+                {
+                    return this.set(entity, new LazyEntityList(session, this.entity, data));
+                }
             }
-            else
+            catch (final Exception e)
             {
-                final List<Object> associations = session.get(this.entity, keys.toArray());
-                if (null == associations || associations.isEmpty())
+                throw new NormandraException("Unable to set lazy join-column collection from data holder [" + data + "].", e);
+            }
+        }
+        else
+        {
+            // get data now, load entities
+            final Object value = data.get();
+            if (!(value instanceof Collection))
+            {
+                throw new NormandraException("Expect collection of primary key values for [" + this.getField() + "] but found [" + value + "].");
+            }
+            try
+            {
+                final Collection keys = (Collection) value;
+                if (keys.isEmpty())
                 {
                     this.set(entity, new ArraySet());
                 }
                 else
                 {
-                    this.set(entity, new ArraySet<>(associations));
+                    final List<Object> associations = session.get(this.entity, keys.toArray());
+                    if (null == associations || associations.isEmpty())
+                    {
+                        this.set(entity, new ArraySet());
+                    }
+                    else
+                    {
+                        this.set(entity, new ArraySet<>(associations));
+                    }
                 }
+                return true;
             }
-            return true;
-        }
-        catch (final Exception e)
-        {
-            throw new NormandraException("Unable to set join-column collection from value [" + value + "].", e);
+            catch (final Exception e)
+            {
+                throw new NormandraException("Unable to set join-column collection from value [" + value + "].", e);
+            }
         }
     }
 }

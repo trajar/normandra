@@ -66,7 +66,7 @@ public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnA
 
 
     @Override
-    public boolean setValue(final Object entity, final Object value, final DatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
     {
         Object base;
         try
@@ -80,7 +80,7 @@ public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnA
 
         if (null == base)
         {
-            if (null == value)
+            if(data.isEmpty())
             {
                 return false;
             }
@@ -99,7 +99,7 @@ public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnA
         {
             return false;
         }
-        return this.delegate.setValue(base, value, session);
+        return this.delegate.setValue(base, data, session);
     }
 
 

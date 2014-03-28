@@ -42,7 +42,7 @@ public class ReadOnlyColumnAccessor implements ColumnAccessor
 
 
     @Override
-    public boolean setValue(Object entity, Object value, DatabaseSession session) throws NormandraException
+    public boolean setValue(Object entity, DataHolder data, DatabaseSession session) throws NormandraException
     {
         return false;
     }

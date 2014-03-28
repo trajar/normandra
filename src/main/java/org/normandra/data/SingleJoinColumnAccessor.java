@@ -86,9 +86,9 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
 
 
     @Override
-    public boolean setValue(final Object entity, final Object key, final DatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
     {
-        if (null == key)
+        if (null == data || data.isEmpty())
         {
             try
             {
@@ -102,6 +102,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
         }
         else
         {
+            final Object key = data.get();
             try
             {
                 final Object associated;

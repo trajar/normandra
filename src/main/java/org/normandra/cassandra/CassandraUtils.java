@@ -8,7 +8,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ClassLoaderObjectInputStream;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
+import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
+import org.normandra.data.DataHolder;
 import org.normandra.meta.CollectionMeta;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
@@ -78,11 +80,9 @@ public class CassandraUtils
             if (accessor != null)
             {
                 final Object value = CassandraUtils.unpack(rows, columnName, column);
-                if (value != null)
-                {
-                    accessor.setValue(instance, value, session);
-                    updated = true;
-                }
+                final DataHolder data = new BasicDataHolder(value);
+                accessor.setValue(instance, data, session);
+                updated = true;
             }
         }
         return updated;
@@ -104,11 +104,9 @@ public class CassandraUtils
             if (accessor != null)
             {
                 final Object value = CassandraUtils.unpack(row, columnName, column);
-                if (value != null)
-                {
-                    accessor.setValue(instance, value, session);
-                    updated = true;
-                }
+                final DataHolder data = new BasicDataHolder(value);
+                accessor.setValue(instance, data, session);
+                updated = true;
             }
         }
         return updated;

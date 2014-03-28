@@ -51,8 +51,9 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
 
 
     @Override
-    public boolean setValue(final Object entity, final Object value, final DatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
     {
+        final Object value = data.get();
         return this.setCollection(entity, (Collection) value);
     }
 

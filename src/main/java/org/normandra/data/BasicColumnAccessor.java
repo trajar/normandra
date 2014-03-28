@@ -95,8 +95,13 @@ public class BasicColumnAccessor extends FieldColumnAccessor implements ColumnAc
 
 
     @Override
-    public boolean setValue(final Object entity, final Object value, final DatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
     {
+        final Object value = data != null && !data.isEmpty() ? data.get() : null;
+        if (this.primitive && null == value)
+        {
+            return false;
+        }
         try
         {
             return this.set(entity, value);

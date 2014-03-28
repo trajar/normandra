@@ -15,7 +15,9 @@ import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
 import org.normandra.cache.MemoryCache;
+import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
+import org.normandra.data.DataHolder;
 import org.normandra.generator.IdGenerator;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DiscriminatorMeta;
@@ -386,10 +388,8 @@ public class CassandraDatabaseSession implements DatabaseSession
                     if (generator != null && accessor != null && accessor.isEmpty(element))
                     {
                         final Object generated = generator.generate(meta);
-                        if (generated != null)
-                        {
-                            accessor.setValue(element, generated, this);
-                        }
+                        final DataHolder data = new BasicDataHolder(generated);
+                        accessor.setValue(element, data, this);
                     }
                 }
             }
