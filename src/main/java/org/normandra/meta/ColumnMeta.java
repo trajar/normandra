@@ -8,18 +8,18 @@ import org.apache.commons.lang.NullArgumentException;
  * User: bowen
  * Date: 9/1/13
  */
-public class ColumnMeta<T> implements Comparable<ColumnMeta>
+public class ColumnMeta implements Comparable<ColumnMeta>
 {
     private final String name;
 
     private final String property;
 
-    private final Class<T> type;
+    private final Class<?> type;
 
     private final boolean primaryKey;
 
 
-    public ColumnMeta(final String name, final String property, final Class<T> clazz, final boolean primaryKey)
+    public ColumnMeta(final String name, final String property, final Class<?> clazz, final boolean primaryKey)
     {
         if (null == name)
         {
@@ -52,7 +52,7 @@ public class ColumnMeta<T> implements Comparable<ColumnMeta>
     }
 
 
-    public Class<T> getType()
+    public Class<?> getType()
     {
         return this.type;
     }

@@ -141,7 +141,7 @@ public class CassandraUtils
     }
 
 
-    public static Object unpack(final List<Row> rows, final String column, final ColumnMeta<?> meta) throws IOException, ClassNotFoundException
+    public static Object unpack(final List<Row> rows, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
     {
         if (null == rows || rows.isEmpty())
         {
@@ -169,7 +169,7 @@ public class CassandraUtils
     }
 
 
-    public static Object unpack(final Row row, final String column, final ColumnMeta<?> meta) throws IOException, ClassNotFoundException
+    public static Object unpack(final Row row, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
     {
         if (null == row || row.isNull(column))
         {
@@ -226,7 +226,7 @@ public class CassandraUtils
     }
 
 
-    private static Object unpackSerialized(final Row row, final String column, final ColumnMeta<?> meta) throws IOException, ClassNotFoundException
+    private static Object unpackSerialized(final Row row, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
     {
         final ByteBuffer buffer = row.getBytes(column);
         if (null == buffer)

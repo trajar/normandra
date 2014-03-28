@@ -10,7 +10,7 @@ import java.util.Collection;
  * User: bowen
  * Date: 9/1/13
  */
-public class CollectionMeta<T extends Collection> extends ColumnMeta<T>
+public class CollectionMeta<T extends Collection> extends ColumnMeta
 {
     private final Class<?> generic;
 

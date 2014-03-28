@@ -480,7 +480,7 @@ public class AnnotationParser
                 final Class<?> embeddedClass = embeddedColumn.getType();
                 final String embeddedName = this.getColumnName(embeddedColumn);
                 final String property = field.getName() + "." + embeddedColumn.getName();
-                final ColumnMeta column = new ColumnMeta<>(embeddedName, property, embeddedClass, true);
+                final ColumnMeta column = new ColumnMeta(embeddedName, property, embeddedClass, true);
                 final ColumnAccessor basic = new BasicColumnAccessor(embeddedColumn, embeddedClass);
                 final ColumnAccessor accessor;
                 if (useNested)

@@ -6,7 +6,7 @@ package org.normandra.meta;
  * User: bowen
  * Date: 2/1/14
  */
-public class DiscriminatorMeta<T> extends ColumnMeta<T>
+public class DiscriminatorMeta<T> extends ColumnMeta
 {
     private final Object value;
 

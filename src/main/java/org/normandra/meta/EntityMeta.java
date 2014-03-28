@@ -125,7 +125,7 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     }
 
 
-    public ColumnAccessor getAccessor(final ColumnMeta<?> column)
+    public ColumnAccessor getAccessor(final ColumnMeta column)
     {
         if (null == column)
         {
