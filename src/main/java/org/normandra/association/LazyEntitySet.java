@@ -27,4 +27,11 @@ public class LazyEntitySet extends LazyEntityCollection implements Set<Object>
     {
         return new HashSet<>();
     }
+
+
+    @Override
+    public LazyEntitySet duplicate()
+    {
+        return new LazyEntitySet(this.session, this.entity, this.data);
+    }
 }

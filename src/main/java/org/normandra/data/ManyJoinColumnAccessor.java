@@ -4,6 +4,7 @@ import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.association.LazyEntityList;
 import org.normandra.association.LazyEntitySet;
+import org.normandra.association.LazyLoadedCollection;
 import org.normandra.meta.EntityMeta;
 import org.normandra.util.ArraySet;
 
@@ -39,7 +40,26 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
     @Override
     public boolean isLoaded(final Object entity) throws NormandraException
     {
-        return true;
+        if (null == entity)
+        {
+            return false;
+        }
+        try
+        {
+            final Collection<?> collection = this.getCollection(entity);
+            if (collection instanceof LazyLoadedCollection)
+            {
+                return ((LazyLoadedCollection) collection).isLoaded();
+            }
+            else
+            {
+                return true;
+            }
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to determine if many-join accessor is loaded.", e);
+        }
     }
 
 
@@ -81,7 +101,15 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
         try
         {
             final Collection elements = this.getCollection(entity);
-            if (null == elements || elements.isEmpty())
+            if (null == elements)
+            {
+                return Collections.emptyList();
+            }
+            if (elements instanceof LazyLoadedCollection)
+            {
+                return ((LazyLoadedCollection) elements).duplicate();
+            }
+            if (elements.isEmpty())
             {
                 return Collections.emptyList();
             }
@@ -111,7 +139,7 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
             try
             {
                 // setup lazy loaded collection
-                if(Set.class.isAssignableFrom(this.getField().getType()))
+                if (Set.class.isAssignableFrom(this.getField().getType()))
                 {
                     return this.set(entity, new LazyEntitySet(session, this.entity, data));
                 }

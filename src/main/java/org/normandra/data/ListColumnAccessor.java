@@ -16,9 +16,9 @@ import java.util.List;
  */
 public class ListColumnAccessor extends CollectionColumnAccessor
 {
-    public ListColumnAccessor(final Field prop, final Class<?> generic)
+    public ListColumnAccessor(final Field prop, final Class<?> generic, final boolean lazy)
     {
-        super(prop, generic);
+        super(prop, generic, lazy);
     }
 
 

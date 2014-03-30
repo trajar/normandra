@@ -3,37 +3,34 @@ package org.normandra.association;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
-import org.normandra.meta.EntityMeta;
+import org.normandra.util.ArraySet;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * a lazy loaded entity collection
+ * lazy loaded element collection
  * <p>
  * User: bowen
- * Date: 3/25/14
+ * Date: 3/29/14
  */
-abstract public class LazyEntityCollection implements LazyLoadedCollection<Object>
+public class LazyElementCollection<T> implements Set<T>, LazyLoadedCollection<T>
 {
-    protected final DataHolder data;
+    private final DataHolder data;
 
-    protected final EntityMeta entity;
+    private final EntitySession session;
 
-    protected final EntitySession session;
-
-    private Object[] keys;
-
-    private Collection<Object> entities;
+    private Collection<T> entities;
 
     private final Object synch = new Object();
 
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
 
-    public LazyEntityCollection(final EntitySession session, final EntityMeta meta, final DataHolder data)
+    public LazyElementCollection(final EntitySession session, final DataHolder data)
     {
         if (null == data)
         {
@@ -43,22 +40,8 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
         {
             throw new NullArgumentException("session");
         }
-        if (null == meta)
-        {
-            throw new NullArgumentException("entity");
-        }
         this.data = data;
         this.session = session;
-        this.entity = meta;
-    }
-
-
-    abstract protected Collection<Object> createCollection();
-
-
-    public EntityMeta getEntity()
-    {
-        return this.entity;
     }
 
 
@@ -69,75 +52,43 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
     }
 
 
-    protected Collection<Object> getCollection()
+    @Override
+    public LazyLoadedCollection<T> duplicate()
     {
-        return this.ensureEntities();
+        return new LazyElementCollection<>(session, data);
     }
 
 
-    private Collection<Object> ensureEntities()
+    private Collection ensureEntities()
     {
-        if (this.entities != null)
+        if (this.loaded.get())
         {
             return this.entities;
         }
 
-        final Object[] keys = this.ensureKeys();
-
         synchronized (this.synch)
         {
-            if (null == keys || keys.length <= 0)
-            {
-                this.entities = new ArrayList<>();
-                return this.entities;
-            }
             try
             {
-                this.entities = this.session.get(this.entity, keys);
-                return this.entities;
-            }
-            catch (final Exception e)
-            {
-                throw new IllegalStateException("Unable to query lazy entity collection with keys [" + keys + "].", e);
-            }
-        }
-    }
-
-
-    private Object[] ensureKeys()
-    {
-        // check atomic flag
-        if (this.loaded.get())
-        {
-            return this.keys;
-        }
-        synchronized (this.synch)
-        {
-            // don't load twice
-            if (this.loaded.get())
-            {
-                return this.keys;
-            }
-            try
-            {
-                // retrieve data
                 final Object value = this.data.get();
                 if (null == value)
                 {
-                    this.keys = new Object[0];
-                    return this.keys;
+                    this.entities = new ArraySet<>(0);
                 }
-                if (!(value instanceof Collection))
+                else if (value instanceof Collection)
                 {
-                    throw new IllegalArgumentException("Expected type of collection but found [" + value + "] from data holder [" + this.data + "].");
+                    this.entities = new HashSet<T>((Collection) value);
                 }
-                final Collection collection = (Collection) value;
-                this.keys = collection.toArray();
-                return this.keys;
+                else
+                {
+                    throw new IllegalStateException("Expected element collection but found value [" + value + "].");
+                }
+                this.loaded.getAndSet(true);
+                return this.entities;
             }
             catch (final Exception e)
             {
-                throw new IllegalStateException("Unable to query lazy entity collection from data holder [" + this.data + "].", e);
+                throw new IllegalStateException("Unable to query lazy element collection with data [" + this.data + "].", e);
             }
         }
     }
@@ -157,14 +108,14 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
     @Override
     public int size()
     {
-        return this.ensureKeys().length;
+        return this.ensureEntities().size();
     }
 
 
     @Override
     public boolean isEmpty()
     {
-        return this.ensureKeys().length <= 0;
+        return this.ensureEntities().isEmpty();
     }
 
 
@@ -180,7 +131,7 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
 
 
     @Override
-    public Iterator<Object> iterator()
+    public Iterator<T> iterator()
     {
         return this.ensureEntities().iterator();
     }
@@ -196,7 +147,7 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
     @Override
     public <T> T[] toArray(T[] a)
     {
-        return this.ensureEntities().toArray(a);
+        return (T[]) this.ensureEntities().toArray(a);
     }
 
 
@@ -222,7 +173,7 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
 
 
     @Override
-    public boolean addAll(Collection<?> c)
+    public boolean addAll(Collection c)
     {
         return this.ensureEntities().addAll(c);
     }

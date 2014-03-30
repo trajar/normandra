@@ -29,6 +29,13 @@ public class LazyEntityList extends LazyEntityCollection implements List<Object>
 
 
     @Override
+    public LazyEntityList duplicate()
+    {
+        return new LazyEntityList(this.session, this.entity, this.data);
+    }
+
+
+    @Override
     protected List<Object> getCollection()
     {
         return (List) super.getCollection();

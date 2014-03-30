@@ -33,7 +33,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
     {
         try
         {
-            return this.get(entity) != null;
+            return this.get(entity) == null;
         }
         catch (final Exception e)
         {

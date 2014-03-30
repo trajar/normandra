@@ -163,11 +163,7 @@ public class CassandraDatabaseSession implements DatabaseSession
         try
         {
             final Map<String, Object> columns = meta.getId().fromKey(key);
-            final List<String> namelist = new ArrayList<>(columns.size());
-            for (final String column : columns.keySet())
-            {
-                namelist.add(column);
-            }
+            final List<String> namelist = new ArrayList<>(columns.keySet());
             final TableMeta table = meta.getTables().iterator().next();
             final String[] names = namelist.toArray(new String[namelist.size()]);
             final Select statement = QueryBuilder.select(names)
@@ -408,7 +404,8 @@ public class CassandraDatabaseSession implements DatabaseSession
                         final ColumnAccessor accessor = meta.getAccessor(column);
                         if (accessor.isLoaded(element))
                         {
-                            final Object value = accessor != null ? accessor.getValue(element) : null;
+                            final boolean empty = accessor.isEmpty(element);
+                            final Object value = !empty && accessor != null ? accessor.getValue(element) : null;
                             if (value != null)
                             {
                                 statement = statement.value(column.getName(), value);
@@ -459,7 +456,8 @@ public class CassandraDatabaseSession implements DatabaseSession
                         final ColumnAccessor accessor = meta.getAccessor(column);
                         if (accessor.isLoaded(element))
                         {
-                            final Object value = accessor != null ? accessor.getValue(element) : null;
+                            final boolean empty = accessor.isEmpty(element);
+                            final Object value = !empty && accessor != null ? accessor.getValue(element) : null;
                             if (value instanceof Collection)
                             {
                                 for (final Object item : ((Collection) value))

@@ -30,7 +30,7 @@ public class ReadOnlyColumnAccessor implements ColumnAccessor
     @Override
     public boolean isEmpty(Object entity) throws NormandraException
     {
-        return false;
+        return null == this.value;
     }
 
 

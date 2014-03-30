@@ -11,9 +11,9 @@ public class JoinCollectionMeta extends ColumnMeta
     private final EntityMeta entity;
 
 
-    public JoinCollectionMeta(final String name, final String property, final Class<?> clazz, final EntityMeta associated, final boolean primary)
+    public JoinCollectionMeta(final String name, final String property, final Class<?> clazz, final EntityMeta associated, final boolean primary, final boolean lazy)
     {
-        super(name, property, clazz, primary);
+        super(name, property, clazz, primary, lazy);
         this.entity = associated;
     }
 

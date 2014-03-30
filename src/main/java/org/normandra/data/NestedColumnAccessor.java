@@ -41,7 +41,7 @@ public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnA
     @Override
     public boolean isEmpty(final Object entity) throws NormandraException
     {
-        return this.getValue(entity) != null;
+        return this.getValue(entity) == null;
     }
 
 
@@ -80,7 +80,7 @@ public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnA
 
         if (null == base)
         {
-            if(data.isEmpty())
+            if (data.isEmpty())
             {
                 return false;
             }

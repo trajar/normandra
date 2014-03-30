@@ -16,9 +16,9 @@ import java.util.Set;
  */
 public class SetColumnAccessor extends CollectionColumnAccessor
 {
-    public SetColumnAccessor(final Field prop, final Class<?> generic)
+    public SetColumnAccessor(final Field prop, final Class<?> generic, final boolean lazy)
     {
-        super(prop, generic);
+        super(prop, generic, lazy);
     }
 
 

@@ -46,10 +46,38 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
     }
 
 
+    public Collection<ColumnMeta> getLazyLoaded()
+    {
+        final List<ColumnMeta> list = new ArrayList<>();
+        for (final ColumnMeta column : this.getColumns())
+        {
+            if (column.isLazyLoaded())
+            {
+                list.add(column);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+
+    public Collection<ColumnMeta> getEagerLoaded()
+    {
+        final List<ColumnMeta> list = new ArrayList<>();
+        for (final ColumnMeta column : this.getColumns())
+        {
+            if (!column.isLazyLoaded())
+            {
+                list.add(column);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+
     public Collection<ColumnMeta> getPrimaryKeys()
     {
         final List<ColumnMeta> keys = new ArrayList<>(4);
-        for (final ColumnMeta column : this.columns)
+        for (final ColumnMeta column : this.getColumns())
         {
             if (column.isPrimaryKey())
             {
@@ -128,5 +156,38 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
             return -1;
         }
         return this.name.compareToIgnoreCase(tbl.name);
+    }
+
+
+    @Override
+    public String toString()
+    {
+        return this.name + " (" + (this.secondary ? "secondary" : "primary") + ")";
+    }
+
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TableMeta that = (TableMeta) o;
+
+        if (secondary != that.secondary) return false;
+        if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+
+        return true;
+    }
+
+
+    @Override
+    public int hashCode()
+    {
+        int result = (secondary ? 1 : 0);
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (columns != null ? columns.hashCode() : 0);
+        return result;
     }
 }

@@ -4,7 +4,7 @@ import org.apache.commons.lang.NullArgumentException;
 
 /**
  * a join column meta description
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/14/14
  */
@@ -15,7 +15,7 @@ public class JoinColumnMeta extends ColumnMeta
 
     public JoinColumnMeta(final String name, final String property, final Class<?> clazz, final EntityMeta entity, final boolean primaryKey)
     {
-        super(name, property, clazz, primaryKey);
+        super(name, property, clazz, primaryKey, false);
         if (null == entity)
         {
             throw new NullArgumentException("entity");

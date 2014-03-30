@@ -459,7 +459,7 @@ public class AnnotationParser
         {
             final String name = this.getColumnName(field);
             final String property = field.getName();
-            final ColumnMeta column = new ColumnMeta(name, property, type, true);
+            final ColumnMeta column = new ColumnMeta(name, property, type, true, false);
             final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
             final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
             map.put(column, accessor);
@@ -480,7 +480,7 @@ public class AnnotationParser
                 final Class<?> embeddedClass = embeddedColumn.getType();
                 final String embeddedName = this.getColumnName(embeddedColumn);
                 final String property = field.getName() + "." + embeddedColumn.getName();
-                final ColumnMeta column = new ColumnMeta(embeddedName, property, embeddedClass, true);
+                final ColumnMeta column = new ColumnMeta(embeddedName, property, embeddedClass, true, false);
                 final ColumnAccessor basic = new BasicColumnAccessor(embeddedColumn, embeddedClass);
                 final ColumnAccessor accessor;
                 if (useNested)
@@ -536,7 +536,7 @@ public class AnnotationParser
         if (field.getAnnotation(Column.class) != null)
         {
             final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
-            final ColumnMeta column = new ColumnMeta(name, field.getName(), type, false);
+            final ColumnMeta column = new ColumnMeta(name, field.getName(), type, false, false);
             table.addColumn(column);
             entity.setAccessor(column, accessor);
             return true;
@@ -647,7 +647,7 @@ public class AnnotationParser
                 join.addColumn(primary);
             }
             final ColumnMeta primary = associatedEntity.getPrimaryKeys().iterator().next();
-            final ColumnMeta column = new JoinCollectionMeta(name, property, primary.getType(), associatedEntity, true);
+            final ColumnMeta column = new JoinCollectionMeta(name, property, primary.getType(), associatedEntity, true, lazy);
             final ColumnAccessor accessor = new ManyJoinColumnAccessor(field, associatedEntity, lazy);
             join.addColumn(column);
             parentEntity.setAccessor(column, accessor);
@@ -668,6 +668,8 @@ public class AnnotationParser
 
     private Map<ColumnMeta, ColumnAccessor> configureElementCollection(final Field field, final String name, final String property)
     {
+        final ElementCollection annotation = field.getAnnotation(ElementCollection.class);
+        final boolean lazy = annotation != null && FetchType.LAZY.equals(annotation.fetch());
         final Class<?> type = field.getType();
         final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
         final Type[] types = parameterizedType.getActualTypeArguments();
@@ -685,14 +687,14 @@ public class AnnotationParser
         final ColumnAccessor accessor;
         if (type.isInstance(Set.class))
         {
-            accessor = new SetColumnAccessor(field, parameterizedClass);
+            accessor = new SetColumnAccessor(field, parameterizedClass, lazy);
         }
         else
         {
-            accessor = new ListColumnAccessor(field, parameterizedClass);
+            accessor = new ListColumnAccessor(field, parameterizedClass, lazy);
         }
         final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
-        final ColumnMeta column = new CollectionMeta(name, property, type, parameterizedClass, false);
+        final ColumnMeta column = new CollectionMeta(name, property, type, parameterizedClass, false, lazy);
         map.put(column, accessor);
         return Collections.unmodifiableMap(map);
     }

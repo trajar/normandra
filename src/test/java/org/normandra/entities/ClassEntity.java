@@ -119,7 +119,6 @@ public class ClassEntity
         if (room != that.room) return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (students != null ? !students.equals(that.students) : that.students != null) return false;
 
         return true;
     }
@@ -131,7 +130,6 @@ public class ClassEntity
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + room;
-        result = 31 * result + (students != null ? students.hashCode() : 0);
         return result;
     }
 }

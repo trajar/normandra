@@ -3,6 +3,8 @@ package org.normandra.data;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
+import org.normandra.association.LazyElementCollection;
+import org.normandra.association.LazyLoadedCollection;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -19,8 +21,10 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
 {
     private final Class<?> generic;
 
+    private final boolean lazy;
 
-    public CollectionColumnAccessor(final Field field, final Class<?> generic)
+
+    public CollectionColumnAccessor(final Field field, final Class<?> generic, final boolean lazy)
     {
         super(field);
         if (null == generic)
@@ -28,33 +32,51 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
             throw new NullArgumentException("generic");
         }
         this.generic = generic;
+        this.lazy = lazy;
     }
 
 
     @Override
     public boolean isLoaded(final Object entity) throws NormandraException
     {
-        return true;
+        try
+        {
+            final Collection<?> collection = this.getCollection(entity);
+            if (collection instanceof LazyLoadedCollection)
+            {
+                return ((LazyLoadedCollection) collection).isLoaded();
+            }
+            else
+            {
+                return collection.isEmpty();
+            }
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to determine if many-join accessor is loaded.", e);
+        }
     }
 
 
     @Override
     public boolean isEmpty(final Object entity) throws NormandraException
     {
-        final Collection list = this.getCollection(entity);
-        if (null == list)
-        {
-            return true;
-        }
-        return list.isEmpty();
+        return this.getCollection(entity).isEmpty();
     }
 
 
     @Override
     public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
     {
-        final Object value = data.get();
-        return this.setCollection(entity, (Collection) value);
+        if (this.lazy)
+        {
+            return this.setCollection(entity, new LazyElementCollection(session, data));
+        }
+        else
+        {
+            final Object value = data.get();
+            return this.setCollection(entity, (Collection) value);
+        }
     }
 
 

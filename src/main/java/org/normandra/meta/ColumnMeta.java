@@ -4,7 +4,7 @@ import org.apache.commons.lang.NullArgumentException;
 
 /**
  * column meta-data
- * <p/>
+ * <p>
  * User: bowen
  * Date: 9/1/13
  */
@@ -18,8 +18,10 @@ public class ColumnMeta implements Comparable<ColumnMeta>
 
     private final boolean primaryKey;
 
+    private final boolean lazy;
 
-    public ColumnMeta(final String name, final String property, final Class<?> clazz, final boolean primaryKey)
+
+    public ColumnMeta(final String name, final String property, final Class<?> clazz, final boolean primaryKey, final boolean lazy)
     {
         if (null == name)
         {
@@ -37,6 +39,7 @@ public class ColumnMeta implements Comparable<ColumnMeta>
         this.property = property;
         this.type = clazz;
         this.primaryKey = primaryKey;
+        this.lazy = lazy;
     }
 
 
@@ -61,6 +64,12 @@ public class ColumnMeta implements Comparable<ColumnMeta>
     public boolean isPrimaryKey()
     {
         return this.primaryKey;
+    }
+
+
+    public boolean isLazyLoaded()
+    {
+        return this.lazy;
     }
 
 
@@ -90,6 +99,7 @@ public class ColumnMeta implements Comparable<ColumnMeta>
 
         ColumnMeta that = (ColumnMeta) o;
 
+        if (lazy != that.lazy) return false;
         if (primaryKey != that.primaryKey) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (property != null ? !property.equals(that.property) : that.property != null) return false;
@@ -106,6 +116,7 @@ public class ColumnMeta implements Comparable<ColumnMeta>
         result = 31 * result + (property != null ? property.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (primaryKey ? 1 : 0);
+        result = 31 * result + (lazy ? 1 : 0);
         return result;
     }
 }

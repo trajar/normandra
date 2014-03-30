@@ -15,9 +15,9 @@ public class CollectionMeta<T extends Collection> extends ColumnMeta
     private final Class<?> generic;
 
 
-    public CollectionMeta(final String name, final String property, final Class<T> clazz, final Class<?> generic, final boolean primary)
+    public CollectionMeta(final String name, final String property, final Class<T> clazz, final Class<?> generic, final boolean primary, final boolean lazy)
     {
-        super(name, property, clazz, primary);
+        super(name, property, clazz, primary, lazy);
         if (null == generic)
         {
             throw new NullArgumentException("generic");

@@ -13,7 +13,7 @@ public class DiscriminatorMeta<T> extends ColumnMeta
 
     public DiscriminatorMeta(final String name, final String property, final T descrim, final Class<T> clazz)
     {
-        super(name, property, clazz, false);
+        super(name, property, clazz, false, false);
         this.value = descrim;
     }
 
