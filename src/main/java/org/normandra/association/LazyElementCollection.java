@@ -3,12 +3,9 @@ package org.normandra.association;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
-import org.normandra.util.ArraySet;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -17,11 +14,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 3/29/14
  */
-public class LazyElementCollection<T> implements Set<T>, LazyLoadedCollection<T>
+abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T>
 {
-    private final DataHolder data;
+    protected final DataHolder data;
 
-    private final EntitySession session;
+    protected final EntitySession session;
+
+    private final CollectionFactory<T> factory;
 
     private Collection<T> entities;
 
@@ -30,7 +29,7 @@ public class LazyElementCollection<T> implements Set<T>, LazyLoadedCollection<T>
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
 
-    public LazyElementCollection(final EntitySession session, final DataHolder data)
+    public LazyElementCollection(final EntitySession session, final DataHolder data, final CollectionFactory<T> factory)
     {
         if (null == data)
         {
@@ -40,8 +39,13 @@ public class LazyElementCollection<T> implements Set<T>, LazyLoadedCollection<T>
         {
             throw new NullArgumentException("session");
         }
+        if (null == factory)
+        {
+            throw new NullArgumentException("collection factory");
+        }
         this.data = data;
         this.session = session;
+        this.factory = factory;
     }
 
 
@@ -52,14 +56,13 @@ public class LazyElementCollection<T> implements Set<T>, LazyLoadedCollection<T>
     }
 
 
-    @Override
-    public LazyLoadedCollection<T> duplicate()
+    protected Collection<T> getCollection()
     {
-        return new LazyElementCollection<>(session, data);
+        return this.ensureCollection();
     }
 
 
-    private Collection ensureEntities()
+    private Collection<T> ensureCollection()
     {
         if (this.loaded.get())
         {
@@ -73,11 +76,13 @@ public class LazyElementCollection<T> implements Set<T>, LazyLoadedCollection<T>
                 final Object value = this.data.get();
                 if (null == value)
                 {
-                    this.entities = new ArraySet<>(0);
+                    this.entities = this.factory.create(0);
                 }
                 else if (value instanceof Collection)
                 {
-                    this.entities = new HashSet<T>((Collection) value);
+                    final Collection<T> collection = (Collection) value;
+                    this.entities = this.factory.create(collection.size());
+                    this.entities.addAll(collection);
                 }
                 else
                 {
@@ -101,21 +106,28 @@ public class LazyElementCollection<T> implements Set<T>, LazyLoadedCollection<T>
         {
             return false;
         }
-        return this.ensureEntities().equals(obj);
+        return this.ensureCollection().equals(obj);
+    }
+
+
+    @Override
+    public int hashCode()
+    {
+        return this.ensureCollection().hashCode();
     }
 
 
     @Override
     public int size()
     {
-        return this.ensureEntities().size();
+        return this.ensureCollection().size();
     }
 
 
     @Override
     public boolean isEmpty()
     {
-        return this.ensureEntities().isEmpty();
+        return this.ensureCollection().isEmpty();
     }
 
 
@@ -126,76 +138,76 @@ public class LazyElementCollection<T> implements Set<T>, LazyLoadedCollection<T>
         {
 
         }
-        return this.ensureEntities().contains(o);
+        return this.ensureCollection().contains(o);
     }
 
 
     @Override
     public Iterator<T> iterator()
     {
-        return this.ensureEntities().iterator();
+        return this.ensureCollection().iterator();
     }
 
 
     @Override
     public Object[] toArray()
     {
-        return this.ensureEntities().toArray();
+        return this.ensureCollection().toArray();
     }
 
 
     @Override
     public <T> T[] toArray(T[] a)
     {
-        return (T[]) this.ensureEntities().toArray(a);
+        return (T[]) this.ensureCollection().toArray(a);
     }
 
 
     @Override
-    public boolean add(Object o)
+    public boolean add(T o)
     {
-        return this.ensureEntities().add(o);
+        return this.ensureCollection().add(o);
     }
 
 
     @Override
     public boolean remove(Object o)
     {
-        return this.ensureEntities().remove(o);
+        return this.ensureCollection().remove(o);
     }
 
 
     @Override
     public boolean containsAll(Collection<?> c)
     {
-        return this.ensureEntities().containsAll(c);
+        return this.ensureCollection().containsAll(c);
     }
 
 
     @Override
     public boolean addAll(Collection c)
     {
-        return this.ensureEntities().addAll(c);
+        return this.ensureCollection().addAll(c);
     }
 
 
     @Override
     public boolean removeAll(Collection<?> c)
     {
-        return this.ensureEntities().removeAll(c);
+        return this.ensureCollection().removeAll(c);
     }
 
 
     @Override
     public boolean retainAll(Collection<?> c)
     {
-        return this.ensureEntities().retainAll(c);
+        return this.ensureCollection().retainAll(c);
     }
 
 
     @Override
     public void clear()
     {
-        this.ensureEntities().clear();
+        this.ensureCollection().clear();
     }
 }

@@ -5,9 +5,9 @@ import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.EntityMeta;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 3/25/14
  */
-abstract public class LazyEntityCollection implements LazyLoadedCollection<Object>
+abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
 {
     protected final DataHolder data;
 
@@ -24,16 +24,18 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
 
     protected final EntitySession session;
 
+    private final CollectionFactory<T> factory;
+
     private Object[] keys;
 
-    private Collection<Object> entities;
+    private Collection<T> entities;
 
     private final Object synch = new Object();
 
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
 
-    public LazyEntityCollection(final EntitySession session, final EntityMeta meta, final DataHolder data)
+    public LazyEntityCollection(final EntitySession session, final EntityMeta meta, final DataHolder data, final CollectionFactory<T> factory)
     {
         if (null == data)
         {
@@ -47,13 +49,15 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
         {
             throw new NullArgumentException("entity");
         }
+        if (null == factory)
+        {
+            throw new NullArgumentException("collection factory");
+        }
         this.data = data;
         this.session = session;
         this.entity = meta;
+        this.factory = factory;
     }
-
-
-    abstract protected Collection<Object> createCollection();
 
 
     public EntityMeta getEntity()
@@ -69,13 +73,13 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
     }
 
 
-    protected Collection<Object> getCollection()
+    protected Collection<T> getCollection()
     {
         return this.ensureEntities();
     }
 
 
-    private Collection<Object> ensureEntities()
+    private Collection<T> ensureEntities()
     {
         if (this.entities != null)
         {
@@ -88,12 +92,14 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
         {
             if (null == keys || keys.length <= 0)
             {
-                this.entities = new ArrayList<>();
+                this.entities = this.factory.create(0);
                 return this.entities;
             }
             try
             {
-                this.entities = this.session.get(this.entity, keys);
+                final List results = this.session.get(this.entity, keys);
+                this.entities = this.factory.create(results.size());
+                this.entities.addAll(results);
                 return this.entities;
             }
             catch (final Exception e)
@@ -155,6 +161,13 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
 
 
     @Override
+    public int hashCode()
+    {
+        return this.ensureEntities().hashCode();
+    }
+
+
+    @Override
     public int size()
     {
         return this.ensureKeys().length;
@@ -180,7 +193,7 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
 
 
     @Override
-    public Iterator<Object> iterator()
+    public Iterator<T> iterator()
     {
         return this.ensureEntities().iterator();
     }
@@ -201,7 +214,7 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
 
 
     @Override
-    public boolean add(Object o)
+    public boolean add(T o)
     {
         return this.ensureEntities().add(o);
     }
@@ -222,7 +235,7 @@ abstract public class LazyEntityCollection implements LazyLoadedCollection<Objec
 
 
     @Override
-    public boolean addAll(Collection<?> c)
+    public boolean addAll(Collection<? extends T> c)
     {
         return this.ensureEntities().addAll(c);
     }

@@ -1,9 +1,7 @@
 package org.normandra.data;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
-import org.normandra.association.LazyElementCollection;
 import org.normandra.association.LazyLoadedCollection;
 
 import java.lang.reflect.Field;
@@ -36,6 +34,12 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
     }
 
 
+    public boolean isLazy()
+    {
+        return this.lazy;
+    }
+
+
     @Override
     public boolean isLoaded(final Object entity) throws NormandraException
     {
@@ -62,21 +66,6 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
     public boolean isEmpty(final Object entity) throws NormandraException
     {
         return this.getCollection(entity).isEmpty();
-    }
-
-
-    @Override
-    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
-    {
-        if (this.lazy)
-        {
-            return this.setCollection(entity, new LazyElementCollection(session, data));
-        }
-        else
-        {
-            final Object value = data.get();
-            return this.setCollection(entity, (Collection) value);
-        }
     }
 
 

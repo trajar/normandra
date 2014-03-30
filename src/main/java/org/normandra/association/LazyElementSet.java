@@ -2,23 +2,22 @@ package org.normandra.association;
 
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
-import org.normandra.meta.EntityMeta;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * a lazy entity collection
+ * an element collection set
  * <p>
  * User: bowen
- * Date: 3/25/14
+ * Date: 3/30/14
  */
-public class LazyEntitySet<T> extends LazyEntityCollection<T> implements Set<T>
+public class LazyElementSet<T> extends LazyElementCollection<T> implements Set<T>
 {
-    public LazyEntitySet(EntitySession session, EntityMeta meta, DataHolder data)
+    public LazyElementSet(EntitySession session, DataHolder data)
     {
-        super(session, meta, data, new CollectionFactory<T>()
+        super(session, data, new CollectionFactory<T>()
         {
             @Override
             public Collection<T> create(int size)
@@ -30,8 +29,8 @@ public class LazyEntitySet<T> extends LazyEntityCollection<T> implements Set<T>
 
 
     @Override
-    public LazyEntitySet<T> duplicate()
+    public LazyLoadedCollection<T> duplicate()
     {
-        return new LazyEntitySet<>(this.session, this.entity, this.data);
+        return new LazyElementSet<>(this.session, this.data);
     }
 }
