@@ -78,8 +78,9 @@ public class CassandraInheritanceTest extends BaseCassandraTest
         this.manager.save(cat);
         final ZooEntity zoo = new ZooEntity(Arrays.asList(dog, cat));
         this.manager.save(zoo);
-
+        this.manager.clear();
         final ZooEntity existing = this.manager.get(ZooEntity.class, zoo.getId());
         Assert.assertNotNull(existing);
+        Assert.assertEquals(2, existing.getAnimals().size());
     }
 }

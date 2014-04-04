@@ -56,6 +56,12 @@ public class EntityManager
     }
 
 
+    public void clear() throws NormandraException
+    {
+        this.database.clear();
+    }
+
+
     public <T> boolean exists(final Class<T> clazz, final Object key) throws NormandraException
     {
         if (null == clazz)

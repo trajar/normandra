@@ -18,7 +18,7 @@ public interface DatabaseSession extends EntitySession
     /**
      * clear session context and any associated cached data
      */
-    void clear() throws NormandraException;
+    void clear();
 
     /**
      * save entity instance (updateInstance, insert)

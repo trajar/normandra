@@ -103,7 +103,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public void clear() throws NormandraException
+    public void clear()
     {
         this.cache.clear();
     }
