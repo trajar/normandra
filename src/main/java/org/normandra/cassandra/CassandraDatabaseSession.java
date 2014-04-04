@@ -20,8 +20,9 @@ import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHolder;
 import org.normandra.generator.IdGenerator;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.DiscriminatorMeta;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +150,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public boolean exists(final EntityMeta meta, final Object key) throws NormandraException
+    public boolean exists(final EntityContext meta, final Object key) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -205,72 +206,14 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public Object discriminator(final EntityMeta meta, final Object key) throws NormandraException
+    public boolean exists(EntityMeta meta, Object key) throws NormandraException
     {
-        if (this.isClosed())
-        {
-            throw new IllegalStateException("Session is closed.");
-        }
-        if (null == meta || null == key)
-        {
-            return null;
-        }
-
-        final DiscriminatorMeta descrim = meta.getDiscriminator();
-        if (null == descrim)
-        {
-            return null;
-        }
-
-        try
-        {
-            // find table that holds discriminator
-            TableMeta descrimTable = null;
-            for (final TableMeta table : meta)
-            {
-                if (table.hasColumn(descrim.getName()))
-                {
-                    descrimTable = table;
-                    break;
-                }
-            }
-            if (null == descrimTable)
-            {
-                return null;
-            }
-
-            // query table
-            final String[] names = new String[]{descrim.getName()};
-            final Select statement = QueryBuilder.select(names)
-                    .from(this.keyspaceName, descrimTable.getName())
-                    .limit(1);
-            for (final Map.Entry<String, Object> entry : meta.getId().fromKey(key).entrySet())
-            {
-                final String name = entry.getKey();
-                final Object value = entry.getValue();
-                statement.where(QueryBuilder.eq(name, value));
-            }
-            final ResultSet results = this.session.execute(statement);
-            if (null == results)
-            {
-                return null;
-            }
-            final Row row = results.one();
-            if (null == row)
-            {
-                return null;
-            }
-            return CassandraUtils.unpack(row, descrim.getName(), descrim);
-        }
-        catch (final Exception e)
-        {
-            throw new NormandraException("Unable to get entity [" + meta + "] by key [" + key + "].", e);
-        }
+        return this.exists(new SingleEntityContext(meta), key);
     }
 
 
     @Override
-    public Object get(final EntityMeta meta, final Object key) throws NormandraException
+    public Object get(final EntityContext meta, final Object key) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -282,7 +225,14 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public List<Object> get(final EntityMeta meta, final Object... keys) throws NormandraException
+    public Object get(EntityMeta meta, Object key) throws NormandraException
+    {
+        return this.get(new SingleEntityContext(meta), key);
+    }
+
+
+    @Override
+    public List<Object> get(final EntityContext meta, final Object... keys) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -290,6 +240,13 @@ public class CassandraDatabaseSession implements DatabaseSession
         }
         final CassandraEntityQuery query = new CassandraEntityQuery(this, this.cache);
         return query.query(meta, keys);
+    }
+
+
+    @Override
+    public List<Object> get(EntityMeta meta, Object... keys) throws NormandraException
+    {
+        return this.get(new SingleEntityContext(meta), keys);
     }
 
 
@@ -375,6 +332,7 @@ public class CassandraDatabaseSession implements DatabaseSession
         try
         {
             // generate any primary ids
+            final EntityContext ctx = new SingleEntityContext(meta);
             for (final TableMeta table : meta)
             {
                 for (final ColumnMeta column : table.getColumns())
@@ -389,12 +347,12 @@ public class CassandraDatabaseSession implements DatabaseSession
                     }
                 }
             }
-            // generate insert/update statements
+            // generate insert/updateInstance statements
             final List<Insert> inserts = new ArrayList<>();
             final List<Delete> deletes = new ArrayList<>();
             for (final TableMeta table : meta)
             {
-                if (table.getPrimaryKeys().size() == meta.getPrimaryKeys().size())
+                if (table.getPrimaryKeys().size() == ctx.getPrimaryKeys().size())
                 {
                     // this table has the same number of keys
                     Insert statement = QueryBuilder.insertInto(this.keyspaceName, table.getName());
@@ -402,10 +360,10 @@ public class CassandraDatabaseSession implements DatabaseSession
                     for (final ColumnMeta column : table.getColumns())
                     {
                         final ColumnAccessor accessor = meta.getAccessor(column);
-                        if (accessor.isLoaded(element))
+                        if (accessor != null && accessor.isLoaded(element))
                         {
                             final boolean empty = accessor.isEmpty(element);
-                            final Object value = !empty && accessor != null ? accessor.getValue(element) : null;
+                            final Object value = !empty ? accessor.getValue(element) : null;
                             if (value != null)
                             {
                                 statement = statement.value(column.getName(), value);
@@ -437,7 +395,7 @@ public class CassandraDatabaseSession implements DatabaseSession
                 {
                     // this table as an extra set of keys, likely as a join table
                     final Map<ColumnMeta, Object> keys = new TreeMap<>();
-                    for (final ColumnMeta column : meta.getPrimaryKeys())
+                    for (final ColumnMeta column : ctx.getPrimaryKeys())
                     {
                         if (table.hasColumn(column.getName()))
                         {
@@ -450,7 +408,7 @@ public class CassandraDatabaseSession implements DatabaseSession
                         }
                     }
                     final Set<ColumnMeta> extraKeys = new TreeSet<>(table.getPrimaryKeys());
-                    extraKeys.removeAll(meta.getPrimaryKeys());
+                    extraKeys.removeAll(ctx.getPrimaryKeys());
                     for (final ColumnMeta column : extraKeys)
                     {
                         final ColumnAccessor accessor = meta.getAccessor(column);

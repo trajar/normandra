@@ -153,7 +153,7 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
     {
         if (null == tbl)
         {
-            return -1;
+            return 1;
         }
         return this.name.compareToIgnoreCase(tbl.name);
     }

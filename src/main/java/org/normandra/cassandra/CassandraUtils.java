@@ -40,7 +40,7 @@ import java.util.UUID;
  */
 public class CassandraUtils
 {
-    public static boolean update(final EntityMeta meta, final Object instance, final Map<TableMeta, Row> data, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
+    public static boolean updateInstance(final EntityMeta meta, final Object instance, final Map<TableMeta, Row> data, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
     {
         if (null == data || data.isEmpty())
         {
@@ -51,7 +51,7 @@ public class CassandraUtils
         {
             final TableMeta table = entry.getKey();
             final Row row = entry.getValue();
-            if (update(meta, instance, table, row, session))
+            if (updateInstance(meta, instance, table, row, session))
             {
                 updated = true;
             }
@@ -60,7 +60,7 @@ public class CassandraUtils
     }
 
 
-    public static boolean update(final EntityMeta meta, final Object instance, final TableMeta table, final ResultSet results, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
+    public static boolean updateInstance(final EntityMeta meta, final Object instance, final TableMeta table, final ResultSet results, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
     {
         if (null == results)
         {
@@ -79,7 +79,7 @@ public class CassandraUtils
             final ColumnAccessor accessor = meta.getAccessor(columnName);
             if (accessor != null)
             {
-                final Object value = CassandraUtils.unpack(rows, columnName, column);
+                final Object value = CassandraUtils.unpackValue(rows, columnName, column);
                 final DataHolder data = new BasicDataHolder(value);
                 accessor.setValue(instance, data, session);
                 updated = true;
@@ -89,7 +89,7 @@ public class CassandraUtils
     }
 
 
-    public static boolean update(final EntityMeta meta, final Object instance, final TableMeta table, final Row row, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
+    public static boolean updateInstance(final EntityMeta meta, final Object instance, final TableMeta table, final Row row, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
     {
         if (null == row)
         {
@@ -103,7 +103,7 @@ public class CassandraUtils
             final ColumnAccessor accessor = meta.getAccessor(columnName);
             if (accessor != null)
             {
-                final Object value = CassandraUtils.unpack(row, columnName, column);
+                final Object value = CassandraUtils.unpackValue(row, columnName, column);
                 final DataHolder data = new BasicDataHolder(value);
                 accessor.setValue(instance, data, session);
                 updated = true;
@@ -113,37 +113,37 @@ public class CassandraUtils
     }
 
 
-    public static Object key(final EntityMeta meta, final TableMeta table, final Row row) throws IOException, ClassNotFoundException, NormandraException
+    public static Map<ColumnMeta, Object> unpackValues(final TableMeta table, final Row row) throws IOException, ClassNotFoundException, NormandraException
     {
-        if (null == row)
+        if (null == row || null == table)
         {
-            return false;
+            return Collections.emptyMap();
         }
-        final Map<String, Object> ids = new TreeMap<>();
+        final Map<ColumnMeta, Object> data = new TreeMap<>();
         for (final ColumnDefinitions.Definition def : row.getColumnDefinitions().asList())
         {
             final String columnName = def.getName();
             final ColumnMeta column = table.getColumn(columnName);
-            if (column != null && column.isPrimaryKey())
+            if (column != null)
             {
-                final Object value = CassandraUtils.unpack(row, columnName, column);
+                final Object value = CassandraUtils.unpackValue(row, columnName, column);
                 if (value != null)
                 {
-                    ids.put(columnName, value);
+                    data.put(column, value);
                 }
             }
         }
-        if (ids.isEmpty())
-        {
-            return null;
-        }
-        return meta.getId().toKey(ids);
+        return Collections.unmodifiableMap(data);
     }
 
 
-    public static Object unpack(final List<Row> rows, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
+    public static Object unpackValue(final List<Row> rows, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
     {
         if (null == rows || rows.isEmpty())
+        {
+            return null;
+        }
+        if (null == meta)
         {
             return null;
         }
@@ -163,15 +163,19 @@ public class CassandraUtils
             {
                 return null;
             }
-            return unpack(row, column, meta);
+            return unpackValue(row, column, meta);
         }
 
     }
 
 
-    public static Object unpack(final Row row, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
+    public static Object unpackValue(final Row row, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
     {
         if (null == row || row.isNull(column))
+        {
+            return null;
+        }
+        if (null == meta)
         {
             return null;
         }
@@ -247,7 +251,7 @@ public class CassandraUtils
     }
 
 
-    private static Object unpackCollection(final Row row, final String column, final CollectionMeta<?> meta)
+    private static Object unpackCollection(final Row row, final String column, final CollectionMeta meta)
     {
         final Class<?> clazz = meta.getType();
         if (Set.class.isAssignableFrom(clazz))
@@ -284,7 +288,7 @@ public class CassandraUtils
         final Set<Object> list = new ArraySet<>();
         for (final Row row : results)
         {
-            final Object value = unpack(row, column, meta);
+            final Object value = unpackValue(row, column, meta);
             if (value != null)
             {
                 list.add(value);

@@ -6,13 +6,9 @@ import org.normandra.data.IdAccessor;
 import org.normandra.data.NullIdAccessor;
 import org.normandra.generator.IdGenerator;
 import org.normandra.generator.UUIDGenerator;
-import org.normandra.util.ArraySet;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -32,6 +28,8 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     private final Set<TableMeta> tables = new TreeSet<>();
 
     private final Class<?> type;
+
+    private DiscriminatorMeta discriminator;
 
     private final Map<ColumnMeta, ColumnAccessor> accessors = new TreeMap<>();
 
@@ -57,65 +55,13 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
 
     public DiscriminatorMeta getDiscriminator()
     {
-        for (final TableMeta table : this.tables)
-        {
-            for (final ColumnMeta column : table)
-            {
-                if (column instanceof DiscriminatorMeta)
-                {
-                    return (DiscriminatorMeta) column;
-                }
-            }
-        }
-        return null;
+        return this.discriminator;
     }
 
 
-    public Collection<ColumnMeta> getPrimaryKeys()
+    public Set<TableMeta> getTables()
     {
-        final Set<ColumnMeta> columns = new ArraySet<>();
-        for (final TableMeta table : this.tables)
-        {
-            if (!table.isSecondary())
-            {
-                columns.addAll(table.getPrimaryKeys());
-            }
-        }
-        return Collections.unmodifiableSet(columns);
-    }
-
-
-    public Collection<TableMeta> getTables()
-    {
-        return Collections.unmodifiableCollection(this.tables);
-    }
-
-
-    public Collection<TableMeta> getPrimaryTables()
-    {
-        final List<TableMeta> list = new ArrayList<>(this.tables.size());
-        for (final TableMeta table : this.tables)
-        {
-            if (!table.isSecondary())
-            {
-                list.add(table);
-            }
-        }
-        return Collections.unmodifiableCollection(list);
-    }
-
-
-    public Collection<TableMeta> getSecondaryTables()
-    {
-        final List<TableMeta> list = new ArrayList<>(this.tables.size());
-        for (final TableMeta table : this.tables)
-        {
-            if (table.isSecondary())
-            {
-                list.add(table);
-            }
-        }
-        return Collections.unmodifiableCollection(list);
+        return Collections.unmodifiableSet(this.tables);
     }
 
 
@@ -150,6 +96,12 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
             }
         }
         return null;
+    }
+
+
+    protected void setDiscriminator(DiscriminatorMeta discriminator)
+    {
+        this.discriminator = discriminator;
     }
 
 
@@ -303,7 +255,7 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     {
         if (null == meta)
         {
-            return -1;
+            return 1;
         }
         return this.name.compareToIgnoreCase(meta.name);
     }
@@ -316,4 +268,33 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     }
 
 
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        EntityMeta that = (EntityMeta) o;
+
+        if (discriminator != null ? !discriminator.equals(that.discriminator) : that.discriminator != null)
+            return false;
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (tables != null ? !tables.equals(that.tables) : that.tables != null) return false;
+        if (type != null ? !type.equals(that.type) : that.type != null) return false;
+
+        return true;
+    }
+
+
+    @Override
+    public int hashCode()
+    {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (tables != null ? tables.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (discriminator != null ? discriminator.hashCode() : 0);
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        return result;
+    }
 }

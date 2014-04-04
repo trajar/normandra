@@ -2,20 +2,18 @@ package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
 
-import java.util.Collection;
-
 /**
  * collection column meta-data
  * <p>
  * User: bowen
  * Date: 9/1/13
  */
-public class CollectionMeta<T extends Collection> extends ColumnMeta
+public class CollectionMeta extends ColumnMeta
 {
     private final Class<?> generic;
 
 
-    public CollectionMeta(final String name, final String property, final Class<T> clazz, final Class<?> generic, final boolean primary, final boolean lazy)
+    public CollectionMeta(final String name, final String property, final Class<?> clazz, final Class<?> generic, final boolean primary, final boolean lazy)
     {
         super(name, property, clazz, primary, lazy);
         if (null == generic)

@@ -9,20 +9,21 @@ import org.normandra.cache.EntityCache;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
+import org.normandra.util.ArraySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -47,7 +48,7 @@ public class CassandraEntityQuery
     }
 
 
-    public Object query(final EntityMeta meta, final Object key) throws NormandraException
+    public Object query(final EntityContext meta, final Object key) throws NormandraException
     {
         if (null == meta || null == key)
         {
@@ -57,10 +58,13 @@ public class CassandraEntityQuery
         if (key instanceof Serializable)
         {
             // check cache
-            final Object existing = this.cache.get(meta, (Serializable) key);
-            if (existing != null)
+            for (final EntityMeta entity : meta.getEntities())
             {
-                return meta.getType().cast(existing);
+                final Object existing = this.cache.get(entity, (Serializable) key);
+                if (existing != null)
+                {
+                    return entity.getType().cast(existing);
+                }
             }
         }
 
@@ -68,6 +72,7 @@ public class CassandraEntityQuery
         {
             // pull primary tables necessary
             final Map<TableMeta, Row> rows = new TreeMap<>();
+            final Map<ColumnMeta, Object> data = new TreeMap<>();
             for (final TableMeta table : meta.getPrimaryTables())
             {
                 final ResultSet results = this.buildEagerQuery(meta, table, key);
@@ -75,24 +80,30 @@ public class CassandraEntityQuery
                 if (row != null)
                 {
                     rows.put(table, row);
+                    data.putAll(CassandraUtils.unpackValues(table, row));
                 }
             }
-            if (rows.isEmpty())
+            if (rows.isEmpty() || data.isEmpty())
             {
                 return null;
             }
 
             // create new instance, copy values
-            final Object entity = meta.getType().newInstance();
+            final EntityMeta entity = meta.findEntity(data);
             if (null == entity)
             {
                 return null;
             }
-            if (!CassandraUtils.update(meta, entity, rows, this.session))
+            final Object instance = entity.getType().newInstance();
+            if (null == instance)
             {
                 return null;
             }
-            this.cache.put(meta, entity);
+            if (!CassandraUtils.updateInstance(entity, instance, rows, this.session))
+            {
+                return null;
+            }
+            this.cache.put(entity, instance);
 
             // now pull secondary tables
             for (final TableMeta table : meta.getSecondaryTables())
@@ -100,7 +111,7 @@ public class CassandraEntityQuery
                 final ResultSet results = this.buildEagerQuery(meta, table, key);
                 if (results != null)
                 {
-                    CassandraUtils.update(meta, entity, table, results, this.session);
+                    CassandraUtils.updateInstance(entity, instance, table, results, this.session);
                 }
             }
 
@@ -111,17 +122,17 @@ public class CassandraEntityQuery
                 {
                     if (column.isLazyLoaded())
                     {
-                        final ColumnAccessor accessor = meta.getAccessor(column);
+                        final ColumnAccessor accessor = entity.getAccessor(column);
                         if (accessor != null)
                         {
-                            accessor.setValue(entity, new LazyDataHolder(this.session, meta, table, column, key), this.session);
+                            accessor.setValue(instance, new LazyDataHolder(this.session, entity, table, column, key), this.session);
                         }
                     }
                 }
             }
 
             // done
-            return entity;
+            return instance;
         }
         catch (final Exception e)
         {
@@ -130,7 +141,7 @@ public class CassandraEntityQuery
     }
 
 
-    public List<Object> query(final EntityMeta meta, final Object... keys) throws NormandraException
+    public List<Object> query(final EntityContext meta, final Object... keys) throws NormandraException
     {
         if (null == meta || null == keys || keys.length <= 0)
         {
@@ -140,13 +151,16 @@ public class CassandraEntityQuery
         final List<Object> entities = new ArrayList<>(keys.length);
         for (final Object key : keys)
         {
-            if (key instanceof Serializable)
+            for (final EntityMeta entity : meta.getEntities())
             {
-                // check cache
-                final Object existing = this.cache.get(meta, (Serializable) key);
-                if (existing != null)
+                if (key instanceof Serializable)
                 {
-                    entities.add(existing);
+                    // check cache
+                    final Object existing = this.cache.get(entity, (Serializable) key);
+                    if (existing != null)
+                    {
+                        entities.add(existing);
+                    }
                 }
             }
         }
@@ -166,16 +180,26 @@ public class CassandraEntityQuery
                 {
                     for (final Row row : results)
                     {
-                        final Object key = CassandraUtils.key(meta, table, row);
-                        if (key != null)
+                        final Map<ColumnMeta, Object> data = CassandraUtils.unpackValues(table, row);
+                        final EntityMeta entity = meta.findEntity(data);
+                        if (entity != null)
                         {
-                            KeyContext ctx = keymap.get(key);
-                            if (null == ctx)
+                            final Map<String, Object> dataByName = new HashMap<>(data.size());
+                            for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
                             {
-                                ctx = new KeyContext(table);
-                                keymap.put(key, ctx);
+                                dataByName.put(entry.getKey().getName(), entry.getValue());
                             }
-                            ctx.rows.add(row);
+                            final Object key = entity.getId().toKey(dataByName);
+                            if (key != null)
+                            {
+                                KeyContext ctx = keymap.get(key);
+                                if (null == ctx)
+                                {
+                                    ctx = new KeyContext(entity, table);
+                                    keymap.put(key, ctx);
+                                }
+                                ctx.rows.add(row);
+                            }
                         }
                     }
                 }
@@ -190,12 +214,12 @@ public class CassandraEntityQuery
             {
                 final List<Row> rows = ctx.rows;
                 final TableMeta table = ctx.table;
-                final Object entity = meta.getType().newInstance();
+                final Object entity = ctx.entity.getType().newInstance();
                 for (final Row row : rows)
                 {
-                    CassandraUtils.update(meta, entity, table, row, this.session);
+                    CassandraUtils.updateInstance(ctx.entity, entity, table, row, this.session);
                 }
-                this.cache.put(meta, entity);
+                this.cache.put(ctx.entity, entity);
                 entities.add(entity);
             }
             return Collections.unmodifiableList(entities);
@@ -207,20 +231,15 @@ public class CassandraEntityQuery
     }
 
 
-    private ResultSet buildEagerQuery(final EntityMeta meta, final TableMeta table, final Object... keys) throws NormandraException
+    private ResultSet buildEagerQuery(final EntityContext meta, final TableMeta table, final Object... keys) throws NormandraException
     {
         // get columns to query
-        final Collection<ColumnMeta> columns;
+        final Set<ColumnMeta> columns = new ArraySet<>(meta.getColumns());
+        columns.retainAll(table.getEagerLoaded());
         if (table.isSecondary())
         {
             // for secondary tables, only query extra fields
-            columns = new TreeSet<>(table.getEagerLoaded());
             columns.removeAll(meta.getPrimaryKeys());
-        }
-        else
-        {
-            // for primary columns, get all keys and properties
-            columns = table.getEagerLoaded();
         }
         if (columns.isEmpty())
         {
@@ -292,13 +311,16 @@ public class CassandraEntityQuery
 
     private static class KeyContext
     {
+        private final EntityMeta entity;
+
         private final TableMeta table;
 
         private final List<Row> rows = new ArrayList<>();
 
 
-        private KeyContext(final TableMeta table)
+        private KeyContext(final EntityMeta meta, final TableMeta table)
         {
+            this.entity = meta;
             this.table = table;
         }
     }
@@ -354,7 +376,7 @@ public class CassandraEntityQuery
             }
             try
             {
-                return CassandraUtils.unpack(rows, this.column.getName(), this.column);
+                return CassandraUtils.unpackValue(rows, this.column.getName(), this.column);
             }
             catch (final Exception e)
             {

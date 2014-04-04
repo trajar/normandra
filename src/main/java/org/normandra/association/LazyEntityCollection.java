@@ -3,7 +3,7 @@ package org.normandra.association;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
-import org.normandra.meta.EntityMeta;
+import org.normandra.meta.EntityContext;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -20,7 +20,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
 {
     protected final DataHolder data;
 
-    protected final EntityMeta entity;
+    protected final EntityContext entity;
 
     protected final EntitySession session;
 
@@ -35,7 +35,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
 
-    public LazyEntityCollection(final EntitySession session, final EntityMeta meta, final DataHolder data, final CollectionFactory<T> factory)
+    public LazyEntityCollection(final EntitySession session, final EntityContext meta, final DataHolder data, final CollectionFactory<T> factory)
     {
         if (null == data)
         {
@@ -57,12 +57,6 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         this.session = session;
         this.entity = meta;
         this.factory = factory;
-    }
-
-
-    public EntityMeta getEntity()
-    {
-        return this.entity;
     }
 
 

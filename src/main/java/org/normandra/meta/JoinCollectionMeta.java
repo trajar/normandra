@@ -8,17 +8,17 @@ package org.normandra.meta;
  */
 public class JoinCollectionMeta extends ColumnMeta
 {
-    private final EntityMeta entity;
+    private final EntityContext entity;
 
 
-    public JoinCollectionMeta(final String name, final String property, final Class<?> clazz, final EntityMeta associated, final boolean primary, final boolean lazy)
+    public JoinCollectionMeta(final String name, final String property, final Class<?> clazz, final EntityContext associated, final boolean primary, final boolean lazy)
     {
         super(name, property, clazz, primary, lazy);
         this.entity = associated;
     }
 
 
-    public EntityMeta getEntity()
+    public EntityContext getEntity()
     {
         return this.entity;
     }

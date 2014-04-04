@@ -1,20 +1,30 @@
 package org.normandra.meta;
 
+import java.io.Serializable;
+
 /**
  * a discriminator column for abstract/inherited entities
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/1/14
  */
-public class DiscriminatorMeta<T> extends ColumnMeta
+public class DiscriminatorMeta
 {
     private final Object value;
 
+    private final ColumnMeta column;
 
-    public DiscriminatorMeta(final String name, final String property, final T descrim, final Class<T> clazz)
+
+    public DiscriminatorMeta(final ColumnMeta column, final Serializable descrim)
     {
-        super(name, property, clazz, false, false);
+        this.column = column;
         this.value = descrim;
+    }
+
+
+    public ColumnMeta getColumn()
+    {
+        return this.column;
     }
 
 
@@ -29,10 +39,10 @@ public class DiscriminatorMeta<T> extends ColumnMeta
     {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
 
         DiscriminatorMeta that = (DiscriminatorMeta) o;
 
+        if (column != null ? !column.equals(that.column) : that.column != null) return false;
         if (value != null ? !value.equals(that.value) : that.value != null) return false;
 
         return true;
@@ -42,8 +52,8 @@ public class DiscriminatorMeta<T> extends ColumnMeta
     @Override
     public int hashCode()
     {
-        int result = super.hashCode();
-        result = 31 * result + (value != null ? value.hashCode() : 0);
+        int result = value != null ? value.hashCode() : 0;
+        result = 31 * result + (column != null ? column.hashCode() : 0);
         return result;
     }
 }

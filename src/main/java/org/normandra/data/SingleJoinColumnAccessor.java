@@ -4,6 +4,7 @@ import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.association.AssociationUtils;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.SingleEntityContext;
 
 import java.lang.reflect.Field;
 
@@ -112,7 +113,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
                 }
                 else
                 {
-                    associated = session.get(this.entity, key);
+                    associated = session.get(new SingleEntityContext(this.entity), key);
                 }
                 this.set(entity, associated);
                 return true;

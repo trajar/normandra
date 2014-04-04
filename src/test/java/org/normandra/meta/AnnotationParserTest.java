@@ -28,7 +28,6 @@ public class AnnotationParserTest
         TableMeta table = meta.getTables().iterator().next();
         Assert.assertEquals("animal", table.getName());
         Assert.assertTrue(table.hasColumn("type"));
-        Assert.assertTrue(table.getColumn("type") instanceof DiscriminatorMeta);
     }
 
 

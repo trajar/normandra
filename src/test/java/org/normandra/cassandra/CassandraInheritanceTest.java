@@ -9,12 +9,14 @@ import org.normandra.EntityManagerFactory;
 import org.normandra.entities.AnimalEntity;
 import org.normandra.entities.CatEntity;
 import org.normandra.entities.DogEntity;
+import org.normandra.entities.ZooEntity;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * unit tests for inheritance and abstract entity classes
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/1/14
  */
@@ -29,6 +31,7 @@ public class CassandraInheritanceTest extends BaseCassandraTest
         final EntityManagerFactory factory = new EntityManagerFactory.Builder()
                 .withClass(CatEntity.class)
                 .withClass(DogEntity.class)
+                .withClass(ZooEntity.class)
                 .withParameter(CassandraDatabase.HOSTS, "localhost")
                 .withParameter(CassandraDatabase.PORT, port)
                 .withParameter(CassandraDatabase.KEYSPACE, keyspace)
@@ -63,5 +66,20 @@ public class CassandraInheritanceTest extends BaseCassandraTest
         Assert.assertTrue(this.manager.exists(AnimalEntity.class, 1));
         Assert.assertEquals(dog, this.manager.get(DogEntity.class, 1));
         Assert.assertEquals(dog, this.manager.get(AnimalEntity.class, 1));
+    }
+
+
+    @Test
+    public void testHierarchy() throws Exception
+    {
+        final DogEntity dog = new DogEntity("sophi", 12);
+        final CatEntity cat = new CatEntity("kitty", true);
+        this.manager.save(dog);
+        this.manager.save(cat);
+        final ZooEntity zoo = new ZooEntity(Arrays.asList(dog, cat));
+        this.manager.save(zoo);
+
+        final ZooEntity existing = this.manager.get(ZooEntity.class, zoo.getId());
+        Assert.assertNotNull(existing);
     }
 }

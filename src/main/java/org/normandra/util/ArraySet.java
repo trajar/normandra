@@ -4,6 +4,7 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * an ArrayList implementation of Set
@@ -23,12 +24,20 @@ public class ArraySet<E> extends AbstractSet<E>
 
     public ArraySet(final Collection<? extends E> collection)
     {
-        items = new ArrayList<>(collection.size());
-        for (E item : collection)
+        if (null == collection)
         {
-            if (!items.contains(item))
+            throw new IllegalArgumentException("Collection cannot be null.");
+        }
+        this.items = new ArrayList<>(collection.size());
+        if (collection instanceof Set)
+        {
+            this.items.addAll(collection);
+        }
+        else
+        {
+            for (final E item : collection)
             {
-                items.add(item);
+                this.add(item);
             }
         }
     }

@@ -21,12 +21,7 @@ public interface DatabaseSession extends EntitySession
     void clear() throws NormandraException;
 
     /**
-     * query entity discriminator based on key value
-     */
-    Object discriminator(EntityMeta meta, Object key) throws NormandraException;
-
-    /**
-     * save entity instance (update, insert)
+     * save entity instance (updateInstance, insert)
      */
     void save(EntityMeta meta, Object element) throws NormandraException;
 

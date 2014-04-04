@@ -4,10 +4,11 @@ import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.SingleEntityContext;
 
 /**
  * a single entity accessor - for one-to-one or many-to-one n relationships
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/9/14
  */
@@ -43,6 +44,6 @@ public class ManyToOneAccessor implements AssociationAccessor
     @Override
     public Object get() throws NormandraException
     {
-        return this.session.get(this.meta, this.key);
+        return this.session.get(new SingleEntityContext(this.meta), this.key);
     }
 }

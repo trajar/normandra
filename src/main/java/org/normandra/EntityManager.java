@@ -2,8 +2,9 @@ package org.normandra;
 
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.meta.DatabaseMeta;
-import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.HierarchyEntityContext;
+import org.normandra.meta.SingleEntityContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 /**
  * an entity manager backed by NoSQL database
- * <p/>
+ * <p>
  * User: bowen
  * Date: 8/31/13
  */
@@ -73,7 +74,11 @@ public class EntityManager
         }
 
         final EntityMeta meta = list.get(0);
-        return this.database.exists(meta, key);
+        if (null == meta)
+        {
+            return false;
+        }
+        return this.database.exists(new SingleEntityContext(meta), key);
     }
 
 
@@ -93,7 +98,7 @@ public class EntityManager
         {
             // simple entity
             final EntityMeta meta = list.get(0);
-            final Object obj = this.database.get(meta, key);
+            final Object obj = this.database.get(new SingleEntityContext(meta), key);
             if (null == obj)
             {
                 return null;
@@ -103,26 +108,12 @@ public class EntityManager
         else
         {
             // inherited entity
-            final Object typeDescriminator = this.database.discriminator(list.get(0), key);
-            if (null == typeDescriminator)
+            final Object obj = this.database.get(new HierarchyEntityContext(list), key);
+            if (null == obj)
             {
                 return null;
             }
-            for (final EntityMeta meta : list)
-            {
-                final DiscriminatorMeta descrim = meta.getDiscriminator();
-                final Object type = descrim.getValue();
-                if (typeDescriminator.equals(type))
-                {
-                    final Object obj = this.database.get(meta, key);
-                    if (null == obj)
-                    {
-                        return null;
-                    }
-                    return clazz.cast(obj);
-                }
-            }
-            return null;
+            return clazz.cast(obj);
         }
     }
 

@@ -235,7 +235,7 @@ public class CassandraDatabase implements Database, SessionAccessor
 
         if (DatabaseConstruction.UPDATE.equals(this.constructionMode))
         {
-            // ensure we create base database with all keys - then update/add columns in separate comment
+            // ensure we create base database with all keys - then updateInstance/add columns in separate comment
             statements.add(defineTable(tableName, primaryColumns));
             for (final ColumnMeta column : allColumns)
             {

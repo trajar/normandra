@@ -5,7 +5,7 @@ import org.normandra.NormandraException;
 import org.normandra.association.LazyEntityList;
 import org.normandra.association.LazyEntitySet;
 import org.normandra.association.LazyLoadedCollection;
-import org.normandra.meta.EntityMeta;
+import org.normandra.meta.EntityContext;
 import org.normandra.util.ArraySet;
 
 import java.lang.reflect.Field;
@@ -24,12 +24,12 @@ import java.util.Set;
  */
 public class ManyJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
-    private final EntityMeta entity;
+    private final EntityContext entity;
 
     private final boolean lazy;
 
 
-    public ManyJoinColumnAccessor(final Field field, final EntityMeta meta, final boolean lazy)
+    public ManyJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy)
     {
         super(field);
         this.entity = meta;
@@ -122,7 +122,14 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
                     set.add(key);
                 }
             }
-            return Collections.unmodifiableCollection(set);
+            if (Set.class.isAssignableFrom(this.getField().getType()))
+            {
+                return Collections.unmodifiableSet(new ArraySet<>(set));
+            }
+            else
+            {
+                return Collections.unmodifiableList(set);
+            }
         }
         catch (final Exception e)
         {

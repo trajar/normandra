@@ -2,7 +2,7 @@ package org.normandra.association;
 
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
-import org.normandra.meta.EntityMeta;
+import org.normandra.meta.EntityContext;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public class LazyEntitySet<T> extends LazyEntityCollection<T> implements Set<T>
 {
-    public LazyEntitySet(EntitySession session, EntityMeta meta, DataHolder data)
+    public LazyEntitySet(EntitySession session, EntityContext meta, DataHolder data)
     {
         super(session, meta, data, new CollectionFactory<T>()
         {

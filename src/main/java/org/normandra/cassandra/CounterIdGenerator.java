@@ -52,7 +52,7 @@ public class CounterIdGenerator implements IdGenerator
         {
             try
             {
-                // try to update counter a fixed number of times
+                // try to updateInstance counter a fixed number of times
                 for (int i = 0; i < 10; i++)
                 {
                     final Long value = this.incrementCounter();

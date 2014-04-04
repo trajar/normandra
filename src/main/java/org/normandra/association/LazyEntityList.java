@@ -2,6 +2,7 @@ package org.normandra.association;
 
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.ListIterator;
  */
 public class LazyEntityList<T> extends LazyEntityCollection<T> implements List<T>
 {
-    public LazyEntityList(EntitySession session, EntityMeta meta, DataHolder data)
+    public LazyEntityList(EntitySession session, EntityContext meta, DataHolder data)
     {
         super(session, meta, data, new CollectionFactory<T>()
         {
