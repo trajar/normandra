@@ -17,7 +17,7 @@ import java.util.TreeMap;
 
 /**
  * entity manager factory
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/1/14
  */
@@ -172,9 +172,16 @@ public class EntityManagerFactory
     }
 
 
-    public EntityManager create() throws NormandraException
+    public EntityManager create()
     {
         final DatabaseSession session = this.database.createSession();
         return new EntityManager(session, this.meta);
+    }
+
+
+    public void close()
+    {
+        this.database.close();
+        this.classMap.clear();
     }
 }

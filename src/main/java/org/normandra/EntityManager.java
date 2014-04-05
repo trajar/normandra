@@ -124,6 +124,24 @@ public class EntityManager
     }
 
 
+    public <T> void delete(final T element) throws NormandraException
+    {
+        if (null == element)
+        {
+            throw new NullArgumentException("element");
+        }
+
+        final Class<?> clazz = element.getClass();
+        final EntityMeta meta = this.classMap.get(clazz);
+        if (null == meta)
+        {
+            throw new IllegalArgumentException("Element [" + element + "] is not a registered entity.");
+        }
+
+        this.database.delete(meta, element);
+    }
+
+
     public <T> void save(final T element) throws NormandraException
     {
         if (null == element)
@@ -139,6 +157,33 @@ public class EntityManager
         }
 
         this.database.save(meta, element);
+    }
+
+
+    /**
+     * being unit of work
+     */
+    public void beginWork() throws NormandraException
+    {
+        this.database.beginWork();
+    }
+
+
+    /**
+     * commit unit of work, executing any stored/batched operations
+     */
+    public void commitWork() throws NormandraException
+    {
+        this.database.commitWork();
+    }
+
+
+    /**
+     * rollback unit of work, clearing stored/batched operations
+     */
+    public void rollbackWork() throws NormandraException
+    {
+        this.database.rollbackWork();
     }
 
 

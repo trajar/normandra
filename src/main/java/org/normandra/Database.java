@@ -10,7 +10,7 @@ import org.normandra.meta.DatabaseMeta;
  */
 public interface Database
 {
-    DatabaseSession createSession() throws NormandraException;
+    DatabaseSession createSession();
     void refresh(DatabaseMeta meta) throws NormandraException;
     void close();
 }

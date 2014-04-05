@@ -85,7 +85,7 @@ public class CassandraDatabase implements Database, SessionAccessor
 
 
     @Override
-    public CassandraDatabaseSession createSession() throws NormandraException
+    public CassandraDatabaseSession createSession()
     {
         return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession(), this.executor);
     }
