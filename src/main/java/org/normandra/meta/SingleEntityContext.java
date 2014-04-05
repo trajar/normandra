@@ -126,6 +126,11 @@ public class SingleEntityContext implements EntityContext
         return Collections.unmodifiableSet(list);
     }
 
+    @Override
+    public String toString()
+    {
+        return this.entity.toString();
+    }
 
     @Override
     public boolean equals(Object o)

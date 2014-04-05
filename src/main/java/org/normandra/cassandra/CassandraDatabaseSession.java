@@ -10,6 +10,7 @@ import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import com.datastax.driver.core.querybuilder.Update;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
@@ -19,6 +20,7 @@ import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHolder;
 import org.normandra.generator.IdGenerator;
+import org.normandra.log.DatabaseActivity;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
@@ -29,12 +31,17 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -55,12 +62,16 @@ public class CassandraDatabaseSession implements DatabaseSession
 
     private final List<RegularStatement> statements = new CopyOnWriteArrayList<>();
 
+    private final List<DatabaseActivity> activities = new CopyOnWriteArrayList<>();
+
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     private final AtomicBoolean activeUnitOfWork = new AtomicBoolean(false);
 
+    private final Executor executor;
 
-    public CassandraDatabaseSession(final String keyspace, final Session session)
+
+    public CassandraDatabaseSession(final String keyspace, final Session session, final Executor executor)
     {
         if (null == keyspace || keyspace.isEmpty())
         {
@@ -70,8 +81,13 @@ public class CassandraDatabaseSession implements DatabaseSession
         {
             throw new NullArgumentException("session");
         }
+        if (null == executor)
+        {
+            throw new NullArgumentException("executor");
+        }
         this.keyspaceName = keyspace;
         this.session = session;
+        this.executor = executor;
     }
 
 
@@ -102,9 +118,36 @@ public class CassandraDatabaseSession implements DatabaseSession
     }
 
 
+    protected ResultSet executeSync(final RegularStatement statement, final DatabaseActivity.Type type)
+    {
+        final CassandraDatabaseActivity activity = new CassandraDatabaseActivity(statement, this.session, type);
+        this.activities.add(activity);
+        return activity.execute();
+    }
+
+
+    protected Future<ResultSet> executeAsync(final RegularStatement statement, final DatabaseActivity.Type type)
+    {
+        final CassandraDatabaseActivity activity = new CassandraDatabaseActivity(statement, this.session, type);
+        this.activities.add(activity);
+        final Callable<ResultSet> callable = new Callable<ResultSet>()
+        {
+            @Override
+            public ResultSet call() throws Exception
+            {
+                return activity.execute();
+            }
+        };
+        final FutureTask<ResultSet> task = new FutureTask<>(callable);
+        this.executor.execute(task);
+        return task;
+    }
+
+
     @Override
     public void clear()
     {
+        this.activities.clear();
         this.cache.clear();
     }
 
@@ -127,13 +170,40 @@ public class CassandraDatabaseSession implements DatabaseSession
         {
             throw new IllegalStateException("No active transaction.");
         }
-
-        final RegularStatement[] list = this.statements.toArray(new RegularStatement[this.statements.size()]);
-        final Batch batch = QueryBuilder.batch(list);
-        this.session.execute(batch);
-        this.statements.clear();
-
-        this.activeUnitOfWork.getAndSet(false);
+        if (this.statements.isEmpty())
+        {
+            return;
+        }
+        try
+        {
+            for (final RegularStatement statement : this.statements)
+            {
+                DatabaseActivity.Type type = DatabaseActivity.Type.ADMIN;
+                if (statement instanceof Batch)
+                {
+                    type = DatabaseActivity.Type.BATCH;
+                }
+                else if (statement instanceof Delete)
+                {
+                    type = DatabaseActivity.Type.DELETE;
+                }
+                else if (statement instanceof Select)
+                {
+                    type = DatabaseActivity.Type.SELECT;
+                }
+                else if (statement instanceof Insert || statement instanceof Update)
+                {
+                    type = DatabaseActivity.Type.UPDATE;
+                }
+                this.executeSync(statement, type);
+            }
+            this.statements.clear();
+            this.activeUnitOfWork.getAndSet(false);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to commit batch unit of work.", e);
+        }
     }
 
 
@@ -146,6 +216,13 @@ public class CassandraDatabaseSession implements DatabaseSession
         }
         this.statements.clear();
         this.activeUnitOfWork.getAndSet(false);
+    }
+
+
+    @Override
+    public List<DatabaseActivity> getActivity()
+    {
+        return Collections.unmodifiableList(this.activities);
     }
 
 
@@ -289,21 +366,23 @@ public class CassandraDatabaseSession implements DatabaseSession
             {
                 throw new NormandraException("No column values found - cannot delete entity.");
             }
-            if (this.activeUnitOfWork.get())
+            final RegularStatement batch;
+            if (deletes.size() == 1)
             {
-                this.statements.addAll(deletes);
+                batch = deletes.get(0);
             }
             else
             {
-                if (deletes.size() == 1)
-                {
-                    this.session.execute(deletes.get(0));
-                }
-                else
-                {
-                    final RegularStatement[] statements = deletes.toArray(new RegularStatement[deletes.size()]);
-                    this.session.execute(QueryBuilder.batch(statements));
-                }
+                final RegularStatement[] statements = deletes.toArray(new RegularStatement[deletes.size()]);
+                batch = QueryBuilder.batch(statements);
+            }
+            if (this.activeUnitOfWork.get())
+            {
+                this.statements.add(batch);
+            }
+            else
+            {
+                this.executeSync(batch, DatabaseActivity.Type.DELETE);
             }
         }
         catch (final Exception e)
@@ -369,8 +448,9 @@ public class CassandraDatabaseSession implements DatabaseSession
                                 statement = statement.value(column.getName(), value);
                                 hasValue = true;
                             }
-                            else
+                            else if (!column.isPrimaryKey())
                             {
+                                boolean hasWhere = false;
                                 final Delete delete = QueryBuilder.delete(column.getName()).from(this.keyspaceName, table.getName());
                                 for (final ColumnMeta key : table.getPrimaryKeys())
                                 {
@@ -379,10 +459,13 @@ public class CassandraDatabaseSession implements DatabaseSession
                                     if (keyValue != null)
                                     {
                                         delete.where(QueryBuilder.eq(key.getName(), keyValue));
+                                        hasWhere = true;
                                     }
-
                                 }
-                                deletes.add(delete);
+                                if (hasWhere)
+                                {
+                                    deletes.add(delete);
+                                }
                             }
                         }
                     }
@@ -439,42 +522,48 @@ public class CassandraDatabaseSession implements DatabaseSession
                                 statement = statement.value(column.getName(), value);
                                 inserts.add(statement);
                             }
-                            else
+                            else if (!column.isPrimaryKey())
                             {
+                                boolean hasWhere = false;
                                 final Delete delete = QueryBuilder.delete(column.getName()).from(this.keyspaceName, table.getName());
                                 for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
                                 {
                                     delete.where(QueryBuilder.eq(entry.getKey().getName(), entry.getValue()));
+                                    hasWhere = true;
                                 }
-                                deletes.add(delete);
+                                if (hasWhere)
+                                {
+                                    deletes.add(delete);
+                                }
                             }
                         }
                     }
                 }
             }
-            if (inserts.isEmpty())
+            final List<RegularStatement> operations = new ArrayList<>(inserts.size() + deletes.size());
+            operations.addAll(inserts);
+            operations.addAll(deletes);
+            if (operations.isEmpty())
             {
-                throw new NormandraException("No column values found - cannot save empty entity.");
+                throw new IllegalStateException("No operations or columns identify for update - cannot save empty entity.");
             }
-            if (this.activeUnitOfWork.get())
+            final RegularStatement batch;
+            if (operations.size() == 1)
             {
-                this.statements.addAll(inserts);
-                this.statements.addAll(deletes);
+                batch = operations.get(0);
             }
             else
             {
-                if (inserts.size() == 1)
-                {
-                    this.session.execute(inserts.get(0));
-                }
-                else
-                {
-                    final List<RegularStatement> batch = new ArrayList<>(inserts.size() + deletes.size());
-                    batch.addAll(inserts);
-                    batch.addAll(deletes);
-                    final RegularStatement[] statements = batch.toArray(new RegularStatement[batch.size()]);
-                    this.session.execute(QueryBuilder.batch(statements));
-                }
+                final RegularStatement[] statements = operations.toArray(new RegularStatement[operations.size()]);
+                batch = QueryBuilder.batch(statements);
+            }
+            if (this.activeUnitOfWork.get())
+            {
+                this.statements.add(batch);
+            }
+            else
+            {
+                this.executeSync(batch, DatabaseActivity.Type.UPDATE);
             }
             this.cache.put(meta, element);
         }

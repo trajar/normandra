@@ -5,6 +5,11 @@ import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseConstruction;
 import org.normandra.DatabaseFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * cassandra database factory
  * User: bowen
@@ -55,7 +60,20 @@ public class CassandraDatabaseFactory implements DatabaseFactory
     @Override
     public CassandraDatabase create()
     {
-        return new CassandraDatabase(this.keyspaceName, this.buildCluster(), this.mode);
+        final Cluster cluster = this.buildCluster();
+        final AtomicInteger counter = new AtomicInteger();
+        final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactory()
+        {
+            @Override
+            public Thread newThread(final Runnable r)
+            {
+                final Thread thread = new Thread(r);
+                thread.setDaemon(true);
+                thread.setName("CassandraWorker-" + counter.incrementAndGet());
+                return thread;
+            }
+        });
+        return new CassandraDatabase(this.keyspaceName, cluster, this.mode, executor);
     }
 
 

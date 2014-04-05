@@ -1,6 +1,9 @@
 package org.normandra;
 
+import org.normandra.log.DatabaseActivity;
 import org.normandra.meta.EntityMeta;
+
+import java.util.List;
 
 /**
  * a database session
@@ -44,4 +47,9 @@ public interface DatabaseSession extends EntitySession
      * rollback unit of work, clearing stored/batched operations
      */
     void rollbackWork() throws NormandraException;
+
+    /**
+     * provides a set of activity from this session
+     */
+    List<DatabaseActivity> getActivity();
 }

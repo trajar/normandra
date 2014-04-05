@@ -8,6 +8,7 @@ import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHolder;
+import org.normandra.log.DatabaseActivity;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -71,11 +73,30 @@ public class CassandraEntityQuery
         try
         {
             // pull primary tables necessary
-            final Map<TableMeta, Row> rows = new TreeMap<>();
-            final Map<ColumnMeta, Object> data = new TreeMap<>();
+            final Map<TableMeta, Future<ResultSet>> primaryFutures = new TreeMap<>();
+            final Map<TableMeta, Future<ResultSet>> secondaryFutures = new TreeMap<>();
             for (final TableMeta table : meta.getPrimaryTables())
             {
-                final ResultSet results = this.buildEagerQuery(meta, table, key);
+                final Future<ResultSet> future = this.buildEagerQuery(meta, table, key);
+                if (future != null)
+                {
+                    primaryFutures.put(table, future);
+                }
+            }
+            for (final TableMeta table : meta.getSecondaryTables())
+            {
+                final Future<ResultSet> future = this.buildEagerQuery(meta, table, key);
+                if (future != null)
+                {
+                    secondaryFutures.put(table, future);
+                }
+            }
+            final Map<TableMeta, Row> rows = new TreeMap<>();
+            final Map<ColumnMeta, Object> data = new TreeMap<>();
+            for (final Map.Entry<TableMeta, Future<ResultSet>> entry : primaryFutures.entrySet())
+            {
+                final TableMeta table = entry.getKey();
+                final ResultSet results = entry.getValue().get();
                 final Row row = results != null ? results.one() : null;
                 if (row != null)
                 {
@@ -106,9 +127,10 @@ public class CassandraEntityQuery
             this.cache.put(entity, instance);
 
             // now pull secondary tables
-            for (final TableMeta table : meta.getSecondaryTables())
+            for (final Map.Entry<TableMeta, Future<ResultSet>> entry : secondaryFutures.entrySet())
             {
-                final ResultSet results = this.buildEagerQuery(meta, table, key);
+                final TableMeta table = entry.getKey();
+                final ResultSet results = entry.getValue().get();
                 if (results != null)
                 {
                     CassandraUtils.updateInstance(entity, instance, table, results, this.session);
@@ -172,10 +194,20 @@ public class CassandraEntityQuery
         try
         {
             // query each table as necessary
-            final Map<Object, KeyContext> keymap = new HashMap<>(keys.length);
+            final Map<TableMeta, Future<ResultSet>> primaryFutures = new TreeMap<>();
             for (final TableMeta table : meta.getPrimaryTables())
             {
-                final ResultSet results = this.buildEagerQuery(meta, table, keys);
+                final Future<ResultSet> future = this.buildEagerQuery(meta, table, keys);
+                if (future != null)
+                {
+                    primaryFutures.put(table, future);
+                }
+            }
+            final Map<Object, KeyContext> keymap = new HashMap<>(keys.length);
+            for (final Map.Entry<TableMeta, Future<ResultSet>> entry : primaryFutures.entrySet())
+            {
+                final TableMeta table = entry.getKey();
+                final ResultSet results = entry.getValue().get();
                 if (results != null)
                 {
                     for (final Row row : results)
@@ -185,9 +217,9 @@ public class CassandraEntityQuery
                         if (entity != null)
                         {
                             final Map<String, Object> dataByName = new HashMap<>(data.size());
-                            for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
+                            for (final Map.Entry<ColumnMeta, Object> pair : data.entrySet())
                             {
-                                dataByName.put(entry.getKey().getName(), entry.getValue());
+                                dataByName.put(pair.getKey().getName(), pair.getValue());
                             }
                             final Object key = entity.getId().toKey(dataByName);
                             if (key != null)
@@ -231,7 +263,7 @@ public class CassandraEntityQuery
     }
 
 
-    private ResultSet buildEagerQuery(final EntityContext meta, final TableMeta table, final Object... keys) throws NormandraException
+    private Future<ResultSet> buildEagerQuery(final EntityContext meta, final TableMeta table, final Object... keys) throws NormandraException
     {
         // get columns to query
         final Set<ColumnMeta> columns = new ArraySet<>(meta.getColumns());
@@ -304,8 +336,8 @@ public class CassandraEntityQuery
             return null;
         }
 
-        // add results
-        return this.session.getSession().execute(statement);
+        // query results
+        return this.session.executeAsync(statement, DatabaseActivity.Type.SELECT);
     }
 
 

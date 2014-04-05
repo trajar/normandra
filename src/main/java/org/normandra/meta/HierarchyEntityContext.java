@@ -1,5 +1,6 @@
 package org.normandra.meta;
 
+import org.apache.commons.lang3.StringUtils;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.IdAccessor;
 import org.normandra.util.ArraySet;
@@ -155,6 +156,13 @@ public class HierarchyEntityContext implements EntityContext
             }
         }
         return null;
+    }
+
+
+    @Override
+    public String toString()
+    {
+        return StringUtils.join(this.entities, ",");
     }
 
 

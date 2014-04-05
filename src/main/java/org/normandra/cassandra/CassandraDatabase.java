@@ -30,10 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
 
 /**
  * a cassandra database
- * <p/>
+ * <p>
  * User: bowen
  * Date: 8/31/13
  */
@@ -53,10 +54,12 @@ public class CassandraDatabase implements Database, SessionAccessor
 
     private final DatabaseConstruction constructionMode;
 
+    private final ExecutorService executor;
+
     private Session session;
 
 
-    public CassandraDatabase(final String keyspace, final Cluster cluster, final DatabaseConstruction mode)
+    public CassandraDatabase(final String keyspace, final Cluster cluster, final DatabaseConstruction mode, final ExecutorService executor)
     {
         if (null == keyspace)
         {
@@ -70,16 +73,21 @@ public class CassandraDatabase implements Database, SessionAccessor
         {
             throw new NullArgumentException("mode");
         }
+        if (null == executor)
+        {
+            throw new NullArgumentException("executor");
+        }
         this.keyspaceName = keyspace;
         this.cluster = cluster;
         this.constructionMode = mode;
+        this.executor = executor;
     }
 
 
     @Override
     public CassandraDatabaseSession createSession() throws NormandraException
     {
-        return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession());
+        return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession(), this.executor);
     }
 
 
@@ -121,7 +129,7 @@ public class CassandraDatabase implements Database, SessionAccessor
                 final String type = generator.generator();
                 String tableName = "id_generator";
                 String keyColumn = "id";
-                String keyValue = entity.getTables().size() == 1  ? entity.getTables().iterator().next().getName() : entity.getName();
+                String keyValue = entity.getTables().size() == 1 ? entity.getTables().iterator().next().getName() : entity.getName();
                 String valueColumn = "value";
                 for (final TableGenerator table : parser.findAnnotations(entityType, TableGenerator.class))
                 {
@@ -273,6 +281,7 @@ public class CassandraDatabase implements Database, SessionAccessor
             this.session = null;
         }
         this.cluster.close();
+        this.executor.shutdownNow();
     }
 
 
