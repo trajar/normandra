@@ -261,7 +261,7 @@ public class CassandraDatabaseSession implements DatabaseSession
                 return false;
             }
 
-            final ResultSet results = this.session.execute(statement);
+            final ResultSet results = this.executeSync(statement, DatabaseActivity.Type.SELECT);
             if (null == results)
             {
                 return false;
