@@ -3,7 +3,7 @@ package org.normandra.log;
 import java.util.Comparator;
 
 /**
- * a database activity comparator
+ * a database listActivity comparator
  * <p>
  * User: bowen
  * Date: 4/4/14

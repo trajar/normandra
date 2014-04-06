@@ -160,6 +160,23 @@ public class HierarchyEntityContext implements EntityContext
 
 
     @Override
+    public TableMeta findTable(final String name)
+    {
+        for (final EntityMeta entity : this.entities)
+        {
+            for (final TableMeta table : entity)
+            {
+                if (table.getName().equalsIgnoreCase(name))
+                {
+                    return table;
+                }
+            }
+        }
+        return null;
+    }
+
+
+    @Override
     public String toString()
     {
         return StringUtils.join(this.entities, ",");

@@ -2,7 +2,6 @@ package org.normandra.cassandra;
 
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ClassLoaderObjectInputStream;
@@ -40,72 +39,22 @@ import java.util.UUID;
  */
 public class CassandraUtils
 {
-    public static boolean updateInstance(final EntityMeta meta, final Object instance, final Map<TableMeta, Row> data, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
+    public static boolean updateInstance(final EntityMeta meta, final Object instance, final Map<ColumnMeta, Object> data, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
     {
         if (null == data || data.isEmpty())
         {
             return false;
         }
         boolean updated = false;
-        for (final Map.Entry<TableMeta, Row> entry : data.entrySet())
+        for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
         {
-            final TableMeta table = entry.getKey();
-            final Row row = entry.getValue();
-            if (updateInstance(meta, instance, table, row, session))
-            {
-                updated = true;
-            }
-        }
-        return updated;
-    }
-
-
-    public static boolean updateInstance(final EntityMeta meta, final Object instance, final TableMeta table, final ResultSet results, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
-    {
-        if (null == results)
-        {
-            return false;
-        }
-        final List<Row> rows = results.all();
-        if (null == rows || rows.isEmpty())
-        {
-            return false;
-        }
-        boolean updated = false;
-        for (final ColumnDefinitions.Definition def : results.getColumnDefinitions().asList())
-        {
-            final String columnName = def.getName();
-            final ColumnMeta column = table.getColumn(columnName);
-            final ColumnAccessor accessor = meta.getAccessor(columnName);
+            final ColumnMeta column = entry.getKey();
+            final ColumnAccessor accessor = meta.getAccessor(column);
             if (accessor != null)
             {
-                final Object value = CassandraUtils.unpackValue(rows, columnName, column);
-                final DataHolder data = new BasicDataHolder(value);
-                accessor.setValue(instance, data, session);
-                updated = true;
-            }
-        }
-        return updated;
-    }
-
-
-    public static boolean updateInstance(final EntityMeta meta, final Object instance, final TableMeta table, final Row row, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
-    {
-        if (null == row)
-        {
-            return false;
-        }
-        boolean updated = false;
-        for (final ColumnDefinitions.Definition def : row.getColumnDefinitions().asList())
-        {
-            final String columnName = def.getName();
-            final ColumnMeta column = table.getColumn(columnName);
-            final ColumnAccessor accessor = meta.getAccessor(columnName);
-            if (accessor != null)
-            {
-                final Object value = CassandraUtils.unpackValue(row, columnName, column);
-                final DataHolder data = new BasicDataHolder(value);
-                accessor.setValue(instance, data, session);
+                final Object value = entry.getValue();
+                final DataHolder placeholder = new BasicDataHolder(value);
+                accessor.setValue(instance, placeholder, session);
                 updated = true;
             }
         }

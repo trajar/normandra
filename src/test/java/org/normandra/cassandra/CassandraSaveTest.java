@@ -85,27 +85,27 @@ public class CassandraSaveTest extends BaseCassandraTest
         final SimpleEntity entity = new SimpleEntity("test", Arrays.asList("foo", "bar"));
         this.session.save(meta, entity);
         Assert.assertEquals(1, entity.getId());
-        Assert.assertEquals(1, this.session.getActivity().size());
+        Assert.assertEquals(1, this.session.listActivity().size());
 
         Assert.assertFalse(this.session.exists(meta, 0L));
         Assert.assertTrue(this.session.exists(meta, 1L));
         Assert.assertTrue(this.session.exists(meta, 1));
-        Assert.assertEquals(4, this.session.getActivity().size());
+        Assert.assertEquals(4, this.session.listActivity().size());
 
         final SimpleEntity notfound = (SimpleEntity) this.session.get(meta, 0);
         Assert.assertNull(notfound);
-        Assert.assertEquals(5, this.session.getActivity().size());
+        Assert.assertEquals(5, this.session.listActivity().size());
         final SimpleEntity existing = (SimpleEntity) this.session.get(meta, 1);
         Assert.assertNotNull(existing);
         Assert.assertEquals(1, existing.getId());
-        Assert.assertEquals(6, this.session.getActivity().size());
+        Assert.assertEquals(6, this.session.listActivity().size());
 
         this.session.delete(meta, existing);
-        Assert.assertEquals(7, this.session.getActivity().size());
+        Assert.assertEquals(7, this.session.listActivity().size());
         Assert.assertFalse(this.session.exists(meta, 1));
-        Assert.assertEquals(8, this.session.getActivity().size());
+        Assert.assertEquals(8, this.session.listActivity().size());
         Assert.assertNull(this.session.get(meta, 1));
-        Assert.assertEquals(9, this.session.getActivity().size());
+        Assert.assertEquals(9, this.session.listActivity().size());
     }
 
 

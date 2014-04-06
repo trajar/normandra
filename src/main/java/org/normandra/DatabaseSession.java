@@ -1,13 +1,15 @@
 package org.normandra;
 
 import org.normandra.log.DatabaseActivity;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * a database session
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/1/14
  */
@@ -34,6 +36,11 @@ public interface DatabaseSession extends EntitySession
     void delete(EntityMeta meta, Object element) throws NormandraException;
 
     /**
+     * query database using string with mapped parameters
+     */
+    DatabaseQuery query(EntityContext meta, String query, Map<String, Object> parameters) throws NormandraException;
+
+    /**
      * being unit of work
      */
     void beginWork() throws NormandraException;
@@ -49,7 +56,7 @@ public interface DatabaseSession extends EntitySession
     void rollbackWork() throws NormandraException;
 
     /**
-     * provides a set of activity from this session
+     * provides a set of listActivity from this session
      */
-    List<DatabaseActivity> getActivity();
+    List<DatabaseActivity> listActivity();
 }

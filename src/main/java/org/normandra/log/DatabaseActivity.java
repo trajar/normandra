@@ -3,7 +3,7 @@ package org.normandra.log;
 import java.util.Date;
 
 /**
- * an instance of database activity
+ * an instance of database listActivity
  * <p>
  * User: bowen
  * Date: 4/4/14

@@ -4,22 +4,18 @@ import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import org.normandra.log.DatabaseActivity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * a cassandra database activity, backed by a cql3 statement
+ * a cassandra database listActivity, backed by a cql3 statement
  * <p>
  * User: bowen
  * Date: 4/4/14
  */
 public class CassandraDatabaseActivity implements DatabaseActivity
 {
-    private static final Logger logger = LoggerFactory.getLogger(CassandraDatabaseActivity.class);
-
     private final RegularStatement statement;
 
     private final Session session;

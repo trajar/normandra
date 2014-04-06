@@ -89,6 +89,20 @@ public class SingleEntityContext implements EntityContext
 
 
     @Override
+    public TableMeta findTable(final String name)
+    {
+        for (final TableMeta table : this.entity)
+        {
+            if (table.getName().equalsIgnoreCase(name))
+            {
+                return table;
+            }
+        }
+        return null;
+    }
+
+
+    @Override
     public Set<TableMeta> getTables()
     {
         return this.entity.getTables();
@@ -126,11 +140,13 @@ public class SingleEntityContext implements EntityContext
         return Collections.unmodifiableSet(list);
     }
 
+
     @Override
     public String toString()
     {
         return this.entity.toString();
     }
+
 
     @Override
     public boolean equals(Object o)

@@ -5,6 +5,7 @@ import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
@@ -12,6 +13,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.querybuilder.Update;
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.DatabaseQuery;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
@@ -220,7 +222,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public List<DatabaseActivity> getActivity()
+    public List<DatabaseActivity> listActivity()
     {
         return Collections.unmodifiableList(this.activities);
     }
@@ -389,6 +391,14 @@ public class CassandraDatabaseSession implements DatabaseSession
         {
             throw new NormandraException("Unable to delete entity [" + element + "] of type [" + meta + "].", e);
         }
+    }
+
+
+    @Override
+    public DatabaseQuery query(final EntityContext meta, final String query, final Map<String, Object> parameters) throws NormandraException
+    {
+        final RegularStatement statement = new SimpleStatement(query);
+        return new CassandraDatabaseQuery<>(meta, statement, this);
     }
 
 

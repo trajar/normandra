@@ -22,4 +22,5 @@ public interface EntityContext
     Set<ColumnMeta> getPrimaryKeys();
     Set<ColumnMeta> getColumns();
     EntityMeta findEntity(Map<ColumnMeta, Object> data);
+    TableMeta findTable(String name);
 }
