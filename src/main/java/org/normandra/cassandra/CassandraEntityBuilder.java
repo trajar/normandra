@@ -76,7 +76,7 @@ public class CassandraEntityBuilder
     }
 
 
-    private Object build(final EntityMeta entity, final Map<ColumnMeta, Object> data) throws IllegalAccessException, InstantiationException, NormandraException, IOException, ClassNotFoundException
+    public Object build(final EntityMeta entity, final Map<ColumnMeta, Object> data) throws IllegalAccessException, InstantiationException, NormandraException, IOException, ClassNotFoundException
     {
         if (null == data || data.isEmpty())
         {

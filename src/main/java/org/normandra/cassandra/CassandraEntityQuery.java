@@ -10,7 +10,6 @@ import org.normandra.log.DatabaseActivity;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 import org.slf4j.Logger;
@@ -205,7 +204,7 @@ public class CassandraEntityQuery
                     final TableMeta table = ctx.entity.getTable(row.getColumnDefinitions().getTable(0));
                     data.putAll(CassandraUtils.unpackValues(table, row));
                 }
-                final Object instance = new CassandraEntityBuilder(this.session).build(new SingleEntityContext(ctx.entity), data);
+                final Object instance = new CassandraEntityBuilder(this.session).build(ctx.entity, data);
                 if (instance != null)
                 {
                     this.cache.put(ctx.entity, instance);
