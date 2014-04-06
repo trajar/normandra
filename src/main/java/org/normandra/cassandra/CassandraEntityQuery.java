@@ -6,7 +6,6 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
-import org.normandra.data.ColumnAccessor;
 import org.normandra.log.DatabaseActivity;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
@@ -107,22 +106,6 @@ public class CassandraEntityQuery
             if (null == instance)
             {
                 return null;
-            }
-
-            // setup lazy loaded properties
-            for (final TableMeta table : meta.getTables())
-            {
-                for (final ColumnMeta column : table)
-                {
-                    if (column.isLazyLoaded())
-                    {
-                        final ColumnAccessor accessor = entity.getAccessor(column);
-                        if (accessor != null)
-                        {
-                            accessor.setValue(instance, new LazyDataHolder(this.session, entity, table, column, key), this.session);
-                        }
-                    }
-                }
             }
 
             // done
