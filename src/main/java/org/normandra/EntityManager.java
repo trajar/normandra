@@ -62,6 +62,30 @@ public class EntityManager
     }
 
 
+    public <T> DatabaseQuery<T> query(final Class<T> clazz, final String query, final Map<String, Object> parameters) throws NormandraException
+    {
+        if (null == clazz)
+        {
+            throw new NullArgumentException("element");
+        }
+
+        final List<EntityMeta> list = this.findMeta(clazz);
+        if (list.isEmpty())
+        {
+            return null;
+        }
+
+        if (list.size() == 1)
+        {
+            return this.database.query(new SingleEntityContext(list.get(0)), query, parameters);
+        }
+        else
+        {
+            return this.database.query(new HierarchyEntityContext(list), query, parameters);
+        }
+    }
+
+
     public <T> boolean exists(final Class<T> clazz, final Object key) throws NormandraException
     {
         if (null == clazz)

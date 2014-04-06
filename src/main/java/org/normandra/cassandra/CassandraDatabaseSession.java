@@ -45,6 +45,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * a cassandra database session
@@ -397,8 +400,49 @@ public class CassandraDatabaseSession implements DatabaseSession
     @Override
     public DatabaseQuery query(final EntityContext meta, final String query, final Map<String, Object> parameters) throws NormandraException
     {
-        final RegularStatement statement = new SimpleStatement(query);
-        return new CassandraDatabaseQuery<>(meta, statement, this);
+        if (parameters.isEmpty())
+        {
+            final RegularStatement statement = new SimpleStatement(query);
+            return new CassandraDatabaseQuery<>(meta, statement, this);
+        }
+
+        try
+        {
+            final StringBuilder buffer = new StringBuilder();
+            final Matcher matcher = Pattern.compile(":\\w+").matcher(query);
+            int last = 0;
+            while (matcher.find())
+            {
+                final int start = matcher.start();
+                final int end = matcher.end();
+                last = end;
+                if (buffer.length() <= 0)
+                {
+                    buffer.append(query.substring(0, start));
+                }
+                String key = matcher.group();
+                key = key.substring(1);
+                final Object value = parameters.get(key);
+                if (value != null)
+                {
+                    buffer.append(QueryBuilder.raw(value.toString()));
+                }
+                else
+                {
+                    buffer.append("null");
+                }
+            }
+            if (last > 0 && last < query.length() - 1)
+            {
+                buffer.append(query.substring(last + 1));
+            }
+            final RegularStatement statement = new SimpleStatement(buffer.toString());
+            return new CassandraDatabaseQuery<>(meta, statement, this);
+        }
+        catch (final PatternSyntaxException e)
+        {
+            throw new NormandraException("Unable to parse query.", e);
+        }
     }
 
 
