@@ -106,6 +106,7 @@ public class CassandraEntityQuery
             {
                 return null;
             }
+            this.cache.put(entity, instance);
 
             // done
             return instance;
