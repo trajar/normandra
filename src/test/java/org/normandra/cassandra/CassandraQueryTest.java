@@ -65,10 +65,17 @@ public class CassandraQueryTest extends BaseCassandraTest
 
         final Map<String, Object> params = new TreeMap<>();
         params.put("id", dog.getId());
-        final DatabaseQuery<DogEntity> query = this.manager.query(DogEntity.class, "select * from animal where id = :id", params);
-        Assert.assertNotNull(query);
-        final Collection<?> elements = query.list();
-        Assert.assertNotNull(query);
+
+        final DatabaseQuery<DogEntity> queryByTable = this.manager.query(DogEntity.class, "select * from animal where id = :id", params);
+        Assert.assertNotNull(queryByTable);
+        Collection<?> elements = queryByTable.list();
+        Assert.assertNotNull(queryByTable);
+        Assert.assertEquals(1, elements.size());
+
+        final DatabaseQuery<DogEntity> queryByEntity = this.manager.query(DogEntity.class, "select from DogEntity where id = :id", params);
+        Assert.assertNotNull(queryByEntity);
+        elements = queryByEntity.list();
+        Assert.assertNotNull(queryByEntity);
         Assert.assertEquals(1, elements.size());
     }
 }
