@@ -38,7 +38,7 @@ public interface DatabaseSession extends EntitySession
     /**
      * query database using string with mapped parameters
      */
-    DatabaseQuery query(EntityContext meta, String query, Map<String, Object> parameters) throws NormandraException;
+    DatabaseQuery query(EntityContext meta, String name, Map<String, Object> parameters) throws NormandraException;
 
     /**
      * being unit of work

@@ -1,8 +1,8 @@
 package org.normandra.cassandra;
 
-import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Statement;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
@@ -27,14 +27,14 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
 
     private final EntityContext context;
 
-    private final RegularStatement statement;
+    private final Statement statement;
 
     private ResultSet results;
 
     private final List<Row> rows = new ArrayList<>();
 
 
-    public CassandraDatabaseQuery(final EntityContext context, final RegularStatement statement, final CassandraDatabaseSession session)
+    public CassandraDatabaseQuery(final EntityContext context, final Statement statement, final CassandraDatabaseSession session)
     {
         if (null == context)
         {

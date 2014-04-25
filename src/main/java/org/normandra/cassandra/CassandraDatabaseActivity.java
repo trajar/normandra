@@ -1,8 +1,11 @@
 package org.normandra.cassandra;
 
+import com.datastax.driver.core.BatchStatement;
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
 import org.normandra.log.DatabaseActivity;
 
 import java.util.Date;
@@ -16,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class CassandraDatabaseActivity implements DatabaseActivity
 {
-    private final RegularStatement statement;
+    private final Statement statement;
 
     private final Session session;
 
@@ -31,7 +34,7 @@ public class CassandraDatabaseActivity implements DatabaseActivity
     private Date date;
 
 
-    public CassandraDatabaseActivity(final RegularStatement statement, final Session session, final Type type)
+    public CassandraDatabaseActivity(final Statement statement, final Session session, final Type type)
     {
         this.statement = statement;
         this.session = session;
@@ -63,7 +66,22 @@ public class CassandraDatabaseActivity implements DatabaseActivity
     @Override
     public CharSequence getInformation()
     {
-        return this.statement.getQueryString();
+        if (this.statement instanceof RegularStatement)
+        {
+            return ((RegularStatement) this.statement).getQueryString();
+        }
+        else if (this.statement instanceof BoundStatement)
+        {
+            return ((BoundStatement) this.statement).preparedStatement().getQueryString();
+        }
+        else if (this.statement instanceof BatchStatement)
+        {
+            return ((BatchStatement) this.statement).getStatements().toString();
+        }
+        else
+        {
+            return this.statement.toString();
+        }
     }
 
 

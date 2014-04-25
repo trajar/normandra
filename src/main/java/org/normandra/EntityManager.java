@@ -62,11 +62,11 @@ public class EntityManager
     }
 
 
-    public <T> DatabaseQuery<T> query(final Class<T> clazz, final String query, final Map<String, Object> parameters) throws NormandraException
+    public <T> DatabaseQuery<T> query(final Class<T> clazz, final String name, final Map<String, Object> parameters) throws NormandraException
     {
         if (null == clazz)
         {
-            throw new NullArgumentException("element");
+            throw new NullArgumentException("type");
         }
 
         final List<EntityMeta> list = this.findMeta(clazz);
@@ -77,11 +77,11 @@ public class EntityManager
 
         if (list.size() == 1)
         {
-            return this.database.query(new SingleEntityContext(list.get(0)), query, parameters);
+            return this.database.query(new SingleEntityContext(list.get(0)), name, parameters);
         }
         else
         {
-            return this.database.query(new HierarchyEntityContext(list), query, parameters);
+            return this.database.query(new HierarchyEntityContext(list), name, parameters);
         }
     }
 

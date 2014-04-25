@@ -43,7 +43,7 @@ public class CassandraQueryParser<T>
             return null;
         }
 
-        final String tableQuery = this.fixQuery(jpaQuery);
+        final String tableQuery = prepare(this.entity, jpaQuery);
         if (parameters.isEmpty())
         {
             final RegularStatement statement = new SimpleStatement(tableQuery);
@@ -90,23 +90,23 @@ public class CassandraQueryParser<T>
     }
 
 
-    private String fixQuery(final String query) throws NormandraException
+    public static String prepare(final EntityContext entity, final String query) throws NormandraException
     {
         if (null == query || query.isEmpty())
         {
             return "";
         }
         String result = query;
-        result = this.replaceEntityNames(result);
-        result = this.ensureColumnNames(result);
+        result = replaceEntityNames(entity, result);
+        result = ensureColumnNames(result);
         return result;
     }
 
 
-    private String replaceEntityNames(final String query) throws NormandraException
+    private static String replaceEntityNames(final EntityContext entity, final String query) throws NormandraException
     {
         String result = query;
-        for (final EntityMeta meta : this.entity.getEntities())
+        for (final EntityMeta meta : entity.getEntities())
         {
             final List<String> tables = new ArrayList<>(2);
             for (final TableMeta table : meta)
@@ -118,7 +118,7 @@ public class CassandraQueryParser<T>
             }
             if (tables.size() > 1)
             {
-                throw new NormandraException("Cassandra CQL3 queries only support a table table.");
+                throw new NormandraException("CQL3 queries only support a table table.");
             }
             result = result.replace(meta.getName(), tables.get(0));
         }
@@ -126,7 +126,7 @@ public class CassandraQueryParser<T>
     }
 
 
-    private String ensureColumnNames(final String query) throws NormandraException
+    private static String ensureColumnNames(final String query) throws NormandraException
     {
         final String upperCase = query.toUpperCase();
         final Matcher selectMatcher = Pattern.compile("SELECT").matcher(upperCase);

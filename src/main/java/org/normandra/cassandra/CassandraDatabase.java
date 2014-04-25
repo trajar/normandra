@@ -4,6 +4,7 @@ package org.normandra.cassandra;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
@@ -16,6 +17,7 @@ import org.normandra.NormandraException;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DatabaseMeta;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 import org.slf4j.Logger;
@@ -30,7 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * a cassandra database
@@ -55,6 +61,8 @@ public class CassandraDatabase implements Database, SessionAccessor
     private final DatabaseConstruction constructionMode;
 
     private final ExecutorService executor;
+
+    private final Map<String, CassandraPreparedStatement> preparedStatements = new ConcurrentHashMap<>();
 
     private Session session;
 
@@ -87,7 +95,76 @@ public class CassandraDatabase implements Database, SessionAccessor
     @Override
     public CassandraDatabaseSession createSession()
     {
-        return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession(), this.executor);
+        return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession(), this.preparedStatements, this.executor);
+    }
+
+
+    @Override
+    public boolean registerQuery(final EntityContext entity, final String name, final String query) throws NormandraException
+    {
+        if (null == name || name.isEmpty())
+        {
+            return false;
+        }
+        if (null == query || query.isEmpty())
+        {
+            return false;
+        }
+
+        final String tableQuery = CassandraQueryParser.prepare(entity, query);
+        if (null == tableQuery || tableQuery.isEmpty())
+        {
+            return false;
+        }
+
+        try
+        {
+            final List<String> list = new ArrayList<>();
+            final StringBuilder buffer = new StringBuilder();
+            final Matcher matcher = Pattern.compile(":\\w+").matcher(tableQuery);
+            int last = 0;
+            while (matcher.find())
+            {
+                final int start = matcher.start();
+                final int end = matcher.end();
+                last = end;
+                if (buffer.length() <= 0)
+                {
+                    buffer.append(tableQuery.substring(0, start));
+                }
+                String key = matcher.group();
+                key = key.substring(1);
+                list.add(key);
+                buffer.append("?");
+            }
+            if (last > 0 && last < tableQuery.length() - 1)
+            {
+                buffer.append(tableQuery.substring(last + 1));
+            }
+
+            final PreparedStatement statement = this.ensureSession().prepare(buffer.toString());
+            if (null == statement)
+            {
+                return false;
+            }
+            this.preparedStatements.put(name, new CassandraPreparedStatement(statement, query, list));
+            return true;
+        }
+        catch (final PatternSyntaxException e)
+        {
+            throw new NormandraException("Unable to parse query.", e);
+        }
+    }
+
+
+    @Override
+    public boolean unregisterQuery(final String name) throws NormandraException
+    {
+        if (null == name || name.isEmpty())
+        {
+            return false;
+        }
+        return this.preparedStatements.remove(name) != null;
     }
 
 
@@ -281,6 +358,7 @@ public class CassandraDatabase implements Database, SessionAccessor
             this.session = null;
         }
         this.cluster.close();
+        this.preparedStatements.clear();
         this.executor.shutdownNow();
     }
 

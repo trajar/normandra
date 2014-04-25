@@ -5,6 +5,7 @@ import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
@@ -65,6 +66,8 @@ public class CassandraDatabaseSession implements DatabaseSession
 
     private final List<DatabaseActivity> activities = new CopyOnWriteArrayList<>();
 
+    private final Map<String, CassandraPreparedStatement> preparedStatements;
+
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     private final AtomicBoolean activeUnitOfWork = new AtomicBoolean(false);
@@ -72,7 +75,7 @@ public class CassandraDatabaseSession implements DatabaseSession
     private final Executor executor;
 
 
-    public CassandraDatabaseSession(final String keyspace, final Session session, final Executor executor)
+    public CassandraDatabaseSession(final String keyspace, final Session session, final Map<String, CassandraPreparedStatement> map, final Executor executor)
     {
         if (null == keyspace || keyspace.isEmpty())
         {
@@ -89,6 +92,7 @@ public class CassandraDatabaseSession implements DatabaseSession
         this.keyspaceName = keyspace;
         this.session = session;
         this.executor = executor;
+        this.preparedStatements = new TreeMap<>(map);
     }
 
 
@@ -119,7 +123,7 @@ public class CassandraDatabaseSession implements DatabaseSession
     }
 
 
-    protected ResultSet executeSync(final RegularStatement statement, final DatabaseActivity.Type type)
+    protected ResultSet executeSync(final Statement statement, final DatabaseActivity.Type type)
     {
         final CassandraDatabaseActivity activity = new CassandraDatabaseActivity(statement, this.session, type);
         this.activities.add(activity);
@@ -127,7 +131,7 @@ public class CassandraDatabaseSession implements DatabaseSession
     }
 
 
-    protected Future<ResultSet> executeAsync(final RegularStatement statement, final DatabaseActivity.Type type)
+    protected Future<ResultSet> executeAsync(final Statement statement, final DatabaseActivity.Type type)
     {
         final CassandraDatabaseActivity activity = new CassandraDatabaseActivity(statement, this.session, type);
         this.activities.add(activity);
@@ -394,9 +398,14 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public DatabaseQuery query(final EntityContext meta, final String query, final Map<String, Object> parameters) throws NormandraException
+    public DatabaseQuery query(final EntityContext meta, final String name, final Map<String, Object> parameters) throws NormandraException
     {
-        return new CassandraQueryParser(meta, this).parse(query, parameters);
+        final CassandraPreparedStatement prepared = this.preparedStatements.get(name);
+        if (null == prepared)
+        {
+            throw new NormandraException("Unable to locate query [" + name + "].");
+        }
+        return new CassandraDatabaseQuery<>(meta, prepared.bind(parameters), this);
     }
 
 

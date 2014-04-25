@@ -6,10 +6,16 @@ import org.normandra.cassandra.CassandraDatabaseFactory;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.HierarchyEntityContext;
+import org.normandra.meta.SingleEntityContext;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -179,9 +185,60 @@ public class EntityManagerFactory
     }
 
 
+    public <T> boolean registerQuery(final Class<T> clazz, final String name, final String query) throws NormandraException
+    {
+        if (null == clazz)
+        {
+            throw new NullArgumentException("type");
+        }
+
+        final List<EntityMeta> list = this.findMeta(clazz);
+        if (list.isEmpty())
+        {
+            return false;
+        }
+
+        if (list.size() == 1)
+        {
+            return this.database.registerQuery(new SingleEntityContext(list.get(0)), name, query);
+        }
+        else
+        {
+            return this.database.registerQuery(new HierarchyEntityContext(list), name, query);
+        }
+    }
+
+
+    public boolean unregisterQuery(final String name) throws NormandraException
+    {
+        return this.database.unregisterQuery(name);
+    }
+
+
     public void close()
     {
         this.database.close();
         this.classMap.clear();
+    }
+
+
+    private List<EntityMeta> findMeta(final Class<?> clazz)
+    {
+        final EntityMeta existing = this.classMap.get(clazz);
+        if (existing != null)
+        {
+            return Arrays.asList(existing);
+        }
+        final List<EntityMeta> list = new ArrayList<>();
+        for (final Map.Entry<Class, EntityMeta> entry : this.classMap.entrySet())
+        {
+            final Class<?> entityClass = entry.getKey();
+            final EntityMeta entityMeta = entry.getValue();
+            if (clazz.isAssignableFrom(entityClass))
+            {
+                list.add(entityMeta);
+            }
+        }
+        return Collections.unmodifiableList(list);
     }
 }
