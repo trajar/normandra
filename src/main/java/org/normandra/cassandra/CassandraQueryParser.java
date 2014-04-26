@@ -120,7 +120,14 @@ public class CassandraQueryParser<T>
             {
                 throw new NormandraException("CQL3 queries only support a table table.");
             }
-            result = result.replace(meta.getName(), tables.get(0));
+            final String table = tables.get(0);
+            result = result.replace(meta.getName(), table);
+            Class<?> parent = meta.getType().getSuperclass();
+            while (parent != null && !Object.class.equals(parent))
+            {
+                result = result.replace(parent.getSimpleName(), table);
+                parent = parent.getSuperclass();
+            }
         }
         return result;
     }

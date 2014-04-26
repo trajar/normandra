@@ -110,6 +110,10 @@ public class CassandraDatabase implements Database, SessionAccessor
         {
             return false;
         }
+        if(this.preparedStatements.containsKey(name))
+        {
+            return false;
+        }
 
         final String tableQuery = CassandraQueryParser.prepare(entity, query);
         if (null == tableQuery || tableQuery.isEmpty())

@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.normandra.DatabaseQuery;
 import org.normandra.EntityManager;
 import org.normandra.EntityManagerFactory;
+import org.normandra.entities.AnimalEntity;
 import org.normandra.entities.CatEntity;
 import org.normandra.entities.DogEntity;
 import org.normandra.entities.ZooEntity;
@@ -71,7 +72,13 @@ public class CassandraQueryTest extends BaseCassandraTest
 
         final DatabaseQuery<DogEntity> queryByTable = this.manager.query(DogEntity.class, "dog_by_id", params);
         Assert.assertNotNull(queryByTable);
-        final Collection<?> elements = queryByTable.list();
+        Collection<?> elements = queryByTable.list();
+        Assert.assertNotNull(queryByTable);
+        Assert.assertEquals(1, elements.size());
+
+        final DatabaseQuery<AnimalEntity> queryNamed = this.manager.query(AnimalEntity.class, "Animal.findByID", params);
+        Assert.assertNotNull(queryByTable);
+        elements = queryByTable.list();
         Assert.assertNotNull(queryByTable);
         Assert.assertEquals(1, elements.size());
     }

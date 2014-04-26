@@ -7,6 +7,7 @@ import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.HierarchyEntityContext;
+import org.normandra.meta.QueryMeta;
 import org.normandra.meta.SingleEntityContext;
 
 import java.util.ArrayList;
@@ -51,8 +52,8 @@ public class EntityManagerFactory
             final String keyspace = this.getParameter(CassandraDatabase.KEYSPACE, String.class, "normandra");
             final String hosts = this.getParameter(CassandraDatabase.HOSTS, String.class, CassandraDatabaseFactory.DEFAULT_HOST);
             final Integer port = this.getParameter(CassandraDatabase.PORT, Integer.class, CassandraDatabaseFactory.DEFAULT_PORT);
-            final DatabaseFactory factory = new CassandraDatabaseFactory(keyspace, hosts, port.intValue(), this.mode);
-            final Database database = factory.create();
+            final DatabaseFactory databaseFactory = new CassandraDatabaseFactory(keyspace, hosts, port.intValue(), this.mode);
+            final Database database = databaseFactory.create();
             if (null == database)
             {
                 return null;
@@ -67,8 +68,16 @@ public class EntityManagerFactory
                 throw new NormandraException("Unable to referesh database.", e);
             }
 
-            // success - create manager
-            return new EntityManagerFactory(database, meta);
+            // create manager, register queries
+            final EntityManagerFactory managerFactory = new EntityManagerFactory(database, meta);
+            for (final Class<?> clazz : this.classes)
+            {
+                for (final QueryMeta query : parser.getQueries(clazz))
+                {
+                    managerFactory.registerQuery(query.getEntity(), query.getName(), query.getQuery());
+                }
+            }
+            return managerFactory;
         }
 
 

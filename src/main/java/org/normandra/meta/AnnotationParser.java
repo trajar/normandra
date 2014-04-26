@@ -32,6 +32,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -41,6 +43,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -274,6 +277,36 @@ public class AnnotationParser
             }
         }
         return baseName;
+    }
+
+
+    public Collection<QueryMeta> getQueries(final Class<?> entityClass)
+    {
+        final EntityContext context = this.readContext(entityClass);
+        if (null == context)
+        {
+            return Collections.emptyList();
+        }
+        final Set<QueryMeta> result = new TreeSet<>();
+        for (final Class<?> clazz : this.getHierarchy(entityClass))
+        {
+            final List<NamedQuery> annotations = new ArrayList<>();
+            final NamedQueries queries = clazz.getAnnotation(NamedQueries.class);
+            if (queries != null)
+            {
+                annotations.addAll(Arrays.asList(queries.value()));
+            }
+            final NamedQuery query = clazz.getAnnotation(NamedQuery.class);
+            if (query != null)
+            {
+                annotations.add(query);
+            }
+            for (final NamedQuery annotation : annotations)
+            {
+                result.add(new QueryMeta(clazz, annotation.name(), annotation.query()));
+            }
+        }
+        return Collections.unmodifiableCollection(result);
     }
 
 
