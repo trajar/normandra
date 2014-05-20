@@ -73,7 +73,7 @@ public class CassandraSchemaTest extends BaseCassandraTest
         Assert.assertTrue(this.database.hasTable(table));
         Assert.assertTrue(this.database.hasColumn(table, "id"));
         Assert.assertFalse(this.database.hasColumn(table, "name"));
-        Assert.assertTrue(this.database.hasColumn(table, "name_colum"));
+        Assert.assertTrue(this.database.hasColumn(table, "name_column"));
         Assert.assertTrue(this.database.hasColumn(table, "values"));
         Assert.assertFalse(this.database.hasColumn(table, "foo"));
 
@@ -81,7 +81,7 @@ public class CassandraSchemaTest extends BaseCassandraTest
         this.database.refresh(meta);
         Assert.assertTrue(this.database.hasTable(table));
         Assert.assertTrue(this.database.hasColumn(table, "id"));
-        Assert.assertTrue(this.database.hasColumn(table, "name_colum"));
+        Assert.assertTrue(this.database.hasColumn(table, "name_column"));
         Assert.assertTrue(this.database.hasColumn(table, "values"));
     }
 

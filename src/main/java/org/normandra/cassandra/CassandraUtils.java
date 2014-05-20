@@ -5,14 +5,9 @@ import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ClassLoaderObjectInputStream;
-import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
-import org.normandra.data.BasicDataHolder;
-import org.normandra.data.ColumnAccessor;
-import org.normandra.data.DataHolder;
 import org.normandra.meta.CollectionMeta;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
@@ -33,35 +28,12 @@ import java.util.UUID;
 
 /**
  * cassandra utility methods
- * <p>
+ * <p/>
  * User: bowen
  * Date: 9/7/13
  */
 public class CassandraUtils
 {
-    public static boolean updateInstance(final EntityMeta meta, final Object instance, final Map<ColumnMeta, Object> data, final DatabaseSession session) throws IOException, ClassNotFoundException, NormandraException
-    {
-        if (null == data || data.isEmpty())
-        {
-            return false;
-        }
-        boolean updated = false;
-        for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
-        {
-            final ColumnMeta column = entry.getKey();
-            final ColumnAccessor accessor = meta.getAccessor(column);
-            if (accessor != null)
-            {
-                final Object value = entry.getValue();
-                final DataHolder placeholder = new BasicDataHolder(value);
-                accessor.setValue(instance, placeholder, session);
-                updated = true;
-            }
-        }
-        return updated;
-    }
-
-
     public static Map<ColumnMeta, Object> unpackValues(final TableMeta table, final Row row) throws IOException, ClassNotFoundException, NormandraException
     {
         if (null == row || null == table)

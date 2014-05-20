@@ -398,7 +398,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
 
     @Override
-    public DatabaseQuery query(final EntityContext meta, final String name, final Map<String, Object> parameters) throws NormandraException
+    public DatabaseQuery executeNamedQuery(final EntityContext meta, final String name, final Map<String, Object> parameters) throws NormandraException
     {
         final CassandraPreparedStatement prepared = this.preparedStatements.get(name);
         if (null == prepared)
@@ -406,6 +406,13 @@ public class CassandraDatabaseSession implements DatabaseSession
             throw new NormandraException("Unable to locate query [" + name + "].");
         }
         return new CassandraDatabaseQuery<>(meta, prepared.bind(parameters), this);
+    }
+
+
+    @Override
+    public DatabaseQuery executeDynamciQuery(final EntityContext meta, final String query, final Map<String, Object> parameters) throws NormandraException
+    {
+        return new CassandraQueryParser(meta, this).parse(query, parameters);
     }
 
 

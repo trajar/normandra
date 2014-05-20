@@ -77,11 +77,11 @@ public class EntityManager
 
         if (list.size() == 1)
         {
-            return this.database.query(new SingleEntityContext(list.get(0)), name, parameters);
+            return this.database.executeNamedQuery(new SingleEntityContext(list.get(0)), name, parameters);
         }
         else
         {
-            return this.database.query(new HierarchyEntityContext(list), name, parameters);
+            return this.database.executeNamedQuery(new HierarchyEntityContext(list), name, parameters);
         }
     }
 

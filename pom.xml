@@ -116,6 +116,22 @@
       <version>1.9.5</version>
       <scope>test</scope>
     </dependency>
+    <!-- orientdb -->
+    <dependency>
+      <groupId>com.orientechnologies</groupId>
+      <artifactId>orient-commons</artifactId>
+      <version>1.6</version>
+    </dependency>
+    <dependency>
+      <groupId>com.orientechnologies</groupId>
+      <artifactId>orientdb-core</artifactId>
+      <version>1.6</version>
+    </dependency>
+    <dependency>
+      <groupId>com.orientechnologies</groupId>
+      <artifactId>orientdb-client</artifactId>
+      <version>1.6</version>
+    </dependency>
     <!-- junit -->
     <dependency>
       <groupId>junit</groupId>
@@ -139,6 +155,22 @@
       <scope>runtime</scope>
     </dependency>
   </dependencies>
+
+  <!--
+  <repositories>
+    <repository>
+      <id>oss.sonatype.org</id>
+      <name>OrientDB Maven2 Repository</name>
+      <url>https://oss.sonatype.org/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  -->
 
   <build>
     <plugins>

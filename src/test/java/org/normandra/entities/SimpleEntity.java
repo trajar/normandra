@@ -25,7 +25,7 @@ public class SimpleEntity
     @GeneratedValue(generator = "id_gen", strategy = GenerationType.TABLE)
     private long id;
 
-    @Column(name = "name_colum")
+    @Column(name = "name_column")
     private String name;
 
     @ElementCollection
