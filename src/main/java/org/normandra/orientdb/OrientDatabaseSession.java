@@ -1,5 +1,6 @@
 package org.normandra.orientdb;
 
+import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -481,7 +482,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     }
 
 
-    protected final ORID findIdByKey(final EntityMeta meta, final Object key)
+    protected final ORID findIdByKey(final EntityMeta meta, final Object key) throws NormandraException
     {
         if (null == meta || null == key)
         {
@@ -502,7 +503,39 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             throw new IllegalStateException("Unable to locate orientdb index [" + indexName + "].");
         }
 
-        final OIdentifiable guid = (OIdentifiable) keyIdx.get(key);
+        final Map<String, Object> keys = meta.getId().fromKey(key);
+        if (keys.isEmpty())
+        {
+            return null;
+        }
+
+        final OIdentifiable guid;
+        final List<Object> packed = new ArrayList<>(keys.size());
+        for (final ColumnMeta column : new SingleEntityContext(meta).getPrimaryKeys())
+        {
+            Object value = keys.get(column.getName());
+            if (null == value)
+            {
+                value = keys.get(column.getProperty());
+            }
+            if (value != null)
+            {
+                packed.add(OrientUtils.packRaw(column, value));
+            }
+            else
+            {
+                packed.add(null);
+            }
+        }
+        if (packed.size() == 1)
+        {
+            guid = (OIdentifiable) keyIdx.get(packed.get(0));
+        }
+        else
+        {
+            guid = (OIdentifiable) keyIdx.get(new OCompositeKey(packed));
+        }
+
         final long end = System.currentTimeMillis();
         this.activities.add(new OrientIndexActivity(DatabaseActivity.Type.SELECT, indexName, key, new Date(), end - start));
         if (null == guid)

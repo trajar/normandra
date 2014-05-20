@@ -47,6 +47,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +66,7 @@ public class AnnotationParser
 
     private final List<Class> classes;
 
-    private final Map<Class, EntityMeta> entities = new HashMap<>();
+    private final Map<Class, EntityMeta> entities = new LinkedHashMap<>();
 
     private final Map<String, TableMeta> tables = new TreeMap<>();
 
@@ -109,7 +110,7 @@ public class AnnotationParser
             this.readEntity(clazz);
         }
         // ensure we read second pass
-        final TreeSet<EntityMeta> set = new TreeSet<>(this.entities.values());
+        final Set<EntityMeta> set = new TreeSet<>(this.entities.values());
         for (final EntityMeta entity : set)
         {
             this.readSecondPass(entity);
@@ -312,7 +313,7 @@ public class AnnotationParser
 
     public Map<Field, GeneratedValue> getGenerators(final Class<?> entityClass)
     {
-        final Map<Field, GeneratedValue> map = new HashMap<>();
+        final Map<Field, GeneratedValue> map = new LinkedHashMap<>();
         for (final Class<?> clazz : this.getHierarchy(entityClass))
         {
             for (final Field field : this.getFields(clazz))
@@ -557,7 +558,7 @@ public class AnnotationParser
             {
                 throw new IllegalStateException("Class [" + type + "] does not have Embeddable annotation.");
             }
-            final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>();
+            final Map<ColumnMeta, ColumnAccessor> map = new LinkedHashMap<>();
             for (final Field embeddedColumn : new AnnotationParser(type).getFields(type))
             {
                 final Class<?> embeddedClass = embeddedColumn.getType();
