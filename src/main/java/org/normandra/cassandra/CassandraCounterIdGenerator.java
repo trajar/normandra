@@ -15,7 +15,7 @@ import org.normandra.meta.EntityMeta;
  * User: bowen
  * Date: 1/26/14
  */
-public class CounterIdGenerator implements IdGenerator
+public class CassandraCounterIdGenerator implements IdGenerator
 {
     private static final Object lock = new Object();
 
@@ -27,10 +27,10 @@ public class CounterIdGenerator implements IdGenerator
 
     private final String keyValue;
 
-    private final SessionAccessor sessionAccessor;
+    private final CassandraAccessor sessionAccessor;
 
 
-    protected CounterIdGenerator(final String table, final String keyCol, final String valueCol, final String key, final SessionAccessor accessor)
+    protected CassandraCounterIdGenerator(final String table, final String keyCol, final String valueCol, final String key, final CassandraAccessor accessor)
     {
         this.tableName = table;
         this.keyColumn = keyCol;

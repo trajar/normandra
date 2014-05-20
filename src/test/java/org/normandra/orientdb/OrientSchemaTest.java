@@ -57,7 +57,7 @@ public class OrientSchemaTest extends BaseOrientTest
 
         // construct schema
         final DatabaseMeta meta = new DatabaseMeta(Arrays.asList(entity));
-        final String clusterName = meta.getEntities().iterator().next().getName();
+        final String clusterName = "simple_entity";
         this.database.refresh(meta);
         Assert.assertTrue(this.database.hasCluster(clusterName));
         Assert.assertTrue(this.database.hasProperty(clusterName, "id"));

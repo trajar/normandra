@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * orient database session
@@ -42,9 +43,11 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 {
     private final EntityCache cache = new MemoryCache();
 
-    private final List<OrientIndexActivity> activities = new ArrayList<>();
+    private final List<DatabaseActivity> activities = new ArrayList<>();
 
     private final ODatabaseDocumentTx database;
+
+    private final AtomicBoolean userTransaction = new AtomicBoolean(false);
 
 
     public OrientDatabaseSession(final ODatabaseDocumentTx db)
@@ -68,6 +71,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     public void clear()
     {
         this.cache.clear();
+        this.activities.clear();
     }
 
 
@@ -86,6 +90,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             throw new NormandraException("Transaction already active.");
         }
         this.database.begin();
+        this.userTransaction.getAndSet(true);
     }
 
 
@@ -93,6 +98,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     public void commitWork() throws NormandraException
     {
         this.database.commit();
+        this.userTransaction.getAndSet(false);
     }
 
 
@@ -100,6 +106,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     public void rollbackWork() throws NormandraException
     {
         this.database.rollback();
+        this.userTransaction.getAndSet(false);
     }
 
 
@@ -122,18 +129,33 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             throw new NullArgumentException("element");
         }
 
+        final boolean commitWhenDone;
+        if (this.userTransaction.get())
+        {
+            commitWhenDone = false;
+        }
+        else
+        {
+            commitWhenDone = true;
+            this.database.begin();
+        }
+
         try
         {
+            final DatabaseActivity.Type operation;
+            final long start = System.currentTimeMillis();
             final ODocument document;
             final ORID existing = this.findIdByElement(meta, element);
             if (existing != null)
             {
                 document = this.findDocument(existing);
+                operation = DatabaseActivity.Type.UPDATE;
             }
             else
             {
-                final String classname = meta.getName();
-                document = new ODocument(classname);
+                final String schemaName = OrientUtils.schemaName(meta);
+                document = this.database.newInstance(schemaName);
+                operation = DatabaseActivity.Type.INSERT;
             }
             for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : meta.getAccessors())
             {
@@ -146,20 +168,30 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
                     final Object generated = generator.generate(meta);
                     final DataHolder data = new BasicDataHolder(generated);
                     accessor.setValue(element, data, this);
-                    value = data;
+                    value = generated;
                 }
                 if (value != null)
                 {
-                    final String name = column.getProperty();
+                    final String name = OrientUtils.propertyName(column);
                     final OType type = OrientUtils.columnType(column);
                     final Object packed = OrientUtils.packRaw(column, value);
                     document.field(name, packed, type);
                 }
             }
             document.save();
+            if (commitWhenDone)
+            {
+                this.database.commit();
+            }
+            final long end = System.currentTimeMillis();
+            this.activities.add(new OrientUpdateActivity(operation, document.getIdentity(), new Date(), end - start));
         }
         catch (final Exception e)
         {
+            if (commitWhenDone)
+            {
+                this.database.rollback();
+            }
             throw new NormandraException("Unable to create/save new orientdb document.", e);
         }
     }
@@ -177,17 +209,36 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             throw new NullArgumentException("element");
         }
 
+        final boolean commitWhenDone;
+        if (this.userTransaction.get())
+        {
+            commitWhenDone = false;
+        }
+        else
+        {
+            commitWhenDone = true;
+            this.database.begin();
+        }
+
         try
         {
+            final long start = System.currentTimeMillis();
             final ORID rid = this.findIdByElement(meta, element);
             if (null == rid)
             {
                 throw new IllegalStateException("Unable to get orientdb record id from element [" + element + "].");
             }
             this.database.delete(rid);
+            if (commitWhenDone)
+            {
+                this.database.commit();
+            }
+            final long end = System.currentTimeMillis();
+            this.activities.add(new OrientUpdateActivity(DatabaseActivity.Type.DELETE, rid, new Date(), end - start));
         }
         catch (final Exception e)
         {
+            this.database.rollback();
             throw new NormandraException("Unable to delete orientdb document.", e);
         }
     }
@@ -210,7 +261,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     @Override
     public DataHolder createLazy(EntityMeta meta, TableMeta table, ColumnMeta column, Object key)
     {
-        return new LazyDataHolder(this, meta, column, key);
+        return new OrientLazyDataHolder(this, meta, column, key);
     }
 
 
@@ -346,8 +397,8 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             // build query statement
 
             final StringBuilder text = new StringBuilder();
-            text.append("select from ").append(meta.getName());
-            text.append(" where ").append(primary.getProperty()).append(" in [");
+            text.append("select from ").append(OrientUtils.schemaName(meta));
+            text.append(" where ").append(OrientUtils.propertyName(primary)).append(" in [");
             boolean first = true;
             for (final Object key : keys)
             {
@@ -444,21 +495,20 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 
         final long start = System.currentTimeMillis();
         final String indexName = OrientUtils.keyIndex(meta);
-        final OIndex keyIdx = this.database.getMetadata().getIndexManager().getIndex(indexName);
+        final String schemaName = OrientUtils.schemaName(meta);
+        final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
         if (null == keyIdx)
         {
             throw new IllegalStateException("Unable to locate orientdb index [" + indexName + "].");
         }
 
         final OIdentifiable guid = (OIdentifiable) keyIdx.get(key);
+        final long end = System.currentTimeMillis();
+        this.activities.add(new OrientIndexActivity(DatabaseActivity.Type.SELECT, indexName, key, new Date(), end - start));
         if (null == guid)
         {
             return null;
         }
-
-        final long end = System.currentTimeMillis();
-        this.activities.add(new OrientIndexActivity(DatabaseActivity.Type.SELECT, indexName, key, new Date(), end - start));
-
         return guid.getIdentity();
     }
 
@@ -476,6 +526,6 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             return null;
         }
 
-        return this.findIdByKey(meta, element);
+        return this.findIdByKey(meta, key);
     }
 }

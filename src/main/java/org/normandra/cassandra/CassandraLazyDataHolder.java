@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 4/5/14
  */
-public class LazyDataHolder implements DataHolder
+public class CassandraLazyDataHolder implements DataHolder
 {
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
@@ -37,7 +37,7 @@ public class LazyDataHolder implements DataHolder
     private final List<Row> rows = new ArrayList<>();
 
 
-    public LazyDataHolder(final CassandraDatabaseSession session, final EntityMeta meta, final TableMeta table, final ColumnMeta column, final Object key)
+    public CassandraLazyDataHolder(final CassandraDatabaseSession session, final EntityMeta meta, final TableMeta table, final ColumnMeta column, final Object key)
     {
         this.session = session;
         this.entity = meta;

@@ -4,14 +4,20 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.cassandra.serializers.InetAddressSerializer;
 import org.apache.cassandra.serializers.UUIDSerializer;
+import org.normandra.meta.CollectionMeta;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
+import org.normandra.util.ArraySet;
+import org.normandra.util.CaseUtils;
 
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -27,13 +33,42 @@ import java.util.UUID;
  */
 public class OrientUtils
 {
+    public static String schemaName(final EntityMeta meta)
+    {
+        if (null == meta)
+        {
+            return null;
+        }
+        return CaseUtils.camelToSnakeCase(meta.getName());
+    }
+
+
+    public static String propertyName(final ColumnMeta meta)
+    {
+        if (null == meta)
+        {
+            return null;
+        }
+        return meta.getName();
+    }
+
+
     public static String keyIndex(final EntityMeta meta)
     {
         if (null == meta)
         {
             return null;
         }
-        return meta.getName() + "._key";
+        final Collection<ColumnMeta> keys = new SingleEntityContext(meta).getPrimaryKeys();
+        if (keys.size() == 1)
+        {
+            final ColumnMeta key = keys.iterator().next();
+            return meta.getName() + "." + key.getProperty();
+        }
+        else
+        {
+            return meta.getName() + ".key";
+        }
     }
 
 
@@ -120,6 +155,15 @@ public class OrientUtils
 
         final Class<?> clazz = column.getType();
 
+        if (List.class.isAssignableFrom(clazz))
+        {
+            return new ArrayList((Collection) value);
+        }
+        else if (Collection.class.isAssignableFrom(clazz))
+        {
+            return new ArraySet((Collection) value);
+        }
+
         if (UUID.class.equals(clazz))
         {
             return UUIDSerializer.instance.serialize((UUID) value).array();
@@ -127,6 +171,31 @@ public class OrientUtils
         if (InetAddress.class.equals(clazz))
         {
             return InetAddressSerializer.instance.serialize((InetAddress) value).array();
+        }
+
+        if (Number.class.isAssignableFrom(clazz) && !clazz.equals(value.getClass()))
+        {
+            final Number number = (Number) value;
+            if (Long.class.equals(clazz))
+            {
+                return number.longValue();
+            }
+            else if (Integer.class.equals(clazz))
+            {
+                return number.intValue();
+            }
+            else if (Short.class.equals(clazz))
+            {
+                return number.shortValue();
+            }
+            else if (Float.class.equals(clazz))
+            {
+                return number.floatValue();
+            }
+            else if (Double.class.equals(clazz))
+            {
+                return number.doubleValue();
+            }
         }
 
         return value;
@@ -142,15 +211,28 @@ public class OrientUtils
 
         final Class<?> clazz = column.getType();
 
-        if (List.class.isAssignableFrom(clazz))
+        // handle collections
+        if (column instanceof CollectionMeta)
+        {
+            if (List.class.isAssignableFrom(clazz))
+            {
+                return OType.EMBEDDEDLIST;
+            }
+            else if (Collection.class.isAssignableFrom(clazz))
+            {
+                return OType.EMBEDDEDSET;
+            }
+        }
+        else if (List.class.isAssignableFrom(clazz))
         {
             return OType.LINKLIST;
         }
-        if (List.class.isAssignableFrom(clazz))
+        else if (Collection.class.isAssignableFrom(clazz))
         {
             return OType.LINKSET;
         }
 
+        // handle regular values
         if (String.class.equals(clazz))
         {
             return OType.STRING;

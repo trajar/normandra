@@ -71,6 +71,7 @@ public class CassandraSchemaTest extends BaseCassandraTest
         this.database.refresh(meta);
         final String table = meta.getTables().iterator().next();
         Assert.assertTrue(this.database.hasTable(table));
+        Assert.assertTrue(this.database.hasTable(table));
         Assert.assertTrue(this.database.hasColumn(table, "id"));
         Assert.assertFalse(this.database.hasColumn(table, "name"));
         Assert.assertTrue(this.database.hasColumn(table, "name_column"));

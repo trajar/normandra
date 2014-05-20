@@ -8,7 +8,7 @@ import com.datastax.driver.core.Session;
  * User: bowen
  * Date: 1/26/14
  */
-public interface SessionAccessor
+public interface CassandraAccessor
 {
     String getKeyspace();
     Session getSession();

@@ -3,8 +3,8 @@ package org.normandra.orientdb;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.BasicConfigurator;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.normandra.DatabaseConstruction;
 
 import java.io.File;
@@ -17,19 +17,19 @@ import java.io.File;
  */
 public class BaseOrientTest
 {
-    public static final DatabaseConstruction construction = DatabaseConstruction.RECREATE;
+    public static final DatabaseConstruction construction = DatabaseConstruction.UPDATE;
 
-    public final File dir = new File("target/embeddedOrientDB");
+    public static final File dir = new File("target/embeddedOrientDB");
 
-    public final String path = "plocal:" + dir.getPath();
+    public static final String path = "plocal:" + dir.getPath();
 
-    public final String user = "admin";
+    public static final String user = "admin";
 
-    public final String password = "admin";
+    public static final String password = "admin";
 
 
-    @Before
-    public void createLocal() throws Exception
+    @BeforeClass
+    public static void createLocal() throws Exception
     {
         BasicConfigurator.configure();
         FileUtils.deleteDirectory(dir);
@@ -38,8 +38,8 @@ public class BaseOrientTest
     }
 
 
-    @After
-    public void detroyLocal() throws Exception
+    @AfterClass
+    public static void detroyLocal() throws Exception
     {
         FileUtils.deleteDirectory(dir);
     }

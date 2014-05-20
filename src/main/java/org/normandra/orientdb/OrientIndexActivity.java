@@ -74,6 +74,6 @@ public class OrientIndexActivity implements DatabaseActivity
     @Override
     public CharSequence getInformation()
     {
-        return "query index [" + this.index + "] with value {" + this.key + "}";
+        return this.type + " index [" + this.index + "] with value {" + this.key + "}";
     }
 }

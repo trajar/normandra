@@ -20,10 +20,13 @@ import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
+import org.normandra.util.CaseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.TableGenerator;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -40,11 +43,11 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * a cassandra database
- * <p>
+ * <p/>
  * User: bowen
  * Date: 8/31/13
  */
-public class CassandraDatabase implements Database, SessionAccessor
+public class CassandraDatabase implements Database, CassandraAccessor
 {
     public static final String KEYSPACE = "cassandra.keyspace";
 
@@ -110,7 +113,7 @@ public class CassandraDatabase implements Database, SessionAccessor
         {
             return false;
         }
-        if(this.preparedStatements.containsKey(name))
+        if (this.preparedStatements.containsKey(name))
         {
             return false;
         }
@@ -210,29 +213,50 @@ public class CassandraDatabase implements Database, SessionAccessor
                 final String type = generator.generator();
                 String tableName = "id_generator";
                 String keyColumn = "id";
-                String keyValue = entity.getTables().size() == 1 ? entity.getTables().iterator().next().getName() : entity.getName();
+                String keyValue = entity.getTables().size() == 1 ? entity.getTables().iterator().next().getName() : CaseUtils.camelToSnakeCase(entity.getName());
                 String valueColumn = "value";
-                for (final TableGenerator table : parser.findAnnotations(entityType, TableGenerator.class))
+
+                if (GenerationType.TABLE.equals(generator.strategy()))
                 {
-                    if (type.equalsIgnoreCase(table.name()))
+                    for (final TableGenerator table : parser.findAnnotations(entityType, TableGenerator.class))
                     {
-                        if (!table.table().isEmpty())
+                        if (type.equalsIgnoreCase(table.name()))
                         {
-                            tableName = table.table();
-                        }
-                        if (!table.pkColumnName().isEmpty())
-                        {
-                            keyColumn = table.pkColumnName();
-                        }
-                        if (!table.pkColumnValue().isEmpty())
-                        {
-                            keyColumn = table.pkColumnValue();
-                        }
-                        if (!table.valueColumnName().isEmpty())
-                        {
-                            keyColumn = table.valueColumnName();
+                            if (!table.table().isEmpty())
+                            {
+                                tableName = table.table();
+                            }
+                            if (!table.pkColumnName().isEmpty())
+                            {
+                                keyColumn = table.pkColumnName();
+                            }
+                            if (!table.pkColumnValue().isEmpty())
+                            {
+                                keyValue = table.pkColumnValue();
+                            }
+                            if (!table.valueColumnName().isEmpty())
+                            {
+                                valueColumn = table.valueColumnName();
+                            }
                         }
                     }
+                }
+                else if (GenerationType.SEQUENCE.equals(generator.strategy()))
+                {
+                    for (final SequenceGenerator sequence : parser.findAnnotations(entityType, SequenceGenerator.class))
+                    {
+                        if (type.equalsIgnoreCase(sequence.name()))
+                        {
+                            if (!sequence.sequenceName().isEmpty())
+                            {
+                                keyValue = sequence.sequenceName();
+                            }
+                        }
+                    }
+                }
+                else if (GenerationType.IDENTITY.equals(generator.strategy()))
+                {
+                    throw new NormandraException("Cassandra CQL3 does not support identity primary key generation.");
                 }
 
                 try
@@ -241,7 +265,7 @@ public class CassandraDatabase implements Database, SessionAccessor
                 }
                 catch (final Exception e)
                 {
-                    throw new NormandraException("Unable to refresh table id generator [" + generator.generator() + "].", e);
+                    throw new NormandraException("Unable to refresh id generator [" + generator.generator() + "].", e);
                 }
 
                 final String fieldName = field.getName();
@@ -250,7 +274,7 @@ public class CassandraDatabase implements Database, SessionAccessor
                     final ColumnMeta column = table.getColumn(fieldName);
                     if (column != null)
                     {
-                        final CounterIdGenerator counter = new CounterIdGenerator(tableName, keyColumn, valueColumn, keyValue, this);
+                        final CassandraCounterIdGenerator counter = new CassandraCounterIdGenerator(tableName, keyColumn, valueColumn, keyValue, this);
                         entity.setGenerator(column, counter);
                         logger.info("Set counter id generator for [" + column + "] on entity [" + entity + "].");
                     }

@@ -35,7 +35,7 @@ public class CassandraEntityBuilder extends EntityBuilder
             @Override
             public DataHolder createLazy(EntityMeta meta, TableMeta table, ColumnMeta column, Object key)
             {
-                return new LazyDataHolder(session, meta, table, column, key);
+                return new CassandraLazyDataHolder(session, meta, table, column, key);
             }
         });
     }

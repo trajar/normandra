@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 4/5/14
  */
-public class LazyDataHolder implements DataHolder
+public class OrientLazyDataHolder implements DataHolder
 {
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
@@ -30,7 +30,7 @@ public class LazyDataHolder implements DataHolder
     private ODocument document;
 
 
-    public LazyDataHolder(final OrientDatabaseSession session, final EntityMeta meta, final ColumnMeta column, final Object key)
+    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityMeta meta, final ColumnMeta column, final Object key)
     {
         this.session = session;
         this.entity = meta;
