@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a lazy loaded entity collection
- * <p>
+ * <p/>
  * User: bowen
  * Date: 3/25/14
  */
@@ -180,7 +180,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
     {
         if (null == o)
         {
-
+            return false;
         }
         return this.ensureEntities().contains(o);
     }

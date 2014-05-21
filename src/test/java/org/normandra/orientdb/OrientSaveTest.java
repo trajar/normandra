@@ -6,11 +6,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.normandra.entities.CatEntity;
 import org.normandra.entities.ClassEntity;
-import org.normandra.entities.CompositeIndexEntity;
 import org.normandra.entities.DogEntity;
 import org.normandra.entities.SimpleEntity;
 import org.normandra.entities.StudentEntity;
-import org.normandra.entities.StudentIndexEntity;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
@@ -96,14 +94,14 @@ public class OrientSaveTest extends BaseOrientTest
         final SimpleEntity existing = (SimpleEntity) this.session.get(meta, 1L);
         Assert.assertNotNull(existing);
         Assert.assertEquals(1, existing.getId());
-        Assert.assertEquals(6, this.session.listActivity().size());
+        Assert.assertEquals(5, this.session.listActivity().size());
 
         this.session.delete(meta, existing);
-        Assert.assertEquals(8, this.session.listActivity().size());
+        Assert.assertEquals(7, this.session.listActivity().size());
         Assert.assertFalse(this.session.exists(meta, 1L));
-        Assert.assertEquals(9, this.session.listActivity().size());
+        Assert.assertEquals(8, this.session.listActivity().size());
         Assert.assertNull(this.session.get(meta, 1L));
-        Assert.assertEquals(10, this.session.listActivity().size());
+        Assert.assertEquals(9, this.session.listActivity().size());
     }
 
 
@@ -185,31 +183,5 @@ public class OrientSaveTest extends BaseOrientTest
         Assert.assertEquals(2, existing.getStudents().size());
         Assert.assertTrue(existing.getStudents().contains(bob));
         Assert.assertTrue(existing.getStudents().contains(jane));
-    }
-
-
-    @Test
-    public void testComposite() throws Exception
-    {
-        final Map<Class, EntityMeta> entityMap = this.setupEntities(StudentIndexEntity.class, CompositeIndexEntity.class);
-        final EntityMeta studentMeta = entityMap.get(StudentIndexEntity.class);
-        final EntityMeta compositeMeta = entityMap.get(CompositeIndexEntity.class);
-
-        final StudentIndexEntity student = new StudentIndexEntity("fred", 101);
-        this.session.save(studentMeta, student);
-        Assert.assertNull(session.get(studentMeta, "fred"));
-        Assert.assertNull(session.get(studentMeta, "101"));
-
-        final CompositeIndexEntity composite = new CompositeIndexEntity("foo");
-        this.session.save(compositeMeta, composite);
-        Assert.assertNotNull(composite.getId());
-        Assert.assertNotNull(composite.getName());
-        this.session.clear();
-        final CompositeIndexEntity existing = (CompositeIndexEntity) this.session.get(compositeMeta, new CompositeIndexEntity.Key(composite.getId(), composite.getName()));
-        Assert.assertNotNull(existing);
-        Assert.assertEquals(composite.getId(), existing.getId());
-        Assert.assertEquals(composite.getName(), existing.getName());
-        Assert.assertNull(this.session.get(compositeMeta, composite.getId()));
-        Assert.assertNull(this.session.get(compositeMeta, composite.getName()));
     }
 }

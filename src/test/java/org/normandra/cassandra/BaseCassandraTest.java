@@ -23,6 +23,6 @@ public class BaseCassandraTest
     public static void setupCassandra() throws Exception
     {
         BasicConfigurator.configure();
-        CassandraUtil.start("/cassandra-2.0.0.yaml");
+        CassandraTestUtil.start("/cassandra-2.0.0.yaml");
     }
 }

@@ -371,6 +371,7 @@ public class CassandraDatabaseSession implements DatabaseSession
             {
                 throw new NormandraException("No column values found - cannot delete entity.");
             }
+
             final RegularStatement batch;
             if (deletes.size() == 1)
             {
@@ -381,6 +382,8 @@ public class CassandraDatabaseSession implements DatabaseSession
                 final RegularStatement[] statements = deletes.toArray(new RegularStatement[deletes.size()]);
                 batch = QueryBuilder.batch(statements);
             }
+
+            this.cache.remove(meta, element);
             if (this.activeUnitOfWork.get())
             {
                 this.statements.add(batch);

@@ -14,5 +14,7 @@ public interface EntityCache
 {
     void clear();
     Object get(EntityMeta meta, Serializable key);
+    boolean remove(EntityMeta meta, Serializable key);
+    boolean remove(EntityMeta meta, Object entity);
     boolean put(EntityMeta meta, Object entity);
 }

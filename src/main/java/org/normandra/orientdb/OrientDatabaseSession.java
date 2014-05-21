@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseQuery;
 import org.normandra.DatabaseSession;
@@ -27,7 +26,10 @@ import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityBuilder;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -186,6 +188,8 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             }
             final long end = System.currentTimeMillis();
             this.activities.add(new OrientUpdateActivity(operation, document.getIdentity(), new Date(), end - start));
+
+            this.cache.put(meta, element);
         }
         catch (final Exception e)
         {
@@ -234,6 +238,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             {
                 this.database.commit();
             }
+            this.cache.remove(meta, element);
             final long end = System.currentTimeMillis();
             this.activities.add(new OrientUpdateActivity(DatabaseActivity.Type.DELETE, rid, new Date(), end - start));
         }
@@ -331,6 +336,19 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             throw new NullArgumentException("key");
         }
 
+        if (key instanceof Serializable)
+        {
+            // check cache
+            for (final EntityMeta entity : context.getEntities())
+            {
+                final Object existing = this.cache.get(entity, (Serializable) key);
+                if (existing != null)
+                {
+                    return entity.getType().cast(existing);
+                }
+            }
+        }
+
         try
         {
             final ODocument document = this.findDocument(context, key);
@@ -389,37 +407,29 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             throw new NormandraException("Unable to query orientdb records with multiple primary keys - use a single / composite column.");
         }
         final ColumnMeta primary = context.getPrimaryKeys().iterator().next();
-        boolean numeric = Number.class.isAssignableFrom(primary.getType());
 
         // query ids for each entity context
         final List<Object> list = new ArrayList<>(keys.length);
         for (final EntityMeta meta : context.getEntities())
         {
-            // build query statement
-
-            final StringBuilder text = new StringBuilder();
-            text.append("select from ").append(OrientUtils.schemaName(meta));
-            text.append(" where ").append(OrientUtils.propertyName(primary)).append(" in [");
-            boolean first = true;
-            for (final Object key : keys)
+            for (final ORID rid : this.findIdByKeys(meta, Arrays.asList(keys)))
             {
-                if (!first)
+                final ODocument document = this.findDocument(rid);
+                if (document != null)
                 {
-                    text.append(",");
+                    final Map<ColumnMeta, Object> data = OrientUtils.unpackValues(context, document);
+                    if (data.isEmpty())
+                    {
+                        return null;
+                    }
+                    final EntityBuilder builder = new EntityBuilder(this, this);
+                    final Object instance = builder.build(context, data);
+                    if (instance != null)
+                    {
+                        list.add(instance);
+                    }
                 }
-                if (numeric)
-                {
-                    text.append(key);
-                }
-                else
-                {
-                    text.append("'").append(key).append("'");
-                }
-                first = false;
             }
-            text.append("]");
-            final OSQLSynchQuery query = new OSQLSynchQuery(text.toString(), keys.length);
-            list.addAll(this.database.query(query));
         }
         return Collections.unmodifiableList(list);
     }
@@ -482,6 +492,84 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     }
 
 
+    protected final Collection<ORID> findIdByKeys(final EntityMeta meta, final Collection<Object> keys) throws NormandraException
+    {
+        if (null == meta || null == keys || keys.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        final List<Object> unknown = new ArrayList<>(keys.size());
+        final List<ORID> result = new ArrayList<>(keys.size());
+        for (final Object key : keys)
+        {
+            if (key instanceof ORID)
+            {
+                result.add((ORID) key);
+            }
+            else
+            {
+                unknown.add(key);
+            }
+        }
+
+        final long start = System.currentTimeMillis();
+        final String indexName = OrientUtils.keyIndex(meta);
+        final String schemaName = OrientUtils.schemaName(meta);
+        final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
+        if (null == keyIdx)
+        {
+            throw new IllegalStateException("Unable to locate orientdb index [" + indexName + "].");
+        }
+
+        final List<Object> query = new ArrayList<>(unknown.size());
+        for (final Object key : unknown)
+        {
+            final Map<String, Object> map = meta.getId().fromKey(key);
+            if (keys.isEmpty())
+            {
+                return null;
+            }
+
+            final List<Object> packed = new ArrayList<>(map.size());
+            for (final ColumnMeta column : new SingleEntityContext(meta).getPrimaryKeys())
+            {
+                Object value = map.get(column.getName());
+                if (null == value)
+                {
+                    value = map.get(column.getProperty());
+                }
+                if (value != null)
+                {
+                    packed.add(OrientUtils.packRaw(column, value));
+                }
+                else
+                {
+                    packed.add(null);
+                }
+            }
+            if (packed.size() == 1)
+            {
+                query.add(packed.get(0));
+            }
+            else
+            {
+                query.add(new OCompositeKey(packed));
+            }
+        }
+
+        if (query.isEmpty())
+        {
+            return Collections.unmodifiableList(result);
+        }
+
+        result.addAll(keyIdx.getValues(query, true));
+        final long end = System.currentTimeMillis();
+        this.activities.add(new OrientIndexActivity(DatabaseActivity.Type.SELECT, indexName, keys, new Date(), end - start));
+        return Collections.unmodifiableList(result);
+    }
+
+
     protected final ORID findIdByKey(final EntityMeta meta, final Object key) throws NormandraException
     {
         if (null == meta || null == key)
@@ -537,7 +625,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
         }
 
         final long end = System.currentTimeMillis();
-        this.activities.add(new OrientIndexActivity(DatabaseActivity.Type.SELECT, indexName, key, new Date(), end - start));
+        this.activities.add(new OrientIndexActivity(DatabaseActivity.Type.SELECT, indexName, Arrays.asList(key), new Date(), end - start));
         if (null == guid)
         {
             return null;

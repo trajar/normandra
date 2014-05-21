@@ -50,7 +50,7 @@ public class CassandraSchemaTest extends BaseCassandraTest
             this.database.close();
             this.database = null;
         }
-        CassandraUtil.reset();
+        CassandraTestUtil.reset();
     }
 
 

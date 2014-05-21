@@ -3,7 +3,10 @@ package org.normandra.orientdb;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.log.DatabaseActivity;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * a orientdb database listActivity
@@ -17,14 +20,14 @@ public class OrientIndexActivity implements DatabaseActivity
 
     private final String index;
 
-    private final Object key;
+    private final List<Object> keys;
 
     private final Date date;
 
     private final long duration;
 
 
-    public OrientIndexActivity(Type type, String index, Object key, Date date, long duration)
+    public OrientIndexActivity(Type type, String index, Collection<?> keys, Date date, long duration)
     {
         if (null == type)
         {
@@ -34,9 +37,9 @@ public class OrientIndexActivity implements DatabaseActivity
         {
             throw new NullArgumentException("index");
         }
-        if (null == key)
+        if (null == keys)
         {
-            throw new NullArgumentException("key");
+            throw new NullArgumentException("keys");
         }
         if (null == date)
         {
@@ -44,7 +47,7 @@ public class OrientIndexActivity implements DatabaseActivity
         }
         this.type = type;
         this.index = index;
-        this.key = key;
+        this.keys = new ArrayList<>(keys);
         this.date = date;
         this.duration = duration;
     }
@@ -74,6 +77,6 @@ public class OrientIndexActivity implements DatabaseActivity
     @Override
     public CharSequence getInformation()
     {
-        return this.type + " index [" + this.index + "] with value {" + this.key + "}";
+        return this.type + " index [" + this.index + "] with values " + this.keys + ".";
     }
 }

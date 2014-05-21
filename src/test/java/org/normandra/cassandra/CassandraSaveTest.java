@@ -57,7 +57,7 @@ public class CassandraSaveTest extends BaseCassandraTest
             this.database.close();
             this.database = null;
         }
-        CassandraUtil.reset();
+        CassandraTestUtil.reset();
     }
 
 

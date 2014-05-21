@@ -55,6 +55,55 @@ public class MemoryCache implements EntityCache
 
 
     @Override
+    public boolean remove(final EntityMeta meta, final Serializable key)
+    {
+        if (null == meta || null == meta.getId() || null == key)
+        {
+            return false;
+        }
+
+        final Map<Object, Object> entities = this.cache.get(meta);
+        if (null == entities)
+        {
+            return false;
+        }
+
+        return entities.remove(key) != null;
+    }
+
+
+    @Override
+    public boolean remove(final EntityMeta meta, final Object instance)
+    {
+        if (null == meta || null == meta.getId() || null == instance)
+        {
+            return false;
+        }
+
+        final Map<Object, Object> entities = this.cache.get(meta);
+        if (null == entities)
+        {
+            return false;
+        }
+
+        try
+        {
+            final Object key = meta.getId().fromEntity(instance);
+            if (null == key)
+            {
+                return false;
+            }
+            return entities.remove(key) != null;
+        }
+        catch (final NormandraException e)
+        {
+            logger.warn("Unable to remove key from cache entity [" + instance + "] of type [" + meta + "].", e);
+            return false;
+        }
+    }
+
+
+    @Override
     public boolean put(final EntityMeta meta, final Object instance)
     {
         if (null == meta || null == meta.getId() || null == instance)

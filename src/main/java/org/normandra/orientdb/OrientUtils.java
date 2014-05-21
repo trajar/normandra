@@ -8,6 +8,7 @@ import org.normandra.meta.CollectionMeta;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
@@ -63,7 +64,7 @@ public class OrientUtils
         if (keys.size() == 1)
         {
             final ColumnMeta key = keys.iterator().next();
-            return meta.getName() + "." + key.getProperty();
+            return meta.getName() + "." + OrientUtils.propertyName(key);
         }
         else
         {
@@ -79,7 +80,7 @@ public class OrientUtils
             return null;
         }
 
-        final String name = column.getProperty();
+        final String name = OrientUtils.propertyName(column);
         final Object raw = document.field(name);
         if (null == raw)
         {
@@ -101,7 +102,7 @@ public class OrientUtils
         {
             for (final ColumnMeta column : table.getColumns())
             {
-                final String name = column.getProperty();
+                final String name = OrientUtils.propertyName(column);
                 final Object raw = document.field(name);
                 final Object value = raw != null ? OrientUtils.unpackRaw(column, raw) : null;
                 if (value != null)
@@ -123,6 +124,24 @@ public class OrientUtils
 
         final Class<?> clazz = column.getType();
 
+        if (column instanceof JoinCollectionMeta)
+        {
+            final Collection list = (Collection) value;
+            final List packed = new ArrayList<>(list.size());
+            for (final Object item : list)
+            {
+                final Object pack = unpackPrimitive(clazz, item);
+                packed.add(pack);
+            }
+            return packed;
+        }
+
+        return unpackPrimitive(clazz, value);
+    }
+
+
+    private static Object unpackPrimitive(final Class<?> clazz, final Object value)
+    {
         if (UUID.class.equals(clazz))
         {
             final byte[] data = (byte[]) value;
@@ -143,6 +162,7 @@ public class OrientUtils
         }
 
         return value;
+
     }
 
 
@@ -155,15 +175,33 @@ public class OrientUtils
 
         final Class<?> clazz = column.getType();
 
+        if (column instanceof JoinCollectionMeta)
+        {
+            final Collection list = (Collection) value;
+            final List packed = new ArrayList<>(list.size());
+            for (final Object item : list)
+            {
+                final Object pack = packPrimitive(clazz, item);
+                packed.add(pack);
+            }
+            return packed;
+        }
+
         if (List.class.isAssignableFrom(clazz))
         {
             return new ArrayList((Collection) value);
         }
-        else if (Collection.class.isAssignableFrom(clazz))
+        if (Collection.class.isAssignableFrom(clazz))
         {
             return new ArraySet((Collection) value);
         }
 
+        return packPrimitive(clazz, value);
+    }
+
+
+    static Object packPrimitive(final Class<?> clazz, final Object value)
+    {
         if (UUID.class.equals(clazz))
         {
             return UUIDSerializer.instance.serialize((UUID) value).array();
@@ -222,6 +260,10 @@ public class OrientUtils
             {
                 return OType.EMBEDDEDSET;
             }
+        }
+        else if (column instanceof JoinCollectionMeta)
+        {
+            return OType.EMBEDDEDSET;
         }
         else if (List.class.isAssignableFrom(clazz))
         {

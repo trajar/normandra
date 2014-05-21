@@ -199,10 +199,12 @@ public class OrientDatabase implements Database
                         if (this.hasCluster(tableName))
                         {
                             database.command(new OCommandSQL("DELETE FROM " + tableName)).execute();
-                        }
-                        if (database.getMetadata().getSchema().getClass(tableName) != null)
-                        {
                             database.getMetadata().getSchema().dropClass(tableName);
+                        }
+                        if (this.hasIndex(indexName))
+                        {
+                            database.command(new OCommandSQL("DROP INDEX " + indexName)).execute();
+                            database.getMetadata().getIndexManager().dropIndex(indexName);
                         }
                     }
 
@@ -278,7 +280,7 @@ public class OrientDatabase implements Database
                 {
                     schemaClass.createProperty(property, OrientUtils.columnType(column));
                 }
-                if (column.isPrimaryKey())
+                if (!table.isSecondary() && column.isPrimaryKey())
                 {
                     primary.add(property);
                 }

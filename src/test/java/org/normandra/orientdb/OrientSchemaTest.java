@@ -61,8 +61,8 @@ public class OrientSchemaTest extends BaseOrientTest
         this.database.refresh(meta);
         Assert.assertTrue(this.database.hasCluster(clusterName));
         Assert.assertTrue(this.database.hasProperty(clusterName, "id"));
-        Assert.assertTrue(this.database.hasProperty(clusterName, "name"));
-        Assert.assertFalse(this.database.hasProperty(clusterName, "name_column"));
+        Assert.assertFalse(this.database.hasProperty(clusterName, "name"));
+        Assert.assertTrue(this.database.hasProperty(clusterName, "name_column"));
         Assert.assertTrue(this.database.hasProperty(clusterName, "values"));
         Assert.assertFalse(this.database.hasProperty(clusterName, "foo"));
 
@@ -70,6 +70,6 @@ public class OrientSchemaTest extends BaseOrientTest
         this.database.refresh(meta);
         Assert.assertTrue(this.database.hasCluster(clusterName));
         Assert.assertTrue(this.database.hasProperty(clusterName, "id"));
-        Assert.assertTrue(this.database.hasProperty(clusterName, "name"));
+        Assert.assertTrue(this.database.hasProperty(clusterName, "name_column"));
     }
 }

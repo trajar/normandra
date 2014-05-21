@@ -49,7 +49,7 @@ public class CassandraInheritanceTest extends BaseCassandraTest
             this.manager.close();
             this.manager = null;
         }
-        CassandraUtil.reset();
+        CassandraTestUtil.reset();
     }
 
 

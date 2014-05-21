@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 11/1/13
  */
-public class CassandraUtil
+public class CassandraTestUtil
 {
     public static final int cqlPort = 8042;
 
@@ -34,7 +34,7 @@ public class CassandraUtil
 
     private static EmbeddedCassandraService embedded = null;
 
-    private static final Logger logger = LoggerFactory.getLogger(CassandraUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(CassandraTestUtil.class);
 
 
     public static void start() throws Exception
@@ -59,7 +59,7 @@ public class CassandraUtil
             tmpYaml.delete();
         }
         embeddedDir.mkdirs();
-        FileUtils.copyURLToFile(CassandraUtil.class.getResource(yamlFile), tmpYaml);
+        FileUtils.copyURLToFile(CassandraTestUtil.class.getResource(yamlFile), tmpYaml);
 
         System.setProperty("cassandra.config", "file:" + tmpYaml.getCanonicalPath());
         System.setProperty("cassandra-foreground", "true");
@@ -88,7 +88,7 @@ public class CassandraUtil
             };
             final Thread thread = new Thread(worker);
             thread.setDaemon(true);
-            thread.setName(CassandraUtil.class.getSimpleName() + "[embedded]");
+            thread.setName(CassandraTestUtil.class.getSimpleName() + "[embedded]");
             thread.start();
 
             for (int i = 0; i < 60; i++)
@@ -197,7 +197,7 @@ public class CassandraUtil
     }
 
 
-    private CassandraUtil()
+    private CassandraTestUtil()
     {
     }
 }
