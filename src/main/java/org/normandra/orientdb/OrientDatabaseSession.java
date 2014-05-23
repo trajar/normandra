@@ -32,8 +32,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -145,49 +148,60 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 
         try
         {
-            final DatabaseActivity.Type operation;
+            DatabaseActivity.Type operation = DatabaseActivity.Type.INSERT;
             final long start = System.currentTimeMillis();
-            final ODocument document;
-            final ORID existing = this.findIdByElement(meta, element);
-            if (existing != null)
+            final List<ODocument> documents = new LinkedList<>();
+            for (final TableMeta table : meta)
             {
-                document = this.findDocument(existing);
-                operation = DatabaseActivity.Type.UPDATE;
-            }
-            else
-            {
-                final String schemaName = OrientUtils.schemaName(meta);
-                document = this.database.newInstance(schemaName);
-                operation = DatabaseActivity.Type.INSERT;
-            }
-            for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : meta.getAccessors())
-            {
-                final ColumnMeta column = entry.getKey();
-                final ColumnAccessor accessor = entry.getValue();
-                final IdGenerator generator = meta.getGenerator(column);
-                Object value = accessor.isEmpty(element) ? null : accessor.getValue(element);
-                if (generator != null && accessor.isEmpty(element))
+                final ODocument document;
+                final ORID existing = this.findIdByElement(meta, table, element);
+                if (existing != null)
                 {
-                    final Object generated = generator.generate(meta);
-                    final DataHolder data = new BasicDataHolder(generated);
-                    accessor.setValue(element, data, this);
-                    value = generated;
+                    document = this.findDocument(existing);
+                    operation = DatabaseActivity.Type.UPDATE;
                 }
-                if (value != null)
+                else
                 {
-                    final String name = OrientUtils.propertyName(column);
-                    final OType type = OrientUtils.columnType(column);
-                    final Object packed = OrientUtils.packRaw(column, value);
-                    document.field(name, packed, type);
+                    final String schemaName = meta.getName();
+                    document = this.database.newInstance(schemaName);
+                    operation = DatabaseActivity.Type.INSERT;
                 }
+                for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : meta.getAccessors())
+                {
+                    final ColumnMeta column = entry.getKey();
+                    final ColumnAccessor accessor = entry.getValue();
+                    final IdGenerator generator = meta.getGenerator(column);
+                    Object value = accessor.isEmpty(element) ? null : accessor.getValue(element);
+                    if (generator != null && accessor.isEmpty(element))
+                    {
+                        final Object generated = generator.generate(meta);
+                        final DataHolder data = new BasicDataHolder(generated);
+                        accessor.setValue(element, data, this);
+                        value = generated;
+                    }
+                    if (value != null)
+                    {
+                        final String name = column.getName();
+                        final OType type = OrientUtils.columnType(column);
+                        final Object packed = OrientUtils.packRaw(column, value);
+                        document.field(name, packed, type);
+                    }
+                }
+                document.save();
+                documents.add(document);
             }
-            document.save();
             if (commitWhenDone)
             {
                 this.database.commit();
             }
+
             final long end = System.currentTimeMillis();
-            this.activities.add(new OrientUpdateActivity(operation, document.getIdentity(), new Date(), end - start));
+            final List<ORID> rids = new ArrayList<>(documents.size());
+            for (final ODocument document : documents)
+            {
+                rids.add(document.getIdentity());
+            }
+            this.activities.add(new OrientUpdateActivity(operation, rids, new Date(), end - start));
 
             this.cache.put(meta, element);
         }
@@ -228,19 +242,23 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
         try
         {
             final long start = System.currentTimeMillis();
-            final ORID rid = this.findIdByElement(meta, element);
-            if (null == rid)
+            final List<ORID> rids = new LinkedList<>();
+            for (final TableMeta table : meta)
             {
-                throw new IllegalStateException("Unable to get orientdb record id from element [" + element + "].");
+                final ORID rid = this.findIdByElement(meta, table, element);
+                if (rid != null)
+                {
+                    rids.add(rid);
+                    this.database.delete(rid);
+                }
             }
-            this.database.delete(rid);
             if (commitWhenDone)
             {
                 this.database.commit();
             }
             this.cache.remove(meta, element);
             final long end = System.currentTimeMillis();
-            this.activities.add(new OrientUpdateActivity(DatabaseActivity.Type.DELETE, rid, new Date(), end - start));
+            this.activities.add(new OrientUpdateActivity(DatabaseActivity.Type.DELETE, rids, new Date(), end - start));
         }
         catch (final Exception e)
         {
@@ -267,7 +285,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     @Override
     public DataHolder createLazy(EntityMeta meta, TableMeta table, ColumnMeta column, Object key)
     {
-        return new OrientLazyDataHolder(this, meta, column, key);
+        return new OrientLazyDataHolder(this, meta, table, column, key);
     }
 
 
@@ -287,9 +305,15 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
         {
             for (final EntityMeta meta : context.getEntities())
             {
-                if (this.findDocument(meta, key) != null)
+                for (final TableMeta table : meta)
                 {
-                    return true;
+                    if (!table.isSecondary())
+                    {
+                        if (this.findDocument(meta, table, key) != null)
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
             return false;
@@ -315,7 +339,18 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 
         try
         {
-            return this.findIdByKey(meta, key) != null;
+            for (final TableMeta table : meta)
+            {
+                if (!table.isSecondary())
+                {
+                    final ORID rid = this.findIdByKey(meta, table, key);
+                    if (rid != null)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
         catch (final Exception e)
         {
@@ -351,16 +386,14 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 
         try
         {
-            final ODocument document = this.findDocument(context, key);
-            if (null == document)
+            final Map<ColumnMeta, Object> data = new TreeMap<>();
+            for (final TableMeta table : context.getPrimaryTables())
             {
-                return null;
-            }
-
-            final Map<ColumnMeta, Object> data = OrientUtils.unpackValues(context, document);
-            if (data.isEmpty())
-            {
-                return null;
+                final ODocument document = this.findDocument(context, table, key);
+                if (document != null)
+                {
+                    data.putAll(OrientUtils.unpackValues(context, document));
+                }
             }
 
             final EntityMeta meta = context.findEntity(data);
@@ -402,36 +435,59 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             return Collections.emptyList();
         }
 
-        if (context.getPrimaryKeys().size() > 1)
-        {
-            throw new NormandraException("Unable to query orientdb records with multiple primary keys - use a single / composite column.");
-        }
-        final ColumnMeta primary = context.getPrimaryKeys().iterator().next();
-
         // query ids for each entity context
-        final List<Object> list = new ArrayList<>(keys.length);
+        final List<ORID> rids = new ArrayList<>(keys.length);
         for (final EntityMeta meta : context.getEntities())
         {
-            for (final ORID rid : this.findIdByKeys(meta, Arrays.asList(keys)))
+            for (final TableMeta table : new SingleEntityContext(meta).getPrimaryTables())
             {
-                final ODocument document = this.findDocument(rid);
-                if (document != null)
+                rids.addAll(this.findIdByKeys(meta, table, Arrays.asList(keys)));
+            }
+        }
+        final Map<Object, Map<ColumnMeta, Object>> entityData = new HashMap<>(rids.size());
+        for (final ORID rid : rids)
+        {
+            final ODocument document = this.findDocument(rid);
+            if (document != null)
+            {
+                final Map<ColumnMeta, Object> data = OrientUtils.unpackValues(context, document);
+                final EntityMeta entity = context.findEntity(data);
+                if (entity != null)
                 {
-                    final Map<ColumnMeta, Object> data = OrientUtils.unpackValues(context, document);
-                    if (data.isEmpty())
+                    final Map<String, Object> keymap = new TreeMap<>();
+                    for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
                     {
-                        return null;
+                        keymap.put(entry.getKey().getName(), entry.getValue());
                     }
-                    final EntityBuilder builder = new EntityBuilder(this, this);
-                    final Object instance = builder.build(context, data);
-                    if (instance != null)
+                    final Object key = entity.getId().toKey(keymap);
+                    if (key != null)
                     {
-                        list.add(instance);
+                        Map<ColumnMeta, Object> datamap = entityData.get(key);
+                        if (null == datamap)
+                        {
+                            datamap = new TreeMap<>();
+                            entityData.put(key, datamap);
+                        }
+                        datamap.putAll(data);
                     }
                 }
             }
         }
-        return Collections.unmodifiableList(list);
+        if (entityData.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        final List<Object> result = new ArrayList<>(entityData.size());
+        for (final Map.Entry<Object, Map<ColumnMeta, Object>> entry : entityData.entrySet())
+        {
+            final EntityBuilder builder = new EntityBuilder(this, this);
+            final Object instance = builder.build(context, entry.getValue());
+            if (instance != null)
+            {
+                result.add(instance);
+            }
+        }
+        return Collections.unmodifiableList(result);
     }
 
 
@@ -457,9 +513,9 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     }
 
 
-    protected final ODocument findDocument(final EntityMeta meta, final Object key) throws NormandraException
+    protected final ODocument findDocument(final EntityMeta meta, final TableMeta table, final Object key) throws NormandraException
     {
-        final ORID rid = this.findIdByKey(meta, key);
+        final ORID rid = this.findIdByKey(meta, table, key);
         if (null == rid)
         {
             return null;
@@ -468,7 +524,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     }
 
 
-    protected final ODocument findDocument(final EntityContext context, final Object key) throws NormandraException
+    protected final ODocument findDocument(final EntityContext context, final TableMeta table, final Object key) throws NormandraException
     {
         if (null == context || null == key)
         {
@@ -482,7 +538,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 
         for (final EntityMeta meta : context.getEntities())
         {
-            final ORID rid = this.findIdByKey(meta, key);
+            final ORID rid = this.findIdByKey(meta, table, key);
             if (rid != null)
             {
                 return this.findDocument(rid);
@@ -492,7 +548,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     }
 
 
-    protected final Collection<ORID> findIdByKeys(final EntityMeta meta, final Collection<Object> keys) throws NormandraException
+    protected final Collection<ORID> findIdByKeys(final EntityMeta meta, final TableMeta table, final Collection<Object> keys) throws NormandraException
     {
         if (null == meta || null == keys || keys.isEmpty())
         {
@@ -515,7 +571,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 
         final long start = System.currentTimeMillis();
         final String indexName = OrientUtils.keyIndex(meta);
-        final String schemaName = OrientUtils.schemaName(meta);
+        final String schemaName = meta.getName();
         final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
         if (null == keyIdx)
         {
@@ -570,7 +626,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     }
 
 
-    protected final ORID findIdByKey(final EntityMeta meta, final Object key) throws NormandraException
+    protected final ORID findIdByKey(final EntityMeta meta, final TableMeta table, final Object key) throws NormandraException
     {
         if (null == meta || null == key)
         {
@@ -584,8 +640,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 
         final long start = System.currentTimeMillis();
         final String indexName = OrientUtils.keyIndex(meta);
-        final String schemaName = OrientUtils.schemaName(meta);
-        final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
+        final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(meta.getName(), indexName);
         if (null == keyIdx)
         {
             throw new IllegalStateException("Unable to locate orientdb index [" + indexName + "].");
@@ -634,7 +689,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
     }
 
 
-    protected final ORID findIdByElement(final EntityMeta meta, final Object element) throws NormandraException
+    protected final ORID findIdByElement(final EntityMeta meta, final TableMeta table, final Object element) throws NormandraException
     {
         if (null == meta || null == element)
         {
@@ -647,6 +702,6 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
             return null;
         }
 
-        return this.findIdByKey(meta, key);
+        return this.findIdByKey(meta, table, key);
     }
 }

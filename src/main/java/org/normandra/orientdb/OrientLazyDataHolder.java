@@ -6,6 +6,7 @@ import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.SingleEntityContext;
+import org.normandra.meta.TableMeta;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -23,6 +24,8 @@ public class OrientLazyDataHolder implements DataHolder
 
     private final EntityMeta entity;
 
+    private final TableMeta table;
+
     private final ColumnMeta column;
 
     private final Object key;
@@ -30,10 +33,11 @@ public class OrientLazyDataHolder implements DataHolder
     private ODocument document;
 
 
-    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityMeta meta, final ColumnMeta column, final Object key)
+    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityMeta meta, final TableMeta table, final ColumnMeta column, final Object key)
     {
         this.session = session;
         this.entity = meta;
+        this.table = table;
         this.column = column;
         this.key = key;
     }
@@ -86,7 +90,7 @@ public class OrientLazyDataHolder implements DataHolder
             }
             try
             {
-                this.document = this.session.findDocument(this.entity, this.key);
+                this.document = this.session.findDocument(this.entity, this.table, this.key);
                 this.loaded.getAndSet(true);
             }
             catch (final Exception e)

@@ -12,7 +12,6 @@ import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
-import org.normandra.util.CaseUtils;
 
 import java.math.BigDecimal;
 import java.net.InetAddress;
@@ -34,41 +33,23 @@ import java.util.UUID;
  */
 public class OrientUtils
 {
-    public static String schemaName(final EntityMeta meta)
-    {
-        if (null == meta)
-        {
-            return null;
-        }
-        return CaseUtils.camelToSnakeCase(meta.getName());
-    }
-
-
-    public static String propertyName(final ColumnMeta meta)
-    {
-        if (null == meta)
-        {
-            return null;
-        }
-        return meta.getName();
-    }
-
-
     public static String keyIndex(final EntityMeta meta)
     {
         if (null == meta)
         {
             return null;
         }
+
+        final String entity = meta.getInherited() != null ? meta.getInherited() : meta.getName();
         final Collection<ColumnMeta> keys = new SingleEntityContext(meta).getPrimaryKeys();
         if (keys.size() == 1)
         {
             final ColumnMeta key = keys.iterator().next();
-            return meta.getName() + "." + OrientUtils.propertyName(key);
+            return entity + "." + key.getName();
         }
         else
         {
-            return meta.getName() + ".key";
+            return entity + ".key";
         }
     }
 
@@ -80,7 +61,7 @@ public class OrientUtils
             return null;
         }
 
-        final String name = OrientUtils.propertyName(column);
+        final String name = column.getName();
         final Object raw = document.field(name);
         if (null == raw)
         {
@@ -102,7 +83,7 @@ public class OrientUtils
         {
             for (final ColumnMeta column : table.getColumns())
             {
-                final String name = OrientUtils.propertyName(column);
+                final String name = column.getName();
                 final Object raw = document.field(name);
                 final Object value = raw != null ? OrientUtils.unpackRaw(column, raw) : null;
                 if (value != null)

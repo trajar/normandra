@@ -57,19 +57,18 @@ public class OrientSchemaTest extends BaseOrientTest
 
         // construct schema
         final DatabaseMeta meta = new DatabaseMeta(Arrays.asList(entity));
-        final String clusterName = "simple_entity";
         this.database.refresh(meta);
-        Assert.assertTrue(this.database.hasCluster(clusterName));
-        Assert.assertTrue(this.database.hasProperty(clusterName, "id"));
-        Assert.assertFalse(this.database.hasProperty(clusterName, "name"));
-        Assert.assertTrue(this.database.hasProperty(clusterName, "name_column"));
-        Assert.assertTrue(this.database.hasProperty(clusterName, "values"));
-        Assert.assertFalse(this.database.hasProperty(clusterName, "foo"));
+        Assert.assertTrue(this.database.hasCluster("simple_entity"));
+        Assert.assertTrue(this.database.hasProperty("SimpleEntity", "id"));
+        Assert.assertFalse(this.database.hasProperty("SimpleEntity", "name"));
+        Assert.assertTrue(this.database.hasProperty("SimpleEntity", "name_column"));
+        Assert.assertTrue(this.database.hasProperty("SimpleEntity", "values"));
+        Assert.assertFalse(this.database.hasProperty("SimpleEntity", "foo"));
 
         // refresh without error
         this.database.refresh(meta);
-        Assert.assertTrue(this.database.hasCluster(clusterName));
-        Assert.assertTrue(this.database.hasProperty(clusterName, "id"));
-        Assert.assertTrue(this.database.hasProperty(clusterName, "name_column"));
+        Assert.assertTrue(this.database.hasCluster("simple_entity"));
+        Assert.assertTrue(this.database.hasProperty("SimpleEntity", "id"));
+        Assert.assertTrue(this.database.hasProperty("SimpleEntity", "name_column"));
     }
 }

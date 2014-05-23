@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.Database;
 import org.normandra.DatabaseConstruction;
@@ -17,9 +18,9 @@ import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
+import org.normandra.util.CaseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,161 +99,155 @@ public class OrientDatabase implements Database
         }
 
         // setup entity schema
-        for (final EntityMeta entity : meta.getEntities())
+        final ODatabaseDocumentTx database = this.createDatabase();
+        try
         {
-            final ODatabaseDocumentTx database = this.createDatabase();
-            try
+            for (final EntityMeta entity : meta.getEntities())
             {
-                this.refreshEntity(entity, database);
-            }
-            catch (final Exception e)
-            {
-                throw new NormandraException("Unable to refresh entity [" + entity + "].", e);
-            }
-            finally
-            {
-                database.close();
-            }
-        }
-
-        // setup any table sequence/id generators
-        for (final EntityMeta entity : meta)
-        {
-            final Class<?> entityType = entity.getType();
-            final AnnotationParser parser = new AnnotationParser(entityType);
-            for (final Map.Entry<Field, GeneratedValue> entry : parser.getGenerators(entityType).entrySet())
-            {
-                final Field field = entry.getKey();
-                final GeneratedValue generator = entry.getValue();
-                final String type = generator.generator();
-                String tableName = "id_generator";
-                String keyColumn = "id";
-                String keyValue = OrientUtils.schemaName(entity);
-                String valueColumn = "value";
-
-                if (GenerationType.TABLE.equals(generator.strategy()))
-                {
-                    for (final TableGenerator table : parser.findAnnotations(entityType, TableGenerator.class))
-                    {
-                        if (type.equalsIgnoreCase(table.name()))
-                        {
-                            if (!table.table().isEmpty())
-                            {
-                                tableName = table.table();
-                            }
-                            if (!table.pkColumnName().isEmpty())
-                            {
-                                keyColumn = table.pkColumnName();
-                            }
-                            if (!table.pkColumnValue().isEmpty())
-                            {
-                                keyValue = table.pkColumnValue();
-                            }
-                            if (!table.valueColumnName().isEmpty())
-                            {
-                                valueColumn = table.valueColumnName();
-                            }
-                        }
-                    }
-                }
-                else if (GenerationType.SEQUENCE.equals(generator.strategy()))
-                {
-                    for (final SequenceGenerator sequence : parser.findAnnotations(entityType, SequenceGenerator.class))
-                    {
-                        if (type.equalsIgnoreCase(sequence.name()))
-                        {
-                            if (!sequence.sequenceName().isEmpty())
-                            {
-                                keyValue = sequence.sequenceName();
-                            }
-                        }
-                    }
-                }
-                else if (GenerationType.IDENTITY.equals(generator.strategy()))
-                {
-                    throw new NormandraException("No support available for orient-db identity primary key generation.");
-                }
-
-                // get the column type
-                final String fieldName = field.getName();
-                final String indexName = tableName + "." + keyColumn;
-                ColumnMeta column = null;
                 for (final TableMeta table : entity)
                 {
-                    column = table.getColumn(fieldName);
-                    if (column != null)
-                    {
-                        break;
-                    }
+                    this.refreshEntity(entity, table, database);
                 }
-                if (null == column)
-                {
-                    throw new NormandraException("Unable to locate primary key [" + fieldName + "] for entity [" + entity + "].");
-                }
-
-                final ODatabaseDocumentTx database = this.createDatabase();
-                try
-                {
-                    // drop table as required
-                    if (DatabaseConstruction.RECREATE.equals(this.constructionMode))
-                    {
-                        if (this.hasCluster(tableName))
-                        {
-                            database.command(new OCommandSQL("DELETE FROM " + tableName)).execute();
-                            database.getMetadata().getSchema().dropClass(tableName);
-                        }
-                        if (this.hasIndex(indexName))
-                        {
-                            database.command(new OCommandSQL("DROP INDEX " + indexName)).execute();
-                            database.getMetadata().getIndexManager().dropIndex(indexName);
-                        }
-                    }
-
-                    // create sequence schema
-                    final OClass schemaClass = database.getMetadata().getSchema().getOrCreateClass(tableName);
-                    if (!schemaClass.existsProperty(keyColumn))
-                    {
-                        schemaClass.createProperty(keyColumn, OType.STRING);
-                    }
-                    if (!schemaClass.existsProperty(valueColumn))
-                    {
-                        schemaClass.createProperty(valueColumn, OrientUtils.columnType(column));
-                    }
-                    if (!schemaClass.areIndexed(keyColumn))
-                    {
-                        schemaClass.createIndex(indexName, OClass.INDEX_TYPE.UNIQUE, keyColumn);
-                    }
-                }
-                catch (final Exception e)
-                {
-                    throw new NormandraException("Unable to refresh id generator [" + generator.generator() + "].", e);
-                }
-                finally
-                {
-                    database.close();
-                }
-
-                // assign generator
-                final IdGenerator counter = new OrientCounterIdGenerator(tableName, indexName, keyColumn, valueColumn, keyValue, this);
-                entity.setGenerator(column, counter);
-                logger.info("Set counter id generator for [" + column + "] on entity [" + entity + "].");
+                this.refreshGenerators(entity, database);
             }
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to refresh database.", e);
+        }
+        finally
+        {
+            database.close();
         }
     }
 
 
-    private void refreshEntity(final EntityMeta meta, final ODatabaseDocumentTx database)
+    private void refreshGenerators(final EntityMeta entity, final ODatabaseDocumentTx database)
     {
-        final String indexName = OrientUtils.keyIndex(meta);
-        final String schemaName = OrientUtils.schemaName(meta);
+        // setup any table sequence/id generators
+        final Class<?> entityType = entity.getType();
+        final AnnotationParser parser = new AnnotationParser(entityType);
+        for (final Map.Entry<Field, GeneratedValue> entry : parser.getGenerators(entityType).entrySet())
+        {
+            final Field field = entry.getKey();
+            final GeneratedValue generator = entry.getValue();
+            final String type = generator.generator();
+            String tableName = "id_generator";
+            String keyColumn = "id";
+            String keyValue = CaseUtils.camelToSnakeCase(entity.getName());
+            String valueColumn = "value";
+
+            if (GenerationType.TABLE.equals(generator.strategy()))
+            {
+                for (final TableGenerator table : parser.findAnnotations(entityType, TableGenerator.class))
+                {
+                    if (type.equalsIgnoreCase(table.name()))
+                    {
+                        if (!table.table().isEmpty())
+                        {
+                            tableName = table.table();
+                        }
+                        if (!table.pkColumnName().isEmpty())
+                        {
+                            keyColumn = table.pkColumnName();
+                        }
+                        if (!table.pkColumnValue().isEmpty())
+                        {
+                            keyValue = table.pkColumnValue();
+                        }
+                        if (!table.valueColumnName().isEmpty())
+                        {
+                            valueColumn = table.valueColumnName();
+                        }
+                    }
+                }
+            }
+            else if (GenerationType.SEQUENCE.equals(generator.strategy()))
+            {
+                for (final SequenceGenerator sequence : parser.findAnnotations(entityType, SequenceGenerator.class))
+                {
+                    if (type.equalsIgnoreCase(sequence.name()))
+                    {
+                        if (!sequence.sequenceName().isEmpty())
+                        {
+                            keyValue = sequence.sequenceName();
+                        }
+                    }
+                }
+            }
+            else if (GenerationType.IDENTITY.equals(generator.strategy()))
+            {
+                throw new IllegalStateException("No support available for orient-db identity primary key generation.");
+            }
+
+            // get the column type
+            final String fieldName = field.getName();
+            final String indexName = tableName + "." + keyColumn;
+            ColumnMeta column = null;
+            for (final TableMeta table : entity)
+            {
+                column = table.getColumn(fieldName);
+                if (column != null)
+                {
+                    break;
+                }
+            }
+            if (null == column)
+            {
+                throw new IllegalStateException("Unable to locate primary key [" + fieldName + "] for entity [" + entity + "].");
+            }
+
+            // drop table as required
+            if (DatabaseConstruction.RECREATE.equals(this.constructionMode))
+            {
+                if (this.hasCluster(tableName))
+                {
+                    database.command(new OCommandSQL("DELETE FROM " + tableName)).execute();
+                    database.getMetadata().getSchema().dropClass(tableName);
+                }
+                if (this.hasIndex(indexName))
+                {
+                    database.command(new OCommandSQL("DROP INDEX " + indexName)).execute();
+                    database.getMetadata().getIndexManager().dropIndex(indexName);
+                }
+            }
+
+            // create sequence schema
+            final OClass schemaClass = database.getMetadata().getSchema().getOrCreateClass(tableName);
+            if (!schemaClass.existsProperty(keyColumn))
+            {
+                schemaClass.createProperty(keyColumn, OType.STRING);
+            }
+            if (!schemaClass.existsProperty(valueColumn))
+            {
+                schemaClass.createProperty(valueColumn, OrientUtils.columnType(column));
+            }
+            if (!schemaClass.areIndexed(keyColumn))
+            {
+                schemaClass.createIndex(indexName, OClass.INDEX_TYPE.UNIQUE, keyColumn);
+            }
+
+            // assign generator
+            final IdGenerator counter = new OrientCounterIdGenerator(tableName, indexName, keyColumn, valueColumn, keyValue, this);
+            entity.setGenerator(column, counter);
+            logger.info("Set counter id generator for [" + column + "] on entity [" + entity + "].");
+        }
+    }
+
+
+    private void refreshEntity(final EntityMeta entity, final TableMeta table, final ODatabaseDocumentTx database)
+    {
+        final String indexName = OrientUtils.keyIndex(entity);
+        final String clusterName = CaseUtils.camelToSnakeCase(entity.getName());
+        final String className = entity.getName();
 
         if (DatabaseConstruction.RECREATE.equals(this.constructionMode))
         {
             // drop schema
-            if (this.hasCluster(schemaName))
+            if (this.hasClass(className))
             {
-                database.command(new OCommandSQL("DELETE FROM " + schemaName)).execute();
-                database.getMetadata().getSchema().dropClass(schemaName);
+                database.command(new OCommandSQL("DELETE FROM " + className)).execute();
+                database.getMetadata().getSchema().dropClass(className);
             }
             if (this.hasIndex(indexName))
             {
@@ -261,29 +256,82 @@ public class OrientDatabase implements Database
             }
         }
 
-        // check cluster (ie table)
-        final Collection<TableMeta> primaryTables = new SingleEntityContext(meta).getPrimaryTables();
-        if (primaryTables.size() > 1)
+        // setup cluster
+        final int clusterId;
+        if (database.existsCluster(clusterName))
         {
-            logger.warn("Collapsing schema for entity [" + meta + "] - only one table/cluster per document supported.");
+            clusterId = database.getClusterIdByName(clusterName);
+        }
+        else
+        {
+            clusterId = database.addCluster(clusterName, OStorage.CLUSTER_TYPE.PHYSICAL);
         }
 
-        // create new class schema
-        final OClass schemaClass = database.getMetadata().getSchema().getOrCreateClass(schemaName);
-        final Set<String> primary = new ArraySet<>();
-        for (final TableMeta table : meta)
+        // setup class
+        final OClass baseClass;
+        final OClass schemaClass;
+        if (entity.getInherited() != null)
         {
-            for (final ColumnMeta column : table)
+            // setup inherited schema
+            final String inheritedSchema = entity.getInherited();
+            if (database.getMetadata().getSchema().existsClass(inheritedSchema))
             {
-                final String property = OrientUtils.propertyName(column);
-                if (!schemaClass.existsProperty(property))
+                baseClass = database.getMetadata().getSchema().getClass(inheritedSchema);
+            }
+            else
+            {
+                baseClass = database.getMetadata().getSchema().createAbstractClass(inheritedSchema);
+            }
+            final List<ColumnMeta> inheritedProperties = new ArrayList<>();
+            inheritedProperties.addAll(table.getPrimaryKeys());
+            if (entity.getDiscriminator() != null)
+            {
+                inheritedProperties.add(entity.getDiscriminator().getColumn());
+            }
+            for (final ColumnMeta column : inheritedProperties)
+            {
+                final String property = column.getName();
+                if (!baseClass.existsProperty(property))
                 {
-                    schemaClass.createProperty(property, OrientUtils.columnType(column));
+                    baseClass.createProperty(property, OrientUtils.columnType(column));
                 }
-                if (!table.isSecondary() && column.isPrimaryKey())
-                {
-                    primary.add(property);
-                }
+            }
+            if (database.getMetadata().getSchema().existsClass(className))
+            {
+                schemaClass = database.getMetadata().getSchema().getClass(className);
+            }
+            else
+            {
+                schemaClass = database.getMetadata().getSchema().createClass(className, baseClass, clusterId);
+            }
+        }
+        else
+        {
+            // simple concrete entity
+            if (database.getMetadata().getSchema().existsClass(className))
+            {
+                schemaClass = database.getMetadata().getSchema().getClass(className);
+            }
+            else
+            {
+                schemaClass = database.getMetadata().getSchema().createClass(className, clusterId);
+            }
+            baseClass = schemaClass;
+        }
+
+        // create new class
+        final Set<String> primary = new ArraySet<>();
+        for (final ColumnMeta column : table)
+        {
+            final String property = column.getName();
+            if (!baseClass.existsProperty(property) &&
+                    !schemaClass.existsProperty(property))
+            {
+                schemaClass.createProperty(property, OrientUtils.columnType(column));
+            }
+            if (column.isPrimaryKey())
+            {
+                primary.add(property);
             }
         }
 
@@ -291,7 +339,11 @@ public class OrientDatabase implements Database
         {
             // create index
             final String[] keys = primary.toArray(new String[primary.size()]);
-            schemaClass.createIndex(indexName, OClass.INDEX_TYPE.UNIQUE, keys);
+            if (keys.length > 1)
+            {
+                logger.warn("Indexing multiple primary keys - index is likely to be unsupported or exhibit degrade performance.");
+            }
+            schemaClass.createIndex(indexName, OClass.INDEX_TYPE.UNIQUE, keys[0]);
         }
     }
 
@@ -307,6 +359,30 @@ public class OrientDatabase implements Database
     public boolean unregisterQuery(String name) throws NormandraException
     {
         throw new UnsupportedOperationException();
+    }
+
+
+    public Collection<String> getClasses()
+    {
+        final ODatabaseDocumentTx database = this.createDatabase();
+        try
+        {
+            final Collection<OClass> types = database.getMetadata().getSchema().getClasses();
+            if (null == types || types.isEmpty())
+            {
+                return Collections.emptyList();
+            }
+            final List<String> list = new ArrayList<>(types.size());
+            for (final OClass type : types)
+            {
+                list.add(type.getName());
+            }
+            return Collections.unmodifiableCollection(list);
+        }
+        finally
+        {
+            database.close();
+        }
     }
 
 
@@ -382,12 +458,29 @@ public class OrientDatabase implements Database
     }
 
 
-    public boolean hasProperty(final String clusterName, final String fieldName)
+    public boolean hasClass(final String className)
+    {
+        if (null == className || className.isEmpty())
+        {
+            return false;
+        }
+        for (final String existing : this.getClasses())
+        {
+            if (className.equalsIgnoreCase(existing))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public boolean hasProperty(final String className, final String fieldName)
     {
         final ODatabaseDocumentTx database = this.createDatabase();
         try
         {
-            final OClass schemaClass = database.getMetadata().getSchema().getClass(clusterName);
+            final OClass schemaClass = database.getMetadata().getSchema().getClass(className);
             if (null == schemaClass)
             {
                 return false;

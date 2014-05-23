@@ -3,7 +3,10 @@ package org.normandra.orientdb;
 import com.orientechnologies.orient.core.id.ORID;
 import org.normandra.log.DatabaseActivity;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * update activity record
@@ -15,17 +18,17 @@ public class OrientUpdateActivity implements DatabaseActivity
 {
     private final Type type;
 
-    private final ORID rid;
+    private final List<ORID> rids;
 
     private final Date date;
 
     private final long duration;
 
 
-    public OrientUpdateActivity(Type type, ORID rid, Date date, long duration)
+    public OrientUpdateActivity(Type type, Collection<ORID> rids, Date date, long duration)
     {
         this.type = type;
-        this.rid = rid;
+        this.rids = new ArrayList<>(rids);
         this.date = date;
         this.duration = duration;
     }
@@ -55,6 +58,6 @@ public class OrientUpdateActivity implements DatabaseActivity
     @Override
     public CharSequence getInformation()
     {
-        return this.type + " document [" + this.rid + "]";
+        return this.type + " documents " + this.rids + ".";
     }
 }

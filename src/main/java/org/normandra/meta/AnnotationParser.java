@@ -56,7 +56,7 @@ import java.util.TreeSet;
 
 /**
  * a class used to parse jpa annotations
- * <p>
+ * <p/>
  * User: bowen
  * Date: 9/1/13
  */
@@ -410,6 +410,7 @@ public class AnnotationParser
                     if (inheritance != null && !InheritanceType.TABLE_PER_CLASS.equals(inheritance.strategy()))
                     {
                         tableName = this.getTable(entity, clazz);
+                        entity.setInherited(this.getEntity(clazz));
                         break;
                     }
                 }

@@ -17,7 +17,7 @@ import java.util.UUID;
 
 /**
  * entity meta-data
- * <p>
+ * <p/>
  * User: bowen
  * Date: 9/1/13
  */
@@ -28,6 +28,8 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     private final Set<TableMeta> tables = new TreeSet<>();
 
     private final Class<?> type;
+
+    private String inherited;
 
     private DiscriminatorMeta discriminator;
 
@@ -62,6 +64,18 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     public Set<TableMeta> getTables()
     {
         return Collections.unmodifiableSet(this.tables);
+    }
+
+
+    public String getInherited()
+    {
+        return this.inherited;
+    }
+
+
+    public void setInherited(final String inherited)
+    {
+        this.inherited = inherited;
     }
 
 
@@ -279,6 +293,7 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         if (discriminator != null ? !discriminator.equals(that.discriminator) : that.discriminator != null)
             return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (inherited != null ? !inherited.equals(that.inherited) : that.inherited != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (tables != null ? !tables.equals(that.tables) : that.tables != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
@@ -293,6 +308,7 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (tables != null ? tables.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (inherited != null ? inherited.hashCode() : 0);
         result = 31 * result + (discriminator != null ? discriminator.hashCode() : 0);
         result = 31 * result + (id != null ? id.hashCode() : 0);
         return result;
