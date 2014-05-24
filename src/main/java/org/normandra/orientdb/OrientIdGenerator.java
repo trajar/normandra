@@ -15,7 +15,7 @@ import org.normandra.meta.EntityMeta;
  * User: bowen
  * Date: 1/26/14
  */
-public class OrientCounterIdGenerator implements IdGenerator
+public class OrientIdGenerator implements IdGenerator
 {
     private static final Object lock = new Object();
 
@@ -32,7 +32,7 @@ public class OrientCounterIdGenerator implements IdGenerator
     private final OrientDatabase database;
 
 
-    protected OrientCounterIdGenerator(final String table, final String index, final String keyCol, final String valueCol, final String key, final OrientDatabase database)
+    protected OrientIdGenerator(final String table, final String index, final String keyCol, final String valueCol, final String key, final OrientDatabase database)
     {
         this.tableName = table;
         this.indexName = index;

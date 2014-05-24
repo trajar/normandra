@@ -7,9 +7,7 @@ import org.apache.cassandra.serializers.UUIDSerializer;
 import org.normandra.meta.CollectionMeta;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
-import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
-import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
@@ -33,27 +31,6 @@ import java.util.UUID;
  */
 public class OrientUtils
 {
-    public static String keyIndex(final EntityMeta meta)
-    {
-        if (null == meta)
-        {
-            return null;
-        }
-
-        final String entity = meta.getInherited() != null ? meta.getInherited() : meta.getName();
-        final Collection<ColumnMeta> keys = new SingleEntityContext(meta).getPrimaryKeys();
-        if (keys.size() == 1)
-        {
-            final ColumnMeta key = keys.iterator().next();
-            return entity + "." + key.getName();
-        }
-        else
-        {
-            return entity + ".key";
-        }
-    }
-
-
     public static Object unpackValue(final EntityContext context, final ODocument document, final ColumnMeta column)
     {
         if (null == context || null == document || null == column)
@@ -242,10 +219,6 @@ public class OrientUtils
                 return OType.EMBEDDEDSET;
             }
         }
-        else if (column instanceof JoinCollectionMeta)
-        {
-            return OType.EMBEDDEDSET;
-        }
         else if (List.class.isAssignableFrom(clazz))
         {
             return OType.LINKLIST;
@@ -293,6 +266,26 @@ public class OrientUtils
             return OType.DATETIME;
         }
         return OType.BINARY;
+    }
+
+
+    static String keyIndex(final TableMeta table)
+    {
+        if (null == table)
+        {
+            return null;
+        }
+
+        final Collection<ColumnMeta> keys = table.getPrimaryKeys();
+        if (keys.size() == 1)
+        {
+            final ColumnMeta key = keys.iterator().next();
+            return table.getName() + "." + key.getName();
+        }
+        else
+        {
+            return table.getName() + ".key";
+        }
     }
 
 

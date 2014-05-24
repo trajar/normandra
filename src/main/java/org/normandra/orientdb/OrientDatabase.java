@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.Database;
 import org.normandra.DatabaseConstruction;
@@ -134,7 +133,7 @@ public class OrientDatabase implements Database
             final String type = generator.generator();
             String tableName = "id_generator";
             String keyColumn = "id";
-            String keyValue = CaseUtils.camelToSnakeCase(entity.getName());
+            String keyValue = entity.getTables().size() == 1 ? entity.getTables().iterator().next().getName() : CaseUtils.camelToSnakeCase(entity.getName());
             String valueColumn = "value";
 
             if (GenerationType.TABLE.equals(generator.strategy()))
@@ -228,7 +227,7 @@ public class OrientDatabase implements Database
             }
 
             // assign generator
-            final IdGenerator counter = new OrientCounterIdGenerator(tableName, indexName, keyColumn, valueColumn, keyValue, this);
+            final IdGenerator counter = new OrientIdGenerator(tableName, indexName, keyColumn, valueColumn, keyValue, this);
             entity.setGenerator(column, counter);
             logger.info("Set counter id generator for [" + column + "] on entity [" + entity + "].");
         }
@@ -237,17 +236,16 @@ public class OrientDatabase implements Database
 
     private void refreshEntity(final EntityMeta entity, final TableMeta table, final ODatabaseDocumentTx database)
     {
-        final String indexName = OrientUtils.keyIndex(entity);
-        final String clusterName = CaseUtils.camelToSnakeCase(entity.getName());
-        final String className = entity.getName();
+        final String indexName = OrientUtils.keyIndex(table);
+        final String schemaName = table.getName();
 
         if (DatabaseConstruction.RECREATE.equals(this.constructionMode))
         {
             // drop schema
-            if (this.hasClass(className))
+            if (this.hasClass(schemaName))
             {
-                database.command(new OCommandSQL("DELETE FROM " + className)).execute();
-                database.getMetadata().getSchema().dropClass(className);
+                database.command(new OCommandSQL("DELETE FROM " + schemaName)).execute();
+                database.getMetadata().getSchema().dropClass(schemaName);
             }
             if (this.hasIndex(indexName))
             {
@@ -256,76 +254,13 @@ public class OrientDatabase implements Database
             }
         }
 
-        // setup cluster
-        final int clusterId;
-        if (database.existsCluster(clusterName))
-        {
-            clusterId = database.getClusterIdByName(clusterName);
-        }
-        else
-        {
-            clusterId = database.addCluster(clusterName, OStorage.CLUSTER_TYPE.PHYSICAL);
-        }
-
-        // setup class
-        final OClass baseClass;
-        final OClass schemaClass;
-        if (entity.getInherited() != null)
-        {
-            // setup inherited schema
-            final String inheritedSchema = entity.getInherited();
-            if (database.getMetadata().getSchema().existsClass(inheritedSchema))
-            {
-                baseClass = database.getMetadata().getSchema().getClass(inheritedSchema);
-            }
-            else
-            {
-                baseClass = database.getMetadata().getSchema().createAbstractClass(inheritedSchema);
-            }
-            final List<ColumnMeta> inheritedProperties = new ArrayList<>();
-            inheritedProperties.addAll(table.getPrimaryKeys());
-            if (entity.getDiscriminator() != null)
-            {
-                inheritedProperties.add(entity.getDiscriminator().getColumn());
-            }
-            for (final ColumnMeta column : inheritedProperties)
-            {
-                final String property = column.getName();
-                if (!baseClass.existsProperty(property))
-                {
-                    baseClass.createProperty(property, OrientUtils.columnType(column));
-                }
-            }
-            if (database.getMetadata().getSchema().existsClass(className))
-            {
-                schemaClass = database.getMetadata().getSchema().getClass(className);
-            }
-            else
-            {
-                schemaClass = database.getMetadata().getSchema().createClass(className, baseClass, clusterId);
-            }
-        }
-        else
-        {
-            // simple concrete entity
-            if (database.getMetadata().getSchema().existsClass(className))
-            {
-                schemaClass = database.getMetadata().getSchema().getClass(className);
-            }
-            else
-            {
-                schemaClass = database.getMetadata().getSchema().createClass(className, clusterId);
-            }
-            baseClass = schemaClass;
-        }
-
         // create new class
+        final OClass schemaClass = database.getMetadata().getSchema().getOrCreateClass(schemaName);
         final Set<String> primary = new ArraySet<>();
         for (final ColumnMeta column : table)
         {
             final String property = column.getName();
-            if (!baseClass.existsProperty(property) &&
-                    !schemaClass.existsProperty(property))
+            if (!schemaClass.existsProperty(property))
             {
                 schemaClass.createProperty(property, OrientUtils.columnType(column));
             }
@@ -339,11 +274,7 @@ public class OrientDatabase implements Database
         {
             // create index
             final String[] keys = primary.toArray(new String[primary.size()]);
-            if (keys.length > 1)
-            {
-                logger.warn("Indexing multiple primary keys - index is likely to be unsupported or exhibit degrade performance.");
-            }
-            schemaClass.createIndex(indexName, OClass.INDEX_TYPE.UNIQUE, keys[0]);
+            schemaClass.createIndex(indexName, OClass.INDEX_TYPE.UNIQUE, keys);
         }
     }
 

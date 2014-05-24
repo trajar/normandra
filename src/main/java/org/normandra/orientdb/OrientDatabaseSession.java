@@ -36,7 +36,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -162,7 +164,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
                 }
                 else
                 {
-                    final String schemaName = meta.getName();
+                    final String schemaName = table.getName();
                     document = this.database.newInstance(schemaName);
                     operation = DatabaseActivity.Type.INSERT;
                 }
@@ -436,12 +438,13 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
         }
 
         // query ids for each entity context
-        final List<ORID> rids = new ArrayList<>(keys.length);
+        final Set<ORID> rids = new TreeSet<>();
         for (final EntityMeta meta : context.getEntities())
         {
-            for (final TableMeta table : new SingleEntityContext(meta).getPrimaryTables())
+            for (final TableMeta table : context.getPrimaryTables())
             {
                 rids.addAll(this.findIdByKeys(meta, table, Arrays.asList(keys)));
+
             }
         }
         final Map<Object, Map<ColumnMeta, Object>> entityData = new HashMap<>(rids.size());
@@ -550,7 +553,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 
     protected final Collection<ORID> findIdByKeys(final EntityMeta meta, final TableMeta table, final Collection<Object> keys) throws NormandraException
     {
-        if (null == meta || null == keys || keys.isEmpty())
+        if (null == meta || null == table || null == keys || keys.isEmpty())
         {
             return Collections.emptyList();
         }
@@ -570,8 +573,8 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
         }
 
         final long start = System.currentTimeMillis();
-        final String indexName = OrientUtils.keyIndex(meta);
-        final String schemaName = meta.getName();
+        final String indexName = OrientUtils.keyIndex(table);
+        final String schemaName = table.getName();
         final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
         if (null == keyIdx)
         {
@@ -628,7 +631,7 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
 
     protected final ORID findIdByKey(final EntityMeta meta, final TableMeta table, final Object key) throws NormandraException
     {
-        if (null == meta || null == key)
+        if (null == meta || null == table || null == key)
         {
             return null;
         }
@@ -639,8 +642,9 @@ public class OrientDatabaseSession implements DatabaseSession, DataHolderFactory
         }
 
         final long start = System.currentTimeMillis();
-        final String indexName = OrientUtils.keyIndex(meta);
-        final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(meta.getName(), indexName);
+        final String indexName = OrientUtils.keyIndex(table);
+        final String schemaName = table.getName();
+        final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
         if (null == keyIdx)
         {
             throw new IllegalStateException("Unable to locate orientdb index [" + indexName + "].");

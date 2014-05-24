@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,6 +19,7 @@ import java.util.Collections;
  * Date: 9/1/13
  */
 @Entity
+@Table(name = "simple_entity")
 public class SimpleEntity
 {
     @Id

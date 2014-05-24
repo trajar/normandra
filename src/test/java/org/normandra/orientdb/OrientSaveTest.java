@@ -116,10 +116,10 @@ public class OrientSaveTest extends BaseOrientTest
         // the second id will also be 1, since each is in their own cluster
         final CatEntity cat = new CatEntity("hank", true);
         this.session.save(entityMap.get(CatEntity.class), cat);
-        Assert.assertEquals(Long.valueOf(1), cat.getId());
+        Assert.assertEquals(Long.valueOf(2), cat.getId());
         final CatEntity cat2 = new CatEntity("bob", true);
         this.session.save(entityMap.get(CatEntity.class), cat2);
-        Assert.assertEquals(Long.valueOf(2), cat2.getId());
+        Assert.assertEquals(Long.valueOf(3), cat2.getId());
     }
 
 
