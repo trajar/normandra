@@ -1,7 +1,5 @@
 package org.normandra.data;
 
-import org.normandra.NormandraException;
-
 import java.util.Collections;
 import java.util.Map;
 
@@ -28,21 +26,21 @@ public class NullIdAccessor implements IdAccessor
 
 
     @Override
-    public Object fromEntity(Object entity) throws NormandraException
+    public Object fromEntity(Object entity)
     {
         return null;
     }
 
 
     @Override
-    public Map<String, Object> fromKey(Object key) throws NormandraException
+    public Map<String, Object> fromKey(Object key)
     {
         return Collections.emptyMap();
     }
 
 
     @Override
-    public Object toKey(Map<String, Object> map) throws NormandraException
+    public Object toKey(Map<String, Object> map)
     {
         return null;
     }

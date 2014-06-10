@@ -124,7 +124,7 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
             }
             if (Set.class.isAssignableFrom(this.getField().getType()))
             {
-                return Collections.unmodifiableSet(new ArraySet<>(set));
+                return Collections.unmodifiableSet(new ArraySet(set));
             }
             else
             {

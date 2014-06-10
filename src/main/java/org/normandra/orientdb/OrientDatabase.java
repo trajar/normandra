@@ -20,6 +20,7 @@ import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 import org.normandra.util.CaseUtils;
+import org.normandra.util.QueryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * User: bowen
@@ -41,6 +43,12 @@ import java.util.Set;
  */
 public class OrientDatabase implements Database
 {
+    public static final String URL = "orientdb.url";
+
+    public static final String USER_ID = "orientdb.userid";
+
+    public static final String PASSWORD = "orientdb.password";
+
     private static final Logger logger = LoggerFactory.getLogger(OrientDatabase.class);
 
     private final String url;
@@ -52,6 +60,8 @@ public class OrientDatabase implements Database
     private final DatabaseConstruction constructionMode;
 
     private final ODatabaseDocumentPool pool = createPool();
+
+    private final Map<String, OrientQuery> statementsByName = new ConcurrentHashMap<>();
 
 
     public OrientDatabase(final String url, final String user, final String pwd, final DatabaseConstruction mode)
@@ -80,7 +90,7 @@ public class OrientDatabase implements Database
     @Override
     public OrientDatabaseSession createSession()
     {
-        return new OrientDatabaseSession(this.createDatabase());
+        return new OrientDatabaseSession(this.createDatabase(), this.statementsByName);
     }
 
 
@@ -260,9 +270,10 @@ public class OrientDatabase implements Database
         for (final ColumnMeta column : table)
         {
             final String property = column.getName();
-            if (!schemaClass.existsProperty(property))
+            final OType type = OrientUtils.columnType(column);
+            if (type != null && !schemaClass.existsProperty(property))
             {
-                schemaClass.createProperty(property, OrientUtils.columnType(column));
+                schemaClass.createProperty(property, type);
             }
             if (column.isPrimaryKey())
             {
@@ -280,16 +291,41 @@ public class OrientDatabase implements Database
 
 
     @Override
-    public boolean registerQuery(EntityContext meta, String name, String query) throws NormandraException
+    public boolean registerQuery(final EntityContext entity, final String name, final String query) throws NormandraException
     {
-        throw new UnsupportedOperationException();
+        if (null == name || name.isEmpty())
+        {
+            return false;
+        }
+        if (null == query || query.isEmpty())
+        {
+            return false;
+        }
+        if (this.statementsByName.containsKey(name))
+        {
+            return false;
+        }
+
+        final String tableQuery = QueryUtils.prepare(entity, query);
+        if (null == tableQuery || tableQuery.isEmpty())
+        {
+            return false;
+        }
+
+        final OrientQuery prepared = new OrientQuery(query, tableQuery);
+        this.statementsByName.put(name, prepared);
+        return true;
     }
 
 
     @Override
-    public boolean unregisterQuery(String name) throws NormandraException
+    public boolean unregisterQuery(final String name) throws NormandraException
     {
-        throw new UnsupportedOperationException();
+        if (null == name || name.isEmpty())
+        {
+            return false;
+        }
+        return this.statementsByName.remove(name) != null;
     }
 
 
@@ -433,7 +469,8 @@ public class OrientDatabase implements Database
     @Override
     public void close()
     {
-        // nothing to do
+        // cleanup and shutdown
+        this.pool.close();
     }
 
 

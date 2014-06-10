@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * generic student entity
- * <p>
+ * <p/>
  * User: bowen
  * Date: 2/14/14
  */
@@ -39,6 +39,13 @@ public class StudentEntity
     public StudentEntity(final String name)
     {
         this.name = name;
+    }
+
+
+    public StudentEntity(final String name, final ClassEntity classroorm)
+    {
+        this.name = name;
+        this.classroom = classroorm;
     }
 
 
@@ -80,7 +87,6 @@ public class StudentEntity
 
         StudentEntity that = (StudentEntity) o;
 
-        if (classroom != null ? !classroom.equals(that.classroom) : that.classroom != null) return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
@@ -93,7 +99,6 @@ public class StudentEntity
     {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (classroom != null ? classroom.hashCode() : 0);
         return result;
     }
 }

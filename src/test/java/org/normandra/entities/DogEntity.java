@@ -3,6 +3,7 @@ package org.normandra.entities;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.NamedQuery;
 
 /**
  * dog entity class
@@ -12,6 +13,7 @@ import javax.persistence.Entity;
  */
 @Entity
 @DiscriminatorValue("dog")
+@NamedQuery(name = "dog_by_id", query = "select from DogEntity where id = :id")
 public class DogEntity extends AnimalEntity
 {
     @Column

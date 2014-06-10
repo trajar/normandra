@@ -8,6 +8,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.Collection;
@@ -19,9 +21,9 @@ import java.util.Collections;
  * User: bowen
  * Date: 2/14/14
  */
-@Table(name = "classroom")
+@Table(name = "student_directory")
 @Entity
-public class ClassEntity
+public class StudentDirectoryEntity
 {
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
@@ -30,23 +32,21 @@ public class ClassEntity
     @Column
     private String name;
 
-    @Column
-    private int room;
-
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "classroom")
+    @JoinTable(name = "student_directory_xref")
+    @JoinColumn(name = "student_id")
+    @OneToMany(fetch = FetchType.LAZY)
     private Collection<StudentEntity> students;
 
 
-    public ClassEntity()
+    public StudentDirectoryEntity()
     {
 
     }
 
 
-    public ClassEntity(final String name, final int room)
+    public StudentDirectoryEntity(final String name)
     {
         this.name = name;
-        this.room = room;
     }
 
 
@@ -98,21 +98,14 @@ public class ClassEntity
     }
 
 
-    public int getRoom()
-    {
-        return room;
-    }
-
-
     @Override
     public boolean equals(Object o)
     {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ClassEntity that = (ClassEntity) o;
+        StudentDirectoryEntity that = (StudentDirectoryEntity) o;
 
-        if (room != that.room) return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
@@ -125,7 +118,6 @@ public class ClassEntity
     {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + room;
         return result;
     }
 }

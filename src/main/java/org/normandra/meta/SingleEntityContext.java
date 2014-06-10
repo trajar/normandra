@@ -52,7 +52,7 @@ public class SingleEntityContext implements EntityContext
         final Set<ColumnMeta> columns = new ArraySet<>();
         for (final TableMeta table : this.entity)
         {
-            if (!table.isSecondary())
+            if (!table.isJoinTable())
             {
                 columns.addAll(table.getPrimaryKeys());
             }
@@ -116,7 +116,7 @@ public class SingleEntityContext implements EntityContext
         final Set<TableMeta> list = new ArraySet<>(tables.size());
         for (final TableMeta table : tables)
         {
-            if (!table.isSecondary())
+            if (!table.isJoinTable())
             {
                 list.add(table);
             }
@@ -132,7 +132,7 @@ public class SingleEntityContext implements EntityContext
         final Set<TableMeta> list = new ArraySet<>(tables.size());
         for (final TableMeta table : tables)
         {
-            if (table.isSecondary())
+            if (table.isJoinTable())
             {
                 list.add(table);
             }

@@ -12,11 +12,13 @@ import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
+import org.normandra.util.EntityBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +29,7 @@ import java.util.concurrent.Future;
 
 /**
  * a class capable of querying and constructing entity instances
- * <p>
+ * <p/>
  * User: bowen
  * Date: 3/23/14
  */
@@ -101,7 +103,7 @@ public class CassandraEntityQuery
             {
                 return null;
             }
-            final Object instance = new CassandraEntityBuilder(this.session).build(meta, data);
+            final Object instance = new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(meta, data);
             if (null == instance)
             {
                 return null;
@@ -118,9 +120,9 @@ public class CassandraEntityQuery
     }
 
 
-    public List<Object> query(final EntityContext meta, final Object... keys) throws NormandraException
+    public List<Object> query(final EntityContext context, final Object... keys) throws NormandraException
     {
-        if (null == meta || null == keys || keys.length <= 0)
+        if (null == context || null == keys || keys.length <= 0)
         {
             return null;
         }
@@ -128,7 +130,7 @@ public class CassandraEntityQuery
         final List<Object> entities = new ArrayList<>(keys.length);
         for (final Object key : keys)
         {
-            for (final EntityMeta entity : meta.getEntities())
+            for (final EntityMeta entity : context.getEntities())
             {
                 if (key instanceof Serializable)
                 {
@@ -150,9 +152,9 @@ public class CassandraEntityQuery
         {
             // query each table as necessary
             final Map<TableMeta, Future<ResultSet>> primaryFutures = new TreeMap<>();
-            for (final TableMeta table : meta.getPrimaryTables())
+            for (final TableMeta table : context.getPrimaryTables())
             {
-                final Future<ResultSet> future = this.buildEagerQuery(meta, table, keys);
+                final Future<ResultSet> future = this.buildEagerQuery(context, table, keys);
                 if (future != null)
                 {
                     primaryFutures.put(table, future);
@@ -168,7 +170,7 @@ public class CassandraEntityQuery
                     for (final Row row : results)
                     {
                         final Map<ColumnMeta, Object> data = CassandraUtils.unpackValues(table, row);
-                        final EntityMeta entity = meta.findEntity(data);
+                        final EntityMeta entity = context.findEntity(data);
                         if (entity != null)
                         {
                             final Map<String, Object> dataByName = new HashMap<>(data.size());
@@ -205,7 +207,7 @@ public class CassandraEntityQuery
                     final TableMeta table = ctx.entity.getTable(row.getColumnDefinitions().getTable(0));
                     data.putAll(CassandraUtils.unpackValues(table, row));
                 }
-                final Object instance = new CassandraEntityBuilder(this.session).build(ctx.entity, data);
+                final Object instance = new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(context, data);
                 if (instance != null)
                 {
                     this.cache.put(ctx.entity, instance);
@@ -216,7 +218,7 @@ public class CassandraEntityQuery
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to get entity [" + meta + "] by keys size [" + keys.length + "].", e);
+            throw new NormandraException("Unable to get entity [" + context + "] by keys " + Arrays.asList(keys) + ".", e);
         }
     }
 
@@ -226,7 +228,7 @@ public class CassandraEntityQuery
         // get columns to query
         final Set<ColumnMeta> columns = new ArraySet<>(meta.getColumns());
         columns.retainAll(table.getEagerLoaded());
-        if (table.isSecondary())
+        if (table.isJoinTable())
         {
             // for secondary tables, only query extra fields
             columns.removeAll(meta.getPrimaryKeys());

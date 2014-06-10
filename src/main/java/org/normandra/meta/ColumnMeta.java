@@ -2,9 +2,11 @@ package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
 
+import java.util.Collection;
+
 /**
  * column meta-data
- * <p>
+ * <p/>
  * User: bowen
  * Date: 9/1/13
  */
@@ -58,6 +60,30 @@ public class ColumnMeta implements Comparable<ColumnMeta>
     public Class<?> getType()
     {
         return this.type;
+    }
+
+
+    public boolean isCollection()
+    {
+        return Collection.class.isAssignableFrom(this.type);
+    }
+
+
+    /**
+     * @return Returns true if this column is a virtual or void column, possibly a column mapped to another table.
+     */
+    public boolean isVirtual()
+    {
+        return Void.class.equals(this.type);
+    }
+
+
+    /**
+     * @return Returns true if this column is embedded within the table, else a joined or mapped column.
+     */
+    public boolean isEmbedded()
+    {
+        return true;
     }
 
 

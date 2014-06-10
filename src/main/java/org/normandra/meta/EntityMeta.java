@@ -33,6 +33,8 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
 
     private DiscriminatorMeta discriminator;
 
+    private final Set<ColumnMeta> indexed = new TreeSet<>();
+
     private final Map<ColumnMeta, ColumnAccessor> accessors = new TreeMap<>();
 
     private final Map<ColumnMeta, IdGenerator> generators = new TreeMap<>();
@@ -76,6 +78,42 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     public void setInherited(final String inherited)
     {
         this.inherited = inherited;
+    }
+
+
+    public boolean addIndexed(final ColumnMeta column)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        return this.indexed.add(column);
+    }
+
+
+    public boolean removeIndexed(final ColumnMeta column)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        return this.indexed.remove(column);
+    }
+
+
+    public boolean isIndexed(final ColumnMeta column)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        return this.indexed.contains(column);
+    }
+
+
+    public Set<ColumnMeta> getIndexed()
+    {
+        return Collections.unmodifiableSet(this.indexed);
     }
 
 
@@ -278,7 +316,7 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
     @Override
     public String toString()
     {
-        return this.name + " (" + this.type.getSimpleName() + ")";
+        return this.name;
     }
 
 

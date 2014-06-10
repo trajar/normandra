@@ -6,11 +6,8 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
 import org.normandra.meta.EntityContext;
-import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
+import org.normandra.util.QueryUtils;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,7 +15,7 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * a simple jpa query parser
- * <p>
+ * <p/>
  * User: bowen
  * Date: 4/20/14
  */
@@ -43,7 +40,7 @@ public class CassandraQueryParser<T>
             return null;
         }
 
-        final String tableQuery = prepare(this.entity, jpaQuery);
+        final String tableQuery = QueryUtils.prepare(this.entity, jpaQuery);
         if (parameters.isEmpty())
         {
             final RegularStatement statement = new SimpleStatement(tableQuery);
@@ -87,74 +84,5 @@ public class CassandraQueryParser<T>
         {
             throw new NormandraException("Unable to parse query.", e);
         }
-    }
-
-
-    public static String prepare(final EntityContext entity, final String query) throws NormandraException
-    {
-        if (null == query || query.isEmpty())
-        {
-            return "";
-        }
-        String result = query;
-        result = replaceEntityNames(entity, result);
-        result = ensureColumnNames(result);
-        return result;
-    }
-
-
-    private static String replaceEntityNames(final EntityContext entity, final String query) throws NormandraException
-    {
-        String result = query;
-        for (final EntityMeta meta : entity.getEntities())
-        {
-            final List<String> tables = new ArrayList<>(2);
-            for (final TableMeta table : meta)
-            {
-                if (!table.isSecondary())
-                {
-                    tables.add(table.getName());
-                }
-            }
-            if (tables.size() > 1)
-            {
-                throw new NormandraException("CQL3 queries only support a table table.");
-            }
-            final String table = tables.get(0);
-            result = result.replace(meta.getName(), table);
-            Class<?> parent = meta.getType().getSuperclass();
-            while (parent != null && !Object.class.equals(parent))
-            {
-                result = result.replace(parent.getSimpleName(), table);
-                parent = parent.getSuperclass();
-            }
-        }
-        return result;
-    }
-
-
-    private static String ensureColumnNames(final String query) throws NormandraException
-    {
-        final String upperCase = query.toUpperCase();
-        final Matcher selectMatcher = Pattern.compile("SELECT").matcher(upperCase);
-        if (!selectMatcher.find())
-        {
-            return query;
-        }
-
-        final Matcher fromMatcher = Pattern.compile("FROM").matcher(upperCase);
-        if (!fromMatcher.find(selectMatcher.end()))
-        {
-            return query;
-        }
-
-        final String columns = query.substring(selectMatcher.end() + 1, fromMatcher.start()).trim();
-        if (!columns.isEmpty())
-        {
-            return query;
-        }
-
-        final String result = query.substring(0, selectMatcher.end() + 1) + " * " + query.substring(fromMatcher.start());
-        return result;
     }
 }

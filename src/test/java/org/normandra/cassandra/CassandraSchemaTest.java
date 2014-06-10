@@ -3,6 +3,7 @@ package org.normandra.cassandra;
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.normandra.data.CompositeIdAccessor;
 import org.normandra.data.NullIdAccessor;
@@ -11,46 +12,48 @@ import org.normandra.entities.ClassEntity;
 import org.normandra.entities.CompositeIndexEntity;
 import org.normandra.entities.DogEntity;
 import org.normandra.entities.SimpleEntity;
+import org.normandra.entities.StudentDirectoryEntity;
 import org.normandra.entities.StudentEntity;
 import org.normandra.entities.StudentIndexEntity;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
+import org.normandra.util.ArraySet;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 /**
  * cassandra unit tests
- * <p>
+ * <p/>
  * User: bowen
  * Date: 9/7/13
  */
-public class CassandraSchemaTest extends BaseCassandraTest
+public class CassandraSchemaTest
 {
-    private CassandraDatabase database;
+    private final CassandraTestHelper helper = new CassandraTestHelper();
+
+
+    @BeforeClass
+    public static void setup() throws Exception
+    {
+        CassandraTestHelper.setup();
+    }
 
 
     @Before
     public void create() throws Exception
     {
-        this.database = new CassandraDatabaseFactory(keyspace, "localhost", port, construction).create();
+        helper.create();
     }
 
 
     @After
-    public void destroy() throws IOException
+    public void destroy() throws Exception
     {
-        if (this.database != null)
-        {
-            this.database.close();
-            this.database = null;
-        }
-        CassandraTestUtil.reset();
+        helper.destroy();
     }
 
 
@@ -58,32 +61,33 @@ public class CassandraSchemaTest extends BaseCassandraTest
     public void testSimple() throws Exception
     {
         // we should start with clean keyspace
+        final CassandraDatabase database = helper.getDatabase();
         final AnnotationParser parser = new AnnotationParser(SimpleEntity.class);
         final EntityMeta entity = parser.read().iterator().next();
         Assert.assertNotNull(entity);
         for (final TableMeta table : entity.getTables())
         {
-            Assert.assertFalse(this.database.hasTable(table.getName()));
+            Assert.assertFalse(database.hasTable(table.getName()));
         }
 
         // construct schema
         final DatabaseMeta meta = new DatabaseMeta(Arrays.asList(entity));
-        this.database.refresh(meta);
+        database.refresh(meta);
         final String table = meta.getTables().iterator().next();
-        Assert.assertTrue(this.database.hasTable(table));
-        Assert.assertTrue(this.database.hasTable(table));
-        Assert.assertTrue(this.database.hasColumn(table, "id"));
-        Assert.assertFalse(this.database.hasColumn(table, "name"));
-        Assert.assertTrue(this.database.hasColumn(table, "name_column"));
-        Assert.assertTrue(this.database.hasColumn(table, "values"));
-        Assert.assertFalse(this.database.hasColumn(table, "foo"));
+        Assert.assertTrue(database.hasTable(table));
+        Assert.assertTrue(database.hasTable(table));
+        Assert.assertTrue(database.hasColumn(table, "id"));
+        Assert.assertFalse(database.hasColumn(table, "name"));
+        Assert.assertTrue(database.hasColumn(table, "name_column"));
+        Assert.assertTrue(database.hasColumn(table, "values"));
+        Assert.assertFalse(database.hasColumn(table, "foo"));
 
         // refresh without error
-        this.database.refresh(meta);
-        Assert.assertTrue(this.database.hasTable(table));
-        Assert.assertTrue(this.database.hasColumn(table, "id"));
-        Assert.assertTrue(this.database.hasColumn(table, "name_column"));
-        Assert.assertTrue(this.database.hasColumn(table, "values"));
+        database.refresh(meta);
+        Assert.assertTrue(database.hasTable(table));
+        Assert.assertTrue(database.hasColumn(table, "id"));
+        Assert.assertTrue(database.hasColumn(table, "name_column"));
+        Assert.assertTrue(database.hasColumn(table, "values"));
     }
 
 
@@ -91,28 +95,23 @@ public class CassandraSchemaTest extends BaseCassandraTest
     public void testInheritance() throws Exception
     {
         // build meta-data for all entities
-        final List<EntityMeta> list = new ArrayList<>();
+        final CassandraDatabase database = helper.getDatabase();
+        final Set<EntityMeta> list = new ArraySet<>();
         for (final Class<?> clazz : Arrays.asList(CatEntity.class, DogEntity.class))
         {
             final AnnotationParser parser = new AnnotationParser(clazz);
-            final EntityMeta entity = parser.read().iterator().next();
-            Assert.assertNotNull(entity);
-            for (final TableMeta table : entity.getTables())
-            {
-                Assert.assertFalse(this.database.hasTable(table.getName()));
-            }
-            list.add(entity);
+            list.addAll(parser.read());
         }
 
         // construct schema
         final DatabaseMeta meta = new DatabaseMeta(list);
-        this.database.refresh(meta);
-        Assert.assertTrue(this.database.hasTable("animal"));
-        Assert.assertTrue(this.database.hasColumn("animal", "id"));
-        Assert.assertTrue(this.database.hasColumn("animal", "type"));
-        Assert.assertFalse(this.database.hasColumn("animal", "numBarks"));
-        Assert.assertTrue(this.database.hasColumn("animal", "num_barks"));
-        Assert.assertTrue(this.database.hasColumn("animal", "litter_box"));
+        database.refresh(meta);
+        Assert.assertTrue(database.hasTable("animal"));
+        Assert.assertTrue(database.hasColumn("animal", "id"));
+        Assert.assertTrue(database.hasColumn("animal", "type"));
+        Assert.assertFalse(database.hasColumn("animal", "numBarks"));
+        Assert.assertTrue(database.hasColumn("animal", "num_barks"));
+        Assert.assertTrue(database.hasColumn("animal", "litter_box"));
     }
 
 
@@ -124,15 +123,16 @@ public class CassandraSchemaTest extends BaseCassandraTest
         Assert.assertFalse(list.isEmpty());
         Assert.assertEquals(2, list.size());
 
+        final CassandraDatabase database = helper.getDatabase();
         final DatabaseMeta meta = new DatabaseMeta(list);
-        this.database.refresh(meta);
-        Assert.assertTrue(this.database.hasTable("student_index"));
-        Assert.assertTrue(this.database.hasColumn("student_index", "name"));
-        Assert.assertTrue(this.database.hasColumn("student_index", "classroom_id"));
-        Assert.assertTrue(this.database.hasTable("composite_index"));
-        Assert.assertFalse(this.database.hasColumn("composite_index", "key"));
-        Assert.assertTrue(this.database.hasColumn("composite_index", "id"));
-        Assert.assertTrue(this.database.hasColumn("composite_index", "name"));
+        database.refresh(meta);
+        Assert.assertTrue(database.hasTable("student_index"));
+        Assert.assertTrue(database.hasColumn("student_index", "name"));
+        Assert.assertTrue(database.hasColumn("student_index", "classroom_id"));
+        Assert.assertTrue(database.hasTable("composite_index"));
+        Assert.assertFalse(database.hasColumn("composite_index", "key"));
+        Assert.assertTrue(database.hasColumn("composite_index", "id"));
+        Assert.assertTrue(database.hasColumn("composite_index", "name"));
 
         final EntityMeta student = meta.getEntity("student_index");
         final TableMeta studentTable = student.getTables().iterator().next();
@@ -153,24 +153,25 @@ public class CassandraSchemaTest extends BaseCassandraTest
     @Test
     public void testJoinTable() throws Exception
     {
-        final AnnotationParser parser = new AnnotationParser(StudentEntity.class, ClassEntity.class);
+        final AnnotationParser parser = new AnnotationParser(StudentEntity.class, StudentDirectoryEntity.class, ClassEntity.class);
         final Collection<EntityMeta> list = parser.read();
         Assert.assertFalse(list.isEmpty());
-        Assert.assertEquals(2, list.size());
+        Assert.assertEquals(3, list.size());
 
+        final CassandraDatabase database = helper.getDatabase();
         final DatabaseMeta meta = new DatabaseMeta(list);
-        this.database.refresh(meta);
+        database.refresh(meta);
 
         Assert.assertTrue(meta.getTables().contains("classroom"));
-        Assert.assertTrue(meta.getTables().contains("classroom_student_xref"));
+        Assert.assertTrue(meta.getTables().contains("student_directory_xref"));
 
         final EntityMeta classroomMeta = meta.getEntity("classroom");
         Assert.assertNotNull(classroomMeta);
         Assert.assertNotNull(classroomMeta.getTable("classroom"));
-        Assert.assertNotNull(classroomMeta.getTable("classroom_student_xref"));
 
-        final TableMeta joinMeta = classroomMeta.getTable("classroom_student_xref");
-        Assert.assertTrue(joinMeta.isSecondary());
+        final EntityMeta direcoryMeta = meta.getEntity("student_directory");
+        final TableMeta joinMeta = direcoryMeta.getTable("student_directory_xref");
+        Assert.assertTrue(joinMeta.isJoinTable());
         Assert.assertTrue(joinMeta.hasColumn("id"));
         Assert.assertTrue(joinMeta.hasColumn("student_id"));
         Assert.assertEquals(2, joinMeta.getColumns().size());

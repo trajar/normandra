@@ -28,17 +28,15 @@ import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
+import org.normandra.util.EntityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
@@ -48,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a cassandra database session
- * <p>
+ * <p/>
  * User: bowen
  * Date: 2/1/14
  */
@@ -438,7 +436,6 @@ public class CassandraDatabaseSession implements DatabaseSession
         try
         {
             // generate any primary ids
-            final EntityContext ctx = new SingleEntityContext(meta);
             for (final TableMeta table : meta)
             {
                 for (final ColumnMeta column : table.getColumns())
@@ -453,123 +450,11 @@ public class CassandraDatabaseSession implements DatabaseSession
                     }
                 }
             }
+
             // generate insert/updateInstance statements
-            final List<Insert> inserts = new ArrayList<>();
-            final List<Delete> deletes = new ArrayList<>();
-            for (final TableMeta table : meta)
-            {
-                if (table.getPrimaryKeys().size() == ctx.getPrimaryKeys().size())
-                {
-                    // this table has the same number of keys
-                    Insert statement = QueryBuilder.insertInto(this.keyspaceName, table.getName());
-                    boolean hasValue = false;
-                    for (final ColumnMeta column : table.getColumns())
-                    {
-                        final ColumnAccessor accessor = meta.getAccessor(column);
-                        if (accessor != null && accessor.isLoaded(element))
-                        {
-                            final boolean empty = accessor.isEmpty(element);
-                            final Object value = !empty ? accessor.getValue(element) : null;
-                            if (value != null)
-                            {
-                                statement = statement.value(column.getName(), value);
-                                hasValue = true;
-                            }
-                            else if (!column.isPrimaryKey())
-                            {
-                                boolean hasWhere = false;
-                                final Delete delete = QueryBuilder.delete(column.getName()).from(this.keyspaceName, table.getName());
-                                for (final ColumnMeta key : table.getPrimaryKeys())
-                                {
-                                    final ColumnAccessor keyAccessor = meta.getAccessor(key);
-                                    final Object keyValue = keyAccessor != null ? keyAccessor.getValue(element) : null;
-                                    if (keyValue != null)
-                                    {
-                                        delete.where(QueryBuilder.eq(key.getName(), keyValue));
-                                        hasWhere = true;
-                                    }
-                                }
-                                if (hasWhere)
-                                {
-                                    deletes.add(delete);
-                                }
-                            }
-                        }
-                    }
-                    if (hasValue)
-                    {
-                        inserts.add(statement);
-                    }
-                }
-                else
-                {
-                    // this table as an extra set of keys, likely as a join table
-                    final Map<ColumnMeta, Object> keys = new TreeMap<>();
-                    for (final ColumnMeta column : ctx.getPrimaryKeys())
-                    {
-                        if (table.hasColumn(column.getName()))
-                        {
-                            final ColumnAccessor accessor = meta.getAccessor(column);
-                            final Object value = accessor != null ? accessor.getValue(element) : null;
-                            if (value != null)
-                            {
-                                keys.put(column, value);
-                            }
-                        }
-                    }
-                    final Set<ColumnMeta> extraKeys = new TreeSet<>(table.getPrimaryKeys());
-                    extraKeys.removeAll(ctx.getPrimaryKeys());
-                    for (final ColumnMeta column : extraKeys)
-                    {
-                        final ColumnAccessor accessor = meta.getAccessor(column);
-                        if (accessor.isLoaded(element))
-                        {
-                            final boolean empty = accessor.isEmpty(element);
-                            final Object value = !empty && accessor != null ? accessor.getValue(element) : null;
-                            if (value instanceof Collection)
-                            {
-                                for (final Object item : ((Collection) value))
-                                {
-                                    Insert statement = QueryBuilder.insertInto(this.keyspaceName, table.getName());
-                                    for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
-                                    {
-                                        statement = statement.value(entry.getKey().getName(), entry.getValue());
-                                    }
-                                    statement = statement.value(column.getName(), item);
-                                    inserts.add(statement);
-                                }
-                            }
-                            else if (value != null)
-                            {
-                                Insert statement = QueryBuilder.insertInto(this.keyspaceName, table.getName());
-                                for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
-                                {
-                                    statement = statement.value(entry.getKey().getName(), entry.getValue());
-                                }
-                                statement = statement.value(column.getName(), value);
-                                inserts.add(statement);
-                            }
-                            else if (!column.isPrimaryKey())
-                            {
-                                boolean hasWhere = false;
-                                final Delete delete = QueryBuilder.delete(column.getName()).from(this.keyspaceName, table.getName());
-                                for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
-                                {
-                                    delete.where(QueryBuilder.eq(entry.getKey().getName(), entry.getValue()));
-                                    hasWhere = true;
-                                }
-                                if (hasWhere)
-                                {
-                                    deletes.add(delete);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            final List<RegularStatement> operations = new ArrayList<>(inserts.size() + deletes.size());
-            operations.addAll(inserts);
-            operations.addAll(deletes);
+            final CassandraDataHandler helper = new CassandraDataHandler(this);
+            new EntityHelper(this).save(meta, element, helper);
+            final List<RegularStatement> operations = helper.getOperations();
             if (operations.isEmpty())
             {
                 throw new IllegalStateException("No operations or columns identify for update - cannot save empty entity.");

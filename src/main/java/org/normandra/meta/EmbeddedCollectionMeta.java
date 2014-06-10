@@ -4,16 +4,16 @@ import org.apache.commons.lang.NullArgumentException;
 
 /**
  * collection column meta-data
- * <p>
+ * <p/>
  * User: bowen
  * Date: 9/1/13
  */
-public class CollectionMeta extends ColumnMeta
+public class EmbeddedCollectionMeta extends ColumnMeta
 {
     private final Class<?> generic;
 
 
-    public CollectionMeta(final String name, final String property, final Class<?> clazz, final Class<?> generic, final boolean primary, final boolean lazy)
+    public EmbeddedCollectionMeta(final String name, final String property, final Class<?> clazz, final Class<?> generic, final boolean primary, final boolean lazy)
     {
         super(name, property, clazz, primary, lazy);
         if (null == generic)
@@ -21,6 +21,20 @@ public class CollectionMeta extends ColumnMeta
             throw new NullArgumentException("generic");
         }
         this.generic = generic;
+    }
+
+
+    @Override
+    public boolean isCollection()
+    {
+        return true;
+    }
+
+
+    @Override
+    public boolean isEmbedded()
+    {
+        return true;
     }
 
 
@@ -37,7 +51,7 @@ public class CollectionMeta extends ColumnMeta
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        CollectionMeta that = (CollectionMeta) o;
+        EmbeddedCollectionMeta that = (EmbeddedCollectionMeta) o;
 
         if (generic != null ? !generic.equals(that.generic) : that.generic != null) return false;
 

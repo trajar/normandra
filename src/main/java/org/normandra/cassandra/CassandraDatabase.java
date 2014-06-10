@@ -21,6 +21,7 @@ import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.CaseUtils;
+import org.normandra.util.QueryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +66,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
 
     private final ExecutorService executor;
 
-    private final Map<String, CassandraPreparedStatement> preparedStatements = new ConcurrentHashMap<>();
+    private final Map<String, CassandraPreparedStatement> statementsByName = new ConcurrentHashMap<>();
 
     private Session session;
 
@@ -98,7 +99,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
     @Override
     public CassandraDatabaseSession createSession()
     {
-        return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession(), this.preparedStatements, this.executor);
+        return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession(), this.statementsByName, this.executor);
     }
 
 
@@ -113,12 +114,12 @@ public class CassandraDatabase implements Database, CassandraAccessor
         {
             return false;
         }
-        if (this.preparedStatements.containsKey(name))
+        if (this.statementsByName.containsKey(name))
         {
             return false;
         }
 
-        final String tableQuery = CassandraQueryParser.prepare(entity, query);
+        final String tableQuery = QueryUtils.prepare(entity, query);
         if (null == tableQuery || tableQuery.isEmpty())
         {
             return false;
@@ -154,7 +155,9 @@ public class CassandraDatabase implements Database, CassandraAccessor
             {
                 return false;
             }
-            this.preparedStatements.put(name, new CassandraPreparedStatement(statement, query, list));
+
+            final CassandraPreparedStatement prepared = new CassandraPreparedStatement(statement, query, list);
+            this.statementsByName.put(name, prepared);
             return true;
         }
         catch (final PatternSyntaxException e)
@@ -171,7 +174,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         {
             return false;
         }
-        return this.preparedStatements.remove(name) != null;
+        return this.statementsByName.remove(name) != null;
     }
 
 
@@ -357,9 +360,12 @@ public class CassandraDatabase implements Database, CassandraAccessor
                 {
                     final StringBuilder cql = new StringBuilder();
                     final String type = CassandraUtils.columnType(column);
-                    cql.append("ALTER TABLE ").append(tableName).append(IOUtils.LINE_SEPARATOR);
-                    cql.append("ADD ").append(name).append(" ").append(type).append(";");
-                    statements.add(new SimpleStatement(cql.toString()));
+                    if (type != null)
+                    {
+                        cql.append("ALTER TABLE ").append(tableName).append(IOUtils.LINE_SEPARATOR);
+                        cql.append("ADD ").append(name).append(" ").append(type).append(";");
+                        statements.add(new SimpleStatement(cql.toString()));
+                    }
                 }
             }
         }
@@ -367,6 +373,21 @@ public class CassandraDatabase implements Database, CassandraAccessor
         {
             // create table and column definitions in one command
             statements.add(defineTable(tableName, allColumns));
+
+            // create indices as needed
+            for (final EntityMeta entity : meta)
+            {
+                final TableMeta table = entity.getTable(tableName);
+                if (table != null)
+                {
+                    for (final ColumnMeta column : entity.getIndexed())
+                    {
+                        final StringBuilder cql = new StringBuilder();
+                        cql.append("CREATE INDEX ON ").append(tableName).append(" (").append(column.getName()).append(");");
+                        statements.add(new SimpleStatement(cql.toString()));
+                    }
+                }
+            }
         }
 
         // execute statements
@@ -386,7 +407,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
             this.session = null;
         }
         this.cluster.close();
-        this.preparedStatements.clear();
+        this.statementsByName.clear();
         this.executor.shutdownNow();
     }
 
@@ -430,14 +451,17 @@ public class CassandraDatabase implements Database, CassandraAccessor
         boolean firstColumn = true;
         for (final ColumnMeta column : columns)
         {
-            if (!firstColumn)
-            {
-                cql.append(",").append(IOUtils.LINE_SEPARATOR);
-            }
             final String name = column.getName();
             final String type = CassandraUtils.columnType(column);
-            cql.append(name).append(" ").append(type);
-            firstColumn = false;
+            if (type != null)
+            {
+                if (!firstColumn)
+                {
+                    cql.append(",").append(IOUtils.LINE_SEPARATOR);
+                }
+                cql.append(name).append(" ").append(type);
+                firstColumn = false;
+            }
         }
 
         // define primary keys

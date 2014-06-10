@@ -10,33 +10,33 @@ import java.util.List;
 
 /**
  * a generic table meta
- * <p>
+ * <p/>
  * User: bowen
  * Date: 3/14/14
  */
 public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
 {
-    private final boolean secondary;
+    private final boolean joinTable;
 
     private final String name;
 
     private final Collection<ColumnMeta> columns = new ArraySet<>();
 
 
-    public TableMeta(final String table, final boolean secondary)
+    public TableMeta(final String table, final boolean join)
     {
         if (null == table || table.isEmpty())
         {
             throw new IllegalArgumentException("Table cannot be empty/null.");
         }
         this.name = table;
-        this.secondary = secondary;
+        this.joinTable = join;
     }
 
 
-    public boolean isSecondary()
+    public boolean isJoinTable()
     {
-        return this.secondary;
+        return this.joinTable;
     }
 
 
@@ -162,7 +162,7 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
     @Override
     public String toString()
     {
-        return this.name + " (" + (this.secondary ? "secondary" : "primary") + ")";
+        return this.name + " (" + (this.joinTable ? "secondary" : "primary") + ")";
     }
 
 
@@ -174,7 +174,7 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
 
         TableMeta that = (TableMeta) o;
 
-        if (secondary != that.secondary) return false;
+        if (joinTable != that.joinTable) return false;
         if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
@@ -185,7 +185,7 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
     @Override
     public int hashCode()
     {
-        int result = (secondary ? 1 : 0);
+        int result = (joinTable ? 1 : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (columns != null ? columns.hashCode() : 0);
         return result;

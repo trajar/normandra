@@ -9,6 +9,8 @@ import org.normandra.meta.EntityMeta;
 import org.normandra.meta.HierarchyEntityContext;
 import org.normandra.meta.QueryMeta;
 import org.normandra.meta.SingleEntityContext;
+import org.normandra.orientdb.OrientDatabase;
+import org.normandra.orientdb.OrientDatabaseFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,14 +26,43 @@ import java.util.TreeMap;
 
 /**
  * entity manager factory
- * <p>
+ * <p/>
  * User: bowen
  * Date: 2/1/14
  */
 public class EntityManagerFactory
 {
+    public static enum Type
+    {
+        CASSANDRA, ORIENTDB;
+
+
+        public static Type parse(final String value)
+        {
+            if (value == null || value.isEmpty())
+            {
+                return null;
+            }
+            final String trimmed = value.trim();
+            for (final Type type : Type.values())
+            {
+                if (trimmed.equalsIgnoreCase(type.toString()))
+                {
+                    return type;
+                }
+                if (trimmed.equalsIgnoreCase(type.name()))
+                {
+                    return type;
+                }
+            }
+            return null;
+        }
+    }
+
     public static class Builder
     {
+        private Type type = Type.CASSANDRA;
+
         private DatabaseConstruction mode = DatabaseConstruction.CREATE;
 
         private final Set<Class> classes = new HashSet<>();
@@ -49,10 +80,21 @@ public class EntityManagerFactory
             final DatabaseMeta meta = new DatabaseMeta(entities);
 
             // create entity manager
-            final String keyspace = this.getParameter(CassandraDatabase.KEYSPACE, String.class, "normandra");
-            final String hosts = this.getParameter(CassandraDatabase.HOSTS, String.class, CassandraDatabaseFactory.DEFAULT_HOST);
-            final Integer port = this.getParameter(CassandraDatabase.PORT, Integer.class, CassandraDatabaseFactory.DEFAULT_PORT);
-            final DatabaseFactory databaseFactory = new CassandraDatabaseFactory(keyspace, hosts, port.intValue(), this.mode);
+            DatabaseFactory databaseFactory = null;
+            if (Type.CASSANDRA.equals(type))
+            {
+                final String keyspace = this.getParameter(CassandraDatabase.KEYSPACE, String.class, "normandra");
+                final String hosts = this.getParameter(CassandraDatabase.HOSTS, String.class, CassandraDatabaseFactory.DEFAULT_HOST);
+                final Integer port = this.getParameter(CassandraDatabase.PORT, Integer.class, CassandraDatabaseFactory.DEFAULT_PORT);
+                databaseFactory = new CassandraDatabaseFactory(keyspace, hosts, port.intValue(), this.mode);
+            }
+            else if (Type.ORIENTDB.equals(type))
+            {
+                final String url = this.getParameter(OrientDatabase.URL, String.class, "plocal:orientdb");
+                final String userid = this.getParameter(OrientDatabase.USER_ID, String.class, "admin");
+                final String password = this.getParameter(OrientDatabase.PASSWORD, String.class, "admin");
+                databaseFactory = new OrientDatabaseFactory(url, userid, password, this.mode);
+            }
             final Database database = databaseFactory.create();
             if (null == database)
             {
@@ -78,6 +120,17 @@ public class EntityManagerFactory
                 }
             }
             return managerFactory;
+        }
+
+
+        public Builder withType(final Type type)
+        {
+            if (null == type)
+            {
+                throw new NullArgumentException("factory type");
+            }
+            this.type = type;
+            return this;
         }
 
 
@@ -155,7 +208,6 @@ public class EntityManagerFactory
             }
             return clazz.cast(value);
         }
-
     }
 
     private final Database database;

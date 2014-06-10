@@ -6,9 +6,11 @@ import com.datastax.driver.core.Row;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ClassLoaderObjectInputStream;
 import org.normandra.NormandraException;
-import org.normandra.meta.CollectionMeta;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.JoinCollectionMeta;
+import org.normandra.meta.DiscriminatorMeta;
+import org.normandra.meta.EmbeddedCollectionMeta;
+import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
@@ -47,7 +49,7 @@ public class CassandraUtils
             final ColumnMeta column = table.getColumn(columnName);
             if (column != null)
             {
-                final Object value = CassandraUtils.unpackValue(row, columnName, column);
+                final Object value = CassandraUtils.unpackValue(row, column);
                 if (value != null)
                 {
                     data.put(column, value);
@@ -58,95 +60,98 @@ public class CassandraUtils
     }
 
 
-    public static Object unpackValue(final List<Row> rows, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
+    public static Object unpackKey(final Row row, final EntityContext entity) throws NormandraException, IOException, ClassNotFoundException
     {
-        if (null == rows || rows.isEmpty())
-        {
-            return null;
-        }
-        if (null == meta)
+        if (null == row || null == entity)
         {
             return null;
         }
 
-        if (meta instanceof CollectionMeta)
+        final Collection<ColumnMeta> keys = entity.getPrimaryKeys();
+        final Set<ColumnMeta> columns = new ArraySet<>(keys.size() + 1);
+        columns.addAll(keys);
+        for (final EntityMeta meta : entity.getEntities())
         {
-            return unpackCollection(rows.get(0), column, (CollectionMeta) meta);
-        }
-        else if (meta instanceof JoinCollectionMeta)
-        {
-            return unpackJoin(rows, column, (JoinCollectionMeta) meta);
-        }
-        else
-        {
-            final Row row = rows.get(0);
-            if (null == row)
+            final DiscriminatorMeta descrim = meta.getDiscriminator();
+            if (descrim != null)
             {
-                return null;
+                columns.add(descrim.getColumn());
             }
-            return unpackValue(row, column, meta);
         }
 
+        final Map<String, Object> data = new TreeMap<>();
+        for (final ColumnMeta column : columns)
+        {
+            final Object value = unpackValue(row, column);
+            if (value != null)
+            {
+                data.put(column.getName(), value);
+            }
+        }
+        return entity.getId().toKey(data);
     }
 
 
-    public static Object unpackValue(final Row row, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
+    public static Object unpackValue(final Row row, final ColumnMeta column) throws IOException, ClassNotFoundException
     {
-        if (null == row || row.isNull(column))
-        {
-            return null;
-        }
-        if (null == meta)
+        if (null == column)
         {
             return null;
         }
 
-        if (meta instanceof CollectionMeta)
+        final String columnName = column.getName();
+
+        if (null == row || row.isNull(columnName))
         {
-            return unpackCollection(row, column, (CollectionMeta) meta);
+            return null;
         }
 
-        final DataType type = row.getColumnDefinitions().getType(column);
+        if (column instanceof EmbeddedCollectionMeta)
+        {
+            return unpackEmbeddedCollection(row, (EmbeddedCollectionMeta) column);
+        }
+
+        final DataType type = row.getColumnDefinitions().getType(columnName);
 
         if (DataType.text().equals(type) || DataType.varchar().equals(type) || DataType.ascii().equals(type))
         {
-            return row.getString(column);
+            return row.getString(columnName);
         }
         else if (DataType.bigint().equals(type))
         {
-            return row.getLong(column);
+            return row.getLong(columnName);
         }
         else if (DataType.cint().equals(type))
         {
-            return row.getInt(column);
+            return row.getInt(columnName);
         }
         else if (DataType.cdouble().equals(type))
         {
-            return row.getDouble(column);
+            return row.getDouble(columnName);
         }
         else if (DataType.cfloat().equals(type))
         {
-            return row.getFloat(column);
+            return row.getFloat(columnName);
         }
         else if (DataType.cboolean().equals(type))
         {
-            return row.getBool(column);
+            return row.getBool(columnName);
         }
         else if (DataType.timestamp().equals(type))
         {
-            return row.getDate(column);
+            return row.getDate(columnName);
         }
         else if (DataType.uuid().equals(type))
         {
-            return row.getUUID(column);
+            return row.getUUID(columnName);
         }
         else if (DataType.inet().equals(type))
         {
-            return row.getInet(column);
+            return row.getInet(columnName);
         }
         else
         {
-            return unpackSerialized(row, column, meta);
+            return unpackSerialized(row, columnName, column);
         }
     }
 
@@ -172,29 +177,30 @@ public class CassandraUtils
     }
 
 
-    private static Object unpackCollection(final Row row, final String column, final CollectionMeta meta)
+    private static Collection<?> unpackEmbeddedCollection(final Row row, final EmbeddedCollectionMeta column)
     {
-        final Class<?> clazz = meta.getType();
+        final Class<?> clazz = column.getType();
+        final String columnName = column.getName();
         if (Set.class.isAssignableFrom(clazz))
         {
-            if (null == row || row.isNull(column))
+            if (null == row || row.isNull(columnName))
             {
                 return Collections.emptySet();
             }
             else
             {
-                return row.getSet(column, meta.getGeneric());
+                return row.getSet(columnName, column.getGeneric());
             }
         }
         else if (Collection.class.isAssignableFrom(clazz) || List.class.isAssignableFrom(clazz))
         {
-            if (null == row || row.isNull(column))
+            if (null == row || row.isNull(columnName))
             {
                 return Collections.emptyList();
             }
             else
             {
-                return row.getList(column, meta.getGeneric());
+                return row.getList(columnName, column.getGeneric());
             }
         }
         else
@@ -204,31 +210,18 @@ public class CassandraUtils
     }
 
 
-    private static Object unpackJoin(final Iterable<Row> results, final String column, final JoinCollectionMeta meta) throws IOException, ClassNotFoundException
-    {
-        final Set<Object> list = new ArraySet<>();
-        for (final Row row : results)
-        {
-            final Object value = unpackValue(row, column, meta);
-            if (value != null)
-            {
-                list.add(value);
-            }
-        }
-        return list;
-    }
-
-
     public static String columnType(final ColumnMeta column)
     {
-        if (null == column)
+        if (null == column || column.isVirtual())
         {
             return null;
         }
+
         final Class<?> clazz = column.getType();
-        if (column instanceof CollectionMeta)
+
+        if (column instanceof EmbeddedCollectionMeta)
         {
-            final CollectionMeta collection = (CollectionMeta) column;
+            final EmbeddedCollectionMeta collection = (EmbeddedCollectionMeta) column;
             final Class<?> generic = collection.getGeneric();
             final String type = columnType(generic);
             if (Set.class.isAssignableFrom(clazz))

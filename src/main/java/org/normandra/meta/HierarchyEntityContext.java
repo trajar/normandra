@@ -65,7 +65,7 @@ public class HierarchyEntityContext implements EntityContext
         final Set<TableMeta> tables = new ArraySet<>();
         for (final TableMeta table : this.getTables())
         {
-            if (!table.isSecondary())
+            if (!table.isJoinTable())
             {
                 tables.add(table);
             }
@@ -80,7 +80,7 @@ public class HierarchyEntityContext implements EntityContext
         final Set<TableMeta> tables = new ArraySet<>();
         for (final TableMeta table : this.getTables())
         {
-            if (table.isSecondary())
+            if (table.isJoinTable())
             {
                 tables.add(table);
             }

@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * a orientdb database listActivity
+ * a orientdb database index lookup activity
  * <p/>
  * User: bowen
  * Date: 4/4/14

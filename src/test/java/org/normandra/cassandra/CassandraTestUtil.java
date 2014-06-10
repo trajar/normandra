@@ -186,14 +186,16 @@ public class CassandraTestUtil
             final ConsoleAppender console = new ConsoleAppender(); //create appender
             final String PATTERN = "%d [%p|%c|%C{1}] %m%n";
             console.setLayout(new PatternLayout(PATTERN));
-            console.setThreshold(org.apache.log4j.Level.INFO);
+            console.setThreshold(org.apache.log4j.Level.WARN);
             console.activateOptions();
             org.apache.log4j.Logger.getRootLogger().getLoggerRepository().resetConfiguration();
             org.apache.log4j.Logger.getRootLogger().addAppender(console);
         }
-        org.apache.log4j.Logger.getRootLogger().setLevel(org.apache.log4j.Level.INFO);
-        java.util.logging.Logger.getGlobal().setLevel(java.util.logging.Level.INFO);
-        java.util.logging.Logger.getAnonymousLogger().setLevel(java.util.logging.Level.INFO);
+        org.apache.log4j.Logger.getRootLogger().setLevel(org.apache.log4j.Level.WARN);
+        org.apache.log4j.Logger.getLogger("org.apache.cassandra.db.Memtable").setLevel(org.apache.log4j.Level.OFF);
+        java.util.logging.Logger.getGlobal().setLevel(java.util.logging.Level.WARNING);
+        java.util.logging.Logger.getAnonymousLogger().setLevel(java.util.logging.Level.WARNING);
+        java.util.logging.Logger.getLogger("org.apache.cassandra.db.Memtable").setLevel(java.util.logging.Level.OFF);
     }
 
 

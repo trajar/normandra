@@ -1,7 +1,5 @@
 package org.normandra.data;
 
-import org.normandra.NormandraException;
-
 import java.util.Map;
 
 /**
@@ -12,7 +10,7 @@ import java.util.Map;
  */
 public interface IdAccessor
 {
-    Object fromEntity(Object entity) throws NormandraException;
-    Map<String, Object> fromKey(Object key) throws NormandraException;
-    Object toKey(Map<String, Object> map) throws NormandraException;
+    Object fromEntity(Object entity);
+    Map<String, Object> fromKey(Object key);
+    Object toKey(Map<String, Object> map);
 }

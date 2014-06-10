@@ -1,7 +1,6 @@
 package org.normandra.data;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.NormandraException;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -10,7 +9,7 @@ import java.util.Map;
 
 /**
  * a simple id accessor based on a single primary key
- * <p>
+ * <p/>
  * User: bowen
  * Date: 2/15/14
  */
@@ -31,7 +30,7 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
 
 
     @Override
-    public Object fromEntity(final Object entity) throws NormandraException
+    public Object fromEntity(final Object entity)
     {
         if (null == entity)
         {
@@ -43,13 +42,13 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to get field [" + this.getField().getName() + "] from entity [" + entity + "].", e);
+            throw new IllegalStateException("Unable to get field [" + this.getField().getName() + "] from entity [" + entity + "].", e);
         }
     }
 
 
     @Override
-    public Map<String, Object> fromKey(final Object key) throws NormandraException
+    public Map<String, Object> fromKey(final Object key)
     {
         if (null == key)
         {
@@ -62,7 +61,7 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
 
 
     @Override
-    public Object toKey(final Map<String, Object> map) throws NormandraException
+    public Object toKey(final Map<String, Object> map)
     {
         if (null == map || map.isEmpty())
         {

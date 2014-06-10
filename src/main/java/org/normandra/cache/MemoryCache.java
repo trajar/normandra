@@ -1,6 +1,5 @@
 package org.normandra.cache;
 
-import org.normandra.NormandraException;
 import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +94,7 @@ public class MemoryCache implements EntityCache
             }
             return entities.remove(key) != null;
         }
-        catch (final NormandraException e)
+        catch (final Exception e)
         {
             logger.warn("Unable to remove key from cache entity [" + instance + "] of type [" + meta + "].", e);
             return false;
@@ -128,7 +127,7 @@ public class MemoryCache implements EntityCache
             entities.put(key, instance);
             return true;
         }
-        catch (final NormandraException e)
+        catch (final Exception e)
         {
             logger.warn("Unable to retrieve key to cache entity [" + instance + "] of type [" + meta + "].", e);
             return false;

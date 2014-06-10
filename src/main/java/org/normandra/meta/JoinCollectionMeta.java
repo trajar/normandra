@@ -2,7 +2,7 @@ package org.normandra.meta;
 
 /**
  * joined collection column, usually from one-to-many association
- * <p>
+ * <p/>
  * User: bowen
  * Date: 3/22/14
  */
@@ -15,6 +15,20 @@ public class JoinCollectionMeta extends ColumnMeta
     {
         super(name, property, clazz, primary, lazy);
         this.entity = associated;
+    }
+
+
+    @Override
+    public boolean isCollection()
+    {
+        return true;
+    }
+
+
+    @Override
+    public boolean isEmbedded()
+    {
+        return false;
     }
 
 

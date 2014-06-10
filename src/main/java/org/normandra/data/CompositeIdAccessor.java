@@ -1,6 +1,5 @@
 package org.normandra.data;
 
-import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
 
 import java.lang.reflect.Field;
@@ -11,7 +10,7 @@ import java.util.TreeMap;
 
 /**
  * basic id accessor
- * <p>
+ * <p/>
  * User: bowen
  * Date: 2/15/14
  */
@@ -32,7 +31,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
 
 
     @Override
-    public Object fromEntity(final Object entity) throws NormandraException
+    public Object fromEntity(final Object entity)
     {
         if (null == entity)
         {
@@ -44,13 +43,13 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to get field [" + this.getField().getName() + "] from entity [" + entity + "].", e);
+            throw new IllegalStateException("Unable to get field [" + this.getField().getName() + "] from entity [" + entity + "].", e);
         }
     }
 
 
     @Override
-    public Map<String, Object> fromKey(final Object key) throws NormandraException
+    public Map<String, Object> fromKey(final Object key)
     {
         if (null == key)
         {
@@ -66,10 +65,17 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
         {
             final ColumnMeta column = entry.getKey();
             final ColumnAccessor accessor = entry.getValue();
-            final Object value = accessor.getValue(key);
-            if (value != null)
+            try
             {
-                map.put(column.getName(), value);
+                final Object value = accessor.getValue(key);
+                if (value != null)
+                {
+                    map.put(column.getName(), value);
+                }
+            }
+            catch (final Exception e)
+            {
+                throw new IllegalStateException("Unable to unpack key properties from [" + key + "].", e);
             }
         }
         return Collections.unmodifiableMap(map);
@@ -77,7 +83,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
 
 
     @Override
-    public Object toKey(final Map<String, Object> map) throws NormandraException
+    public Object toKey(final Map<String, Object> map)
     {
         if (null == map || map.isEmpty())
         {
@@ -98,7 +104,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to instantiate composite key from field [" + this.getField() + "].", e);
+            throw new IllegalStateException("Unable to instantiate composite key from field [" + this.getField() + "].", e);
         }
     }
 }

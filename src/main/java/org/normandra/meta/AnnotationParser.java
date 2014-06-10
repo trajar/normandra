@@ -12,6 +12,7 @@ import org.normandra.data.NullIdAccessor;
 import org.normandra.data.ReadOnlyColumnAccessor;
 import org.normandra.data.SetColumnAccessor;
 import org.normandra.data.SingleJoinColumnAccessor;
+import org.normandra.util.ArraySet;
 import org.normandra.util.CaseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
@@ -109,18 +111,73 @@ public class AnnotationParser
         {
             this.readEntity(clazz);
         }
+
         // ensure we read second pass
         final Set<EntityMeta> set = new TreeSet<>(this.entities.values());
         for (final EntityMeta entity : set)
         {
             this.readSecondPass(entity);
         }
+
+        // read indexed columns
+        for (final EntityMeta entity : set)
+        {
+            for (final String columnName : this.readIndices(entity))
+            {
+                ColumnMeta column = null;
+                for (final TableMeta table : entity)
+                {
+                    column = table.getColumn(columnName);
+                    if (column != null)
+                    {
+                        break;
+                    }
+                }
+                if (null == column)
+                {
+                    throw new IllegalStateException("Unable to locate column [" + columnName + "] for indexing within [" + entity + "].");
+                }
+                if (!column.isPrimaryKey())
+                {
+                    entity.addIndexed(column);
+                }
+            }
+        }
+
         // done
         return Collections.unmodifiableSet(set);
     }
 
 
-    private TableMeta readTable(final EntityMeta entity, final String tableName, final boolean secondary)
+    private Collection<String> readIndices(final EntityMeta entity)
+    {
+        final List<Index> annotations = new ArrayList<>();
+        for (final Table table : this.findAnnotations(entity.getType(), Table.class))
+        {
+            if (table.indexes() != null && table.indexes().length > 0)
+            {
+                annotations.addAll(Arrays.asList(table.indexes()));
+            }
+        }
+        annotations.addAll(this.findAnnotations(entity.getType(), Index.class));
+
+        final Set<String> columns = new ArraySet<>(annotations.size());
+        for (final Index annotation : annotations)
+        {
+            for (final String columnName : annotation.columnList().split(",|;|\\s+"))
+            {
+                final String trimmed = columnName.trim();
+                if (!trimmed.isEmpty())
+                {
+                    columns.add(trimmed);
+                }
+            }
+        }
+        return Collections.unmodifiableCollection(columns);
+    }
+
+
+    private TableMeta readTable(final EntityMeta entity, final String tableName)
     {
         if (null == entity)
         {
@@ -129,7 +186,7 @@ public class AnnotationParser
         TableMeta table = this.tables.get(tableName);
         if (null == table)
         {
-            table = new TableMeta(tableName, secondary);
+            table = new TableMeta(tableName, false);
             this.tables.put(tableName, table);
         }
         if (entity.getTable(tableName) == null)
@@ -414,7 +471,7 @@ public class AnnotationParser
                         break;
                     }
                 }
-                final TableMeta table = this.readTable(entity, tableName, false);
+                final TableMeta table = this.readTable(entity, tableName);
                 table.addColumn(discriminatorColumn);
                 entity.setAccessor(discriminatorColumn, new ReadOnlyColumnAccessor(discriminatorValue.getValue()));
                 entity.setDiscriminator(discriminatorValue);
@@ -437,12 +494,11 @@ public class AnnotationParser
         {
             // ensure table exists
             final String tableName = this.getTable(entity, clazz);
-            final TableMeta table = this.readTable(entity, tableName, false);
+            final TableMeta table = this.readTable(entity, tableName);
 
             // read fields
             for (final Field field : this.getFields(clazz, annotations))
             {
-                final String name = this.getColumnName(field);
                 if (this.configureField(entity, table, field))
                 {
                     logger.debug("Configured metadata for [" + field + "] in [" + entity + "].");
@@ -743,14 +799,43 @@ public class AnnotationParser
         else if (oneToMany.mappedBy() != null && !oneToMany.mappedBy().trim().isEmpty())
         {
             // we query this value via the other side of the relationship (which would require indices)
-            return false;
+            for (final EntityMeta entity : associatedEntity.getEntities())
+            {
+                this.readSecondPass(entity);
+            }
+            // find the actual mapped column and table
+            ColumnMeta mappedColumn = null;
+            TableMeta mappedTable = null;
+            for (final TableMeta associatedTable : associatedEntity.getTables())
+            {
+                mappedColumn = associatedTable.getColumn(oneToMany.mappedBy());
+                if (mappedColumn != null)
+                {
+                    mappedTable = associatedTable;
+                    break;
+                }
+            }
+            if (null == mappedColumn)
+            {
+                throw new IllegalStateException("Unable to locate column [" + oneToMany.mappedBy() + "] within [" + associatedEntity + "].");
+            }
+            // setup column meta and accessor
+            final ColumnAccessor accessor = new ManyJoinColumnAccessor(field, associatedEntity, lazy);
+            final ColumnMeta column = new MappedColumnMeta(associatedEntity, mappedTable, mappedColumn, name, property, field.getType(), lazy);
+            table.addColumn(column);
+            parentEntity.setAccessor(column, accessor);
+            for (final EntityMeta entity : associatedEntity.getEntities())
+            {
+                entity.addIndexed(mappedColumn);
+            }
+            return true;
         }
         else
         {
             // use embedded collection
             final ColumnAccessor accessor = new ManyJoinColumnAccessor(field, associatedEntity, lazy);
             final ColumnMeta primary = associatedEntity.getPrimaryKeys().iterator().next();
-            final ColumnMeta column = new CollectionMeta(name, property, field.getType(), primary.getType(), false, lazy);
+            final ColumnMeta column = new EmbeddedCollectionMeta(name, property, field.getType(), primary.getType(), false, lazy);
             table.addColumn(column);
             parentEntity.setAccessor(column, accessor);
             return true;
@@ -786,7 +871,7 @@ public class AnnotationParser
             accessor = new ListColumnAccessor(field, parameterizedClass, lazy);
         }
         final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
-        final ColumnMeta column = new CollectionMeta(name, property, type, parameterizedClass, false, lazy);
+        final ColumnMeta column = new EmbeddedCollectionMeta(name, property, type, parameterizedClass, false, lazy);
         map.put(column, accessor);
         return Collections.unmodifiableMap(map);
     }

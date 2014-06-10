@@ -1,17 +1,20 @@
 package org.normandra.orientdb;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * a lazy-loaded orientdb data holder
+ * a lazy-loaded orientdb data holder based on key/index lookup
  * <p/>
  * User: bowen
  * Date: 4/5/14
@@ -22,24 +25,24 @@ public class OrientLazyDataHolder implements DataHolder
 
     private final OrientDatabaseSession session;
 
-    private final EntityMeta entity;
+    private final EntityContext entity;
 
     private final TableMeta table;
 
     private final ColumnMeta column;
 
-    private final Object key;
+    private final Map<String, Object> key;
 
     private ODocument document;
 
 
-    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityMeta meta, final TableMeta table, final ColumnMeta column, final Object key)
+    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityContext meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
     {
         this.session = session;
         this.entity = meta;
         this.table = table;
         this.column = column;
-        this.key = key;
+        this.key = new TreeMap<>(keys);
     }
 
 
@@ -67,7 +70,7 @@ public class OrientLazyDataHolder implements DataHolder
         }
         try
         {
-            return OrientUtils.unpackValue(new SingleEntityContext(this.entity), doc, this.column);
+            return OrientUtils.unpackValue(this.entity, doc, this.column);
         }
         catch (final Exception e)
         {
@@ -90,7 +93,15 @@ public class OrientLazyDataHolder implements DataHolder
             }
             try
             {
-                this.document = this.session.findDocument(this.entity, this.table, this.key);
+                for (final EntityMeta entity : this.entity.getEntities())
+                {
+                    final ORID rid = this.session.findIdByMap(entity, this.table, this.key);
+                    if (rid != null)
+                    {
+                        this.document = this.session.findDocument(rid);
+                        break;
+                    }
+                }
                 this.loaded.getAndSet(true);
             }
             catch (final Exception e)

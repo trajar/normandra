@@ -4,10 +4,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.cassandra.serializers.InetAddressSerializer;
 import org.apache.cassandra.serializers.UUIDSerializer;
-import org.normandra.meta.CollectionMeta;
 import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.DiscriminatorMeta;
+import org.normandra.meta.EmbeddedCollectionMeta;
 import org.normandra.meta.EntityContext;
-import org.normandra.meta.JoinCollectionMeta;
+import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
@@ -20,6 +21,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -45,6 +47,38 @@ public class OrientUtils
             return null;
         }
         return OrientUtils.unpackRaw(column, raw);
+    }
+
+
+    public static Object unpackKey(final EntityContext context, final ODocument document)
+    {
+        if (null == context || null == document)
+        {
+            return null;
+        }
+
+        final Collection<ColumnMeta> keys = context.getPrimaryKeys();
+        final Set<ColumnMeta> columns = new ArraySet<>(keys.size() + 1);
+        columns.addAll(keys);
+        for (final EntityMeta meta : context.getEntities())
+        {
+            final DiscriminatorMeta descrim = meta.getDiscriminator();
+            if (descrim != null)
+            {
+                columns.add(descrim.getColumn());
+            }
+        }
+
+        final Map<String, Object> data = new TreeMap<>();
+        for (final ColumnMeta column : columns)
+        {
+            final Object value = unpackValue(context, document, column);
+            if (value != null)
+            {
+                data.put(column.getName(), value);
+            }
+        }
+        return context.getId().toKey(data);
     }
 
 
@@ -82,7 +116,7 @@ public class OrientUtils
 
         final Class<?> clazz = column.getType();
 
-        if (column instanceof JoinCollectionMeta)
+        if (column.isCollection() && value instanceof Collection)
         {
             final Collection list = (Collection) value;
             final List packed = new ArrayList<>(list.size());
@@ -133,25 +167,23 @@ public class OrientUtils
 
         final Class<?> clazz = column.getType();
 
-        if (column instanceof JoinCollectionMeta)
+        if (column.isCollection() && value instanceof Collection)
         {
             final Collection list = (Collection) value;
-            final List packed = new ArrayList<>(list.size());
+            final List<Object> packed = new ArrayList<>(list.size());
             for (final Object item : list)
             {
                 final Object pack = packPrimitive(clazz, item);
                 packed.add(pack);
             }
-            return packed;
-        }
-
-        if (List.class.isAssignableFrom(clazz))
-        {
-            return new ArrayList((Collection) value);
-        }
-        if (Collection.class.isAssignableFrom(clazz))
-        {
-            return new ArraySet((Collection) value);
+            if (List.class.isAssignableFrom(clazz))
+            {
+                return new ArrayList<>(packed);
+            }
+            if (Collection.class.isAssignableFrom(clazz))
+            {
+                return new ArraySet<>(packed);
+            }
         }
 
         return packPrimitive(clazz, value);
@@ -200,7 +232,7 @@ public class OrientUtils
 
     public static OType columnType(final ColumnMeta column)
     {
-        if (null == column)
+        if (null == column || column.isVirtual())
         {
             return null;
         }
@@ -208,7 +240,7 @@ public class OrientUtils
         final Class<?> clazz = column.getType();
 
         // handle collections
-        if (column instanceof CollectionMeta)
+        if (column instanceof EmbeddedCollectionMeta)
         {
             if (List.class.isAssignableFrom(clazz))
             {

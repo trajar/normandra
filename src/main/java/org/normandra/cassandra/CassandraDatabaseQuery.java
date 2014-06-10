@@ -7,17 +7,22 @@ import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
 import org.normandra.log.DatabaseActivity;
+import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.TableMeta;
+import org.normandra.util.EntityBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * cassandra database query
- * <p>
+ * <p/>
  * User: bowen
  * Date: 4/5/14
  */
@@ -64,7 +69,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
                 return null;
             }
             final Row row = this.rows.get(0);
-            return (T) new CassandraEntityBuilder(this.session).build(this.context, row);
+            return this.build(row);
         }
         else
         {
@@ -74,7 +79,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
                 return null;
             }
             this.rows.add(first);
-            return (T) new CassandraEntityBuilder(this.session).build(this.context, first);
+            return this.build(first);
         }
     }
 
@@ -98,7 +103,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         final List<T> elements = new ArrayList<>(this.rows.size());
         for (final Row row : this.rows)
         {
-            final T element = (T) new CassandraEntityBuilder(this.session).build(this.context, row);
+            final T element = this.build(row);
             if (element != null)
             {
                 elements.add(element);
@@ -151,7 +156,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
                 rows.add(row);
                 try
                 {
-                    return (T) new CassandraEntityBuilder(session).build(context, row);
+                    return build(row);
                 }
                 catch (final Exception e)
                 {
@@ -159,17 +164,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
                 }
             }
         };
-    }
-
-
-    private ResultSet ensurResults()
-    {
-        if (this.results != null)
-        {
-            return this.results;
-        }
-        this.results = this.session.executeSync(this.statement, DatabaseActivity.Type.SELECT);
-        return this.results;
     }
 
 
@@ -182,5 +176,52 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
             num++;
         }
         return num;
+    }
+
+
+    private T build(final Row row) throws NormandraException
+    {
+        if (null == row)
+        {
+            return null;
+        }
+
+        final TableMeta table = this.context.findTable(row.getColumnDefinitions().getTable(0));
+        if (null == table)
+        {
+            return null;
+        }
+
+        final Map<ColumnMeta, Object> data;
+        try
+        {
+            data = CassandraUtils.unpackValues(table, row);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to unpack row values [" + row + "].", e);
+        }
+        if (null == data || data.isEmpty())
+        {
+            return null;
+        }
+
+        final EntityMeta entity = this.context.findEntity(data);
+        if (null == entity)
+        {
+            return null;
+        }
+        return (T) new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(this.context, data);
+    }
+
+
+    synchronized private ResultSet ensurResults()
+    {
+        if (this.results != null)
+        {
+            return this.results;
+        }
+        this.results = this.session.executeSync(this.statement, DatabaseActivity.Type.SELECT);
+        return this.results;
     }
 }

@@ -80,64 +80,41 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
             return this.entities;
         }
 
-        final Object[] keys = this.ensureKeys();
-
         synchronized (this.synch)
         {
-            if (null == keys || keys.length <= 0)
-            {
-                this.entities = this.factory.create(0);
-                return this.entities;
-            }
             try
             {
-                final List results = this.session.get(this.entity, keys);
-                this.entities = this.factory.create(results.size());
-                this.entities.addAll(results);
-                return this.entities;
-            }
-            catch (final Exception e)
-            {
-                throw new IllegalStateException("Unable to query lazy entity collection with keys [" + keys + "].", e);
-            }
-        }
-    }
-
-
-    private Object[] ensureKeys()
-    {
-        // check atomic flag
-        if (this.loaded.get())
-        {
-            return this.keys;
-        }
-        synchronized (this.synch)
-        {
-            // don't load twice
-            if (this.loaded.get())
-            {
-                return this.keys;
-            }
-            try
-            {
-                // retrieve data
                 final Object value = this.data.get();
                 if (null == value)
                 {
                     this.keys = new Object[0];
-                    return this.keys;
                 }
-                if (!(value instanceof Collection))
+                else
                 {
-                    throw new IllegalArgumentException("Expected type of collection but found [" + value + "] from data holder [" + this.data + "].");
+                    if (!(value instanceof Collection))
+                    {
+                        throw new IllegalArgumentException("Expected type of collection but found [" + value + "] from data holder [" + this.data + "].");
+                    }
+                    final Collection collection = (Collection) value;
+                    this.keys = collection.toArray();
                 }
-                final Collection collection = (Collection) value;
-                this.keys = collection.toArray();
-                return this.keys;
+                this.loaded.getAndSet(true);
+                if (this.keys.length <= 0)
+                {
+                    this.entities = this.factory.create(0);
+                    return this.entities;
+                }
+                else
+                {
+                    final List results = this.session.get(this.entity, keys);
+                    this.entities = this.factory.create(results.size());
+                    this.entities.addAll(results);
+                    return this.entities;
+                }
             }
             catch (final Exception e)
             {
-                throw new IllegalStateException("Unable to query lazy entity collection from data holder [" + this.data + "].", e);
+                throw new IllegalStateException("Unable to query lazy entity collection with data [" + this.data + "].", e);
             }
         }
     }
@@ -164,14 +141,14 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
     @Override
     public int size()
     {
-        return this.ensureKeys().length;
+        return this.ensureEntities().size();
     }
 
 
     @Override
     public boolean isEmpty()
     {
-        return this.ensureKeys().length <= 0;
+        return this.ensureEntities().isEmpty();
     }
 
 
