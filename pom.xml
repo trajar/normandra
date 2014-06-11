@@ -156,22 +156,6 @@
     </dependency>
   </dependencies>
 
-  <!--
-  <repositories>
-    <repository>
-      <id>oss.sonatype.org</id>
-      <name>OrientDB Maven2 Repository</name>
-      <url>https://oss.sonatype.org/content/groups/public/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-  -->
-
   <build>
     <plugins>
       <plugin>
@@ -179,8 +163,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.1</version>
         <configuration>
-          <target>1.7</target>
-          <source>1.7</source>
+          <target>1.8</target>
+          <source>1.8</source>
         </configuration>
       </plugin>
       <plugin>
