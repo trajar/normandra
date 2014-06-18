@@ -7,14 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.normandra.data.CompositeIdAccessor;
 import org.normandra.data.NullIdAccessor;
-import org.normandra.entities.CatEntity;
-import org.normandra.entities.ClassEntity;
-import org.normandra.entities.CompositeIndexEntity;
-import org.normandra.entities.DogEntity;
-import org.normandra.entities.SimpleEntity;
-import org.normandra.entities.StudentDirectoryEntity;
-import org.normandra.entities.StudentEntity;
-import org.normandra.entities.StudentIndexEntity;
+import org.normandra.entities.*;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
@@ -46,7 +39,7 @@ public class CassandraSchemaTest
     @Before
     public void create() throws Exception
     {
-        helper.create();
+        helper.create(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }
 
 

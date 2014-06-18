@@ -5,7 +5,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.normandra.entities.CatEntity;
+import org.normandra.entities.DogEntity;
 import org.normandra.entities.SimpleEntity;
+import org.normandra.entities.ZooEntity;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
@@ -34,7 +37,7 @@ public class OrientSchemaTest
     @Before
     public void create() throws Exception
     {
-        helper.create();
+        helper.create(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }
 
 

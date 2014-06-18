@@ -3,8 +3,11 @@ package org.normandra;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.normandra.entities.AnimalEntity;
+import org.normandra.entities.CatEntity;
 import org.normandra.entities.DogEntity;
+import org.normandra.entities.ZooEntity;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
@@ -17,6 +20,12 @@ import java.util.TreeMap;
  */
 public class QueryTest extends BaseTest
 {
+    public QueryTest()
+    {
+        super(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
+    }
+
+
     @Test
     public void testSimple() throws Exception
     {

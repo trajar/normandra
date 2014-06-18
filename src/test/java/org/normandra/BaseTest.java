@@ -7,12 +7,13 @@ import org.normandra.cassandra.CassandraTestHelper;
 import org.normandra.orientdb.OrientTestHelper;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * a base test case bootstrap
- * <p/>
+ * <p>
  * User: bowen
  * Date: 6/8/14
  */
@@ -20,9 +21,11 @@ abstract public class BaseTest
 {
     public final List<TestHelper> helpers;
 
+    private final List<Class> types;
 
-    public BaseTest()
+    public BaseTest(final Collection<Class> types)
     {
+        this.types = new ArrayList<>(types);
         final List<TestHelper> list = new ArrayList<>(2);
         list.add(new CassandraTestHelper());
         list.add(new OrientTestHelper());
@@ -43,7 +46,7 @@ abstract public class BaseTest
     {
         for (final TestHelper helper : helpers)
         {
-            helper.create();
+            helper.create(this.types);
         }
     }
 

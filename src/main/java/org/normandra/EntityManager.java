@@ -62,6 +62,11 @@ public class EntityManager
     }
 
 
+    public <T> DatabaseQuery<T> query(final Class<T> clazz, final String name) throws NormandraException
+    {
+        return this.query(clazz, name, Collections.emptyMap());
+    }
+
     public <T> DatabaseQuery<T> query(final Class<T> clazz, final String name, final Map<String, Object> parameters) throws NormandraException
     {
         if (null == clazz)
@@ -78,8 +83,7 @@ public class EntityManager
         if (list.size() == 1)
         {
             return this.database.executeNamedQuery(new SingleEntityContext(list.get(0)), name, parameters);
-        }
-        else
+        } else
         {
             return this.database.executeNamedQuery(new HierarchyEntityContext(list), name, parameters);
         }
@@ -134,8 +138,7 @@ public class EntityManager
                 return null;
             }
             return clazz.cast(obj);
-        }
-        else
+        } else
         {
             // inherited entity
             final Object obj = this.database.get(new HierarchyEntityContext(list), key);

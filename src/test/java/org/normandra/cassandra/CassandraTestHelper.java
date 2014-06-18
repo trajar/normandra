@@ -5,13 +5,12 @@ import org.normandra.DatabaseConstruction;
 import org.normandra.EntityManager;
 import org.normandra.EntityManagerFactory;
 import org.normandra.TestHelper;
-import org.normandra.entities.CatEntity;
-import org.normandra.entities.DogEntity;
-import org.normandra.entities.ZooEntity;
+
+import java.util.Collection;
 
 /**
  * common cassandra unit test bootstrap
- * <p/>
+ * <p>
  * User: bowen
  * Date: 1/20/14
  */
@@ -58,19 +57,19 @@ public class CassandraTestHelper implements TestHelper
 
 
     @Override
-    public void create() throws Exception
+    public void create(final Collection<Class> types) throws Exception
     {
-        final EntityManagerFactory factory = new EntityManagerFactory.Builder()
-                .withClass(CatEntity.class)
-                .withClass(DogEntity.class)
-                .withClass(ZooEntity.class)
+        final EntityManagerFactory.Builder builder = new EntityManagerFactory.Builder()
                 .withType(EntityManagerFactory.Type.CASSANDRA)
                 .withParameter(CassandraDatabase.HOSTS, "localhost")
                 .withParameter(CassandraDatabase.PORT, port)
                 .withParameter(CassandraDatabase.KEYSPACE, keyspace)
-                .withDatabaseConstruction(construction)
-                .create();
-        this.manager = factory.create();
+                .withDatabaseConstruction(construction);
+        for (final Class<?> clazz : types)
+        {
+            builder.withClass(clazz);
+        }
+        this.manager = builder.create().create();
         this.database = new CassandraDatabaseFactory(keyspace, "localhost", port, construction).create();
         this.session = this.database.createSession();
     }

@@ -2,25 +2,26 @@ package org.normandra;
 
 import junit.framework.Assert;
 import org.junit.Test;
-import org.normandra.entities.CatEntity;
-import org.normandra.entities.ClassEntity;
-import org.normandra.entities.CompositeIndexEntity;
-import org.normandra.entities.DogEntity;
-import org.normandra.entities.StudentDirectoryEntity;
-import org.normandra.entities.StudentEntity;
-import org.normandra.entities.StudentIndexEntity;
+import org.normandra.entities.*;
 import org.normandra.meta.EntityMeta;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /**
  * unit test to test persistence
- * <p/>
+ * <p>
  * User: bowen
  * Date: 1/20/14
  */
 public class SaveTest extends BaseTest
 {
+    public SaveTest()
+    {
+        super(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
+    }
+
+
     @Test
     public void testInherited() throws Exception
     {

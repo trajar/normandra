@@ -9,7 +9,10 @@ import org.normandra.Database;
 import org.normandra.DatabaseSession;
 import org.normandra.TestHelper;
 import org.normandra.TestUtils;
+import org.normandra.entities.CatEntity;
+import org.normandra.entities.DogEntity;
 import org.normandra.entities.SimpleEntity;
+import org.normandra.entities.ZooEntity;
 import org.normandra.meta.EntityMeta;
 
 import java.util.Arrays;
@@ -36,7 +39,7 @@ public class CassandraSaveTest
     @Before
     public void create() throws Exception
     {
-        helper.create();
+        helper.create(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }
 
 

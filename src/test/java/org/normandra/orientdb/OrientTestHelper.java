@@ -8,16 +8,14 @@ import org.normandra.DatabaseConstruction;
 import org.normandra.EntityManager;
 import org.normandra.EntityManagerFactory;
 import org.normandra.TestHelper;
-import org.normandra.entities.CatEntity;
-import org.normandra.entities.DogEntity;
-import org.normandra.entities.ZooEntity;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * orientdb test utilities
- * <p/>
+ * <p>
  * User: bowen
  * Date: 6/8/14
  */
@@ -75,19 +73,19 @@ public class OrientTestHelper implements TestHelper
 
 
     @Override
-    public void create() throws Exception
+    public void create(final Collection<Class> types) throws Exception
     {
-        final EntityManagerFactory factory = new EntityManagerFactory.Builder()
-                .withClass(CatEntity.class)
-                .withClass(DogEntity.class)
-                .withClass(ZooEntity.class)
+        final EntityManagerFactory.Builder builder = new EntityManagerFactory.Builder()
                 .withType(EntityManagerFactory.Type.ORIENTDB)
                 .withParameter(OrientDatabase.URL, path)
                 .withParameter(OrientDatabase.USER_ID, user)
                 .withParameter(OrientDatabase.PASSWORD, password)
-                .withDatabaseConstruction(construction)
-                .create();
-        this.manager = factory.create();
+                .withDatabaseConstruction(construction);
+        for (final Class<?> clazz : types)
+        {
+            builder.withClass(clazz);
+        }
+        this.manager = builder.create().create();
         this.database = new OrientDatabaseFactory(path, user, password, construction).create();
         this.session = this.database.createSession();
     }

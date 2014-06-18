@@ -11,12 +11,18 @@ import java.util.Arrays;
 
 /**
  * unit tests for inheritance and abstract entity classes
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/1/14
  */
 public class InheritanceTest extends BaseTest
 {
+    public InheritanceTest()
+    {
+        super(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
+    }
+
+
     @Test
     public void testSave() throws Exception
     {
