@@ -44,7 +44,7 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * a cassandra database
- * <p/>
+ * <p>
  * User: bowen
  * Date: 8/31/13
  */
@@ -130,7 +130,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
             final List<String> list = new ArrayList<>();
             final StringBuilder buffer = new StringBuilder();
             final Matcher matcher = Pattern.compile(":\\w+").matcher(tableQuery);
-            int last = 0;
+            int last = -1;
             while (matcher.find())
             {
                 final int start = matcher.start();
@@ -148,6 +148,10 @@ public class CassandraDatabase implements Database, CassandraAccessor
             if (last > 0 && last < tableQuery.length() - 1)
             {
                 buffer.append(tableQuery.substring(last + 1));
+            }
+            else if (last <= 0)
+            {
+                buffer.append(tableQuery);
             }
 
             final PreparedStatement statement = this.ensureSession().prepare(buffer.toString());
@@ -412,6 +416,39 @@ public class CassandraDatabase implements Database, CassandraAccessor
     }
 
 
+    public boolean hasKeyspace(final String ks)
+    {
+        return this.hasTable(ks);
+    }
+
+
+    public void createKeyspace(final String ks)
+    {
+        final Session session = this.cluster.connect();
+        try
+        {
+            session.execute("CREATE KEYSPACE " + ks + " WITH strategy_class = SimpleStrategy AND strategy_options:replication_factor = 1;");
+        }
+        finally
+        {
+            session.close();
+        }
+    }
+
+
+    public void dropKeyspace(final String ks)
+    {
+        final Session session = this.cluster.connect();
+        try
+        {
+            session.execute("DROP KEYSPACE " + ks + ";");
+        }
+        finally
+        {
+            session.close();
+        }
+    }
+
     protected boolean hasTable(final String table)
     {
         final KeyspaceMetadata ksMeta = this.cluster.getMetadata().getKeyspace(this.keyspaceName);
@@ -496,7 +533,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         {
             return this.session;
         }
-        this.ensureKeyspace();
+        this.ensureKeyspace(this.keyspaceName);
         this.session = this.cluster.connect(this.keyspaceName);
         return this.session;
     }
@@ -505,9 +542,9 @@ public class CassandraDatabase implements Database, CassandraAccessor
     /**
      * ensure keyspace exists prior to constructing database session
      */
-    synchronized private void ensureKeyspace()
+    synchronized private void ensureKeyspace(final String ks)
     {
-        final KeyspaceMetadata meta = this.cluster.getMetadata().getKeyspace(this.keyspaceName);
+        final KeyspaceMetadata meta = this.cluster.getMetadata().getKeyspace(ks);
         if (meta != null)
         {
             return;
@@ -517,7 +554,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         try
         {
             final StringBuilder cql = new StringBuilder();
-            cql.append("CREATE KEYSPACE ").append(this.keyspaceName).append(" WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 3};");
+            cql.append("CREATE KEYSPACE ").append(ks).append(" WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};");
             session.execute(cql.toString());
         }
         finally

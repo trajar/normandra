@@ -1,9 +1,6 @@
 package org.normandra.cassandra;
 
-import me.prettyprint.cassandra.service.CassandraHostConfigurator;
-import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
-import me.prettyprint.hector.api.factory.HFactory;
+import com.datastax.driver.core.Cluster;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.service.EmbeddedCassandraService;
@@ -11,18 +8,20 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;
+import org.normandra.DatabaseConstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * unit test utilities
- * <p/>
+ * <p>
  * User: bowen
  * Date: 11/1/13
  */
@@ -116,31 +115,16 @@ public class CassandraTestUtil
 
     private static void dropKeyspaces()
     {
-        Cluster cluster = null;
-        for (final String name : Arrays.asList("TestCluster", "TestCluster"))
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+        final Cluster cluster = Cluster.builder()
+                .addContactPoint("localhost")
+                .withPort(CassandraTestHelper.port).build();
+        final CassandraDatabase db = new CassandraDatabase(CassandraTestHelper.keyspace, cluster, DatabaseConstruction.RECREATE, executor);
+        for (final String name : Arrays.asList("TestCluster", "Test Cluster"))
         {
-            cluster = HFactory.getCluster(name);
-            if (cluster != null)
+            if (db.hasKeyspace(name))
             {
-                logger.info("Found cluster [" + name + "].");
-                break;
-            }
-        }
-        if (null == cluster)
-        {
-            final String host = DatabaseDescriptor.getRpcAddress().getHostName();
-            final int port = DatabaseDescriptor.getRpcPort();
-            logger.info("Creating new cluster [TestCluster] at " + host + ":" + port + ".");
-            cluster = HFactory.getOrCreateCluster("TestCluster", new CassandraHostConfigurator(host + ":" + port));
-        }
-
-        final List<String> keep = Arrays.asList("system", "system_auth", "system_traces");
-        for (final KeyspaceDefinition keyspaceDefinition : cluster.describeKeyspaces())
-        {
-            final String keyspaceName = keyspaceDefinition.getName();
-            if (!keep.contains(keyspaceName))
-            {
-                cluster.dropKeyspace(keyspaceName);
+                db.dropKeyspace(name);
             }
         }
     }
