@@ -21,6 +21,7 @@ import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityBuilder;
 import org.normandra.util.EntityHelper;
+import org.normandra.util.LazyCollection;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * orient database session
- * <p/>
+ * <p>
  * User: bowen
  * Date: 5/14/14
  */
@@ -258,21 +259,19 @@ public class OrientDatabaseSession implements DatabaseSession
     }
 
 
-    protected List<ODocument> query(final String query, final Collection<?> args)
+    protected Collection<ODocument> query(final String query, final Collection<?> args)
     {
         final OrientQueryActivity activity = new OrientQueryActivity(this.database, query, args);
         this.activities.add(activity);
-        activity.run();
-        return activity.getResults();
+        return new LazyCollection<>(activity.execute());
     }
 
 
-    protected List<ODocument> query(final String query, final Map<String, Object> args)
+    protected Collection<ODocument> query(final String query, final Map<String, Object> args)
     {
         final OrientQueryActivity activity = new OrientQueryActivity(this.database, query, args);
         this.activities.add(activity);
-        activity.run();
-        return activity.getResults();
+        return new LazyCollection<>(activity.execute());
     }
 
 

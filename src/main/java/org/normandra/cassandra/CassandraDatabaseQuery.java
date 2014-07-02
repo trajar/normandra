@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * cassandra database query
- * <p/>
+ * <p>
  * User: bowen
  * Date: 4/5/14
  */
@@ -99,8 +99,8 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
     @Override
     public List<T> list() throws NormandraException
     {
-        this.readAll();
-        final List<T> elements = new ArrayList<>(this.rows.size());
+        final int read = this.readAll();
+        final List<T> elements = new ArrayList<>(Math.max(10, read));
         for (final Row row : this.rows)
         {
             final T element = this.build(row);

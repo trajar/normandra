@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a lazy-loaded orientdb data holder based on query string
- * <p/>
+ * <p>
  * User: bowen
  * Date: 4/5/14
  */
@@ -114,10 +114,13 @@ public class OrientLazyQueryHolder implements DataHolder
             }
             try
             {
-                final List<ODocument> results = this.session.query(this.query, this.parameters);
-                if (null != results && !results.isEmpty())
+                this.documents.clear();
+                for (final ODocument doc : this.session.query(this.query, this.parameters))
                 {
-                    this.documents.addAll(results);
+                    if (doc != null)
+                    {
+                        this.documents.add(doc);
+                    }
                 }
                 this.loaded.getAndSet(true);
             }

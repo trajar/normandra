@@ -20,7 +20,7 @@ import java.util.TreeMap;
 
 /**
  * simple utility class to help simplify saving of orientdb documents
- * <p/>
+ * <p>
  * User: bowen
  * Date: 6/4/14
  */
@@ -105,8 +105,8 @@ public class OrientDataHandler implements DataHandler
 
         // get existing collection values
         final EntityContext context = new SingleEntityContext(entity);
-        final Collection<ODocument> documents = this.findDocuments(entity, table, keys);
-        final List<Object> removed = new ArrayList<>(documents.size());
+        final Iterable<ODocument> documents = this.findDocuments(entity, table, keys);
+        final List<Object> removed = new ArrayList<>();
         for (final ODocument document : documents)
         {
             final Object item = OrientUtils.unpackValue(context, document, column);
@@ -180,7 +180,7 @@ public class OrientDataHandler implements DataHandler
     }
 
 
-    private List<ODocument> findDocuments(final EntityMeta entity, final TableMeta table, final Map<ColumnMeta, Object> keys)
+    private Iterable<ODocument> findDocuments(final EntityMeta entity, final TableMeta table, final Map<ColumnMeta, Object> keys)
     {
         final List<Object> parameters = new ArrayList<>(keys.size());
         final StringBuilder query = new StringBuilder();

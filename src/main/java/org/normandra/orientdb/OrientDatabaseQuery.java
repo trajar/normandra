@@ -6,6 +6,7 @@ import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.util.EntityBuilder;
+import org.normandra.util.LazyCollection;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,7 +17,7 @@ import java.util.Map;
 
 /**
  * orientdb query api
- * <p/>
+ * <p>
  * User: bowen
  * Date: 6/9/14
  */
@@ -27,6 +28,8 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
     private final EntityContext context;
 
     private final OrientQueryActivity query;
+
+    private LazyCollection<ODocument> lazy = null;
 
 
     public OrientDatabaseQuery(final OrientDatabaseSession session, final EntityContext context, final OrientQueryActivity query)
@@ -40,24 +43,32 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
     @Override
     public T first() throws NormandraException
     {
-        final Collection<ODocument> list = this.ensurResults();
-        if (list.isEmpty())
+        final Iterator<T> itr = this.iterator();
+        while (itr.hasNext())
         {
-            return null;
+            final T item = itr.next();
+            if (item != null)
+            {
+                return item;
+            }
         }
-        return this.build(list.iterator().next());
+        return null;
     }
 
 
     @Override
     public T last() throws NormandraException
     {
-        final List<ODocument> list = this.ensurResults();
-        if (list.isEmpty())
+        ODocument last = null;
+        final Iterator<ODocument> itr = this.ensureResults().iterator();
+        while (itr.hasNext())
         {
-            return null;
+            final ODocument item = itr.next();
+            if (item != null)
+            {
+                last = item;
+            }
         }
-        final ODocument last = list.get(list.size() - 1);
         if (null == last)
         {
             return null;
@@ -69,49 +80,52 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
     @Override
     public List<T> list() throws NormandraException
     {
-        final List<ODocument> list = this.ensurResults();
-        if (list.isEmpty())
-        {
-            return Collections.emptyList();
-        }
-        final List<T> result = new ArrayList<>(list.size());
+        final List<T> list = new ArrayList<>();
         final Iterator<T> itr = this.iterator();
         while (itr.hasNext())
         {
             final T item = itr.next();
             if (item != null)
             {
-                result.add(item);
+                list.add(item);
             }
         }
-        return Collections.unmodifiableList(result);
+        return Collections.unmodifiableList(list);
     }
 
 
     @Override
     public int size() throws NormandraException
     {
-        return this.ensurResults().size();
+        return this.list().size();
     }
 
 
     @Override
     public Collection<T> subset(int offset, int count) throws NormandraException
     {
-        final List<T> items = this.list();
-        if (items.isEmpty())
+        final Collection<ODocument> subset = this.ensureResults().subset(offset, count);
+        if (null == subset || subset.isEmpty())
         {
             return Collections.emptyList();
         }
-        return items.subList(offset, offset + count);
+        final List<T> items = new ArrayList<>(subset.size());
+        for (final ODocument doc : subset)
+        {
+            final T item = this.build(doc);
+            if (item != null)
+            {
+                items.add(item);
+            }
+        }
+        return Collections.unmodifiableList(items);
     }
 
 
     @Override
     public Iterator<T> iterator()
     {
-        final List<ODocument> documents = this.ensurResults();
-        final Iterator<ODocument> itr = documents.iterator();
+        final Iterator<ODocument> itr = this.ensureResults().iterator();
         return new Iterator<T>()
         {
             @Override
@@ -142,6 +156,17 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
     }
 
 
+    synchronized private LazyCollection<ODocument> ensureResults()
+    {
+        if (this.lazy != null)
+        {
+            return this.lazy;
+        }
+        this.lazy = new LazyCollection<>(this.query.execute());
+        return this.lazy;
+    }
+
+
     private T build(final ODocument document) throws NormandraException
     {
         if (null == document)
@@ -157,18 +182,5 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
 
         final OrientDataFactory factory = new OrientDataFactory(this.session);
         return (T) new EntityBuilder(this.session, factory).build(this.context, datamap);
-    }
-
-
-    synchronized private List<ODocument> ensurResults()
-    {
-        if (this.query.isFinished())
-        {
-            return this.query.getResults();
-        }
-        else
-        {
-            return this.query.execute();
-        }
     }
 }
