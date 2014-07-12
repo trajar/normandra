@@ -3,7 +3,7 @@ package org.normandra.association;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
-import org.normandra.DatabaseSession;
+import org.normandra.EntitySession;
 import org.normandra.meta.EntityMeta;
 
 import java.lang.reflect.InvocationTargetException;
@@ -51,7 +51,7 @@ public class AssociationUtils
     }
 
 
-    public static Object createProxy(final EntityMeta meta, final Object key, final DatabaseSession session) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
+    public static Object createProxy(final EntityMeta meta, final Object key, final EntitySession session) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
     {
         if (null == meta)
         {

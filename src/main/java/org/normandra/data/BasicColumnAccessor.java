@@ -1,7 +1,7 @@
 package org.normandra.data;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.DatabaseSession;
+import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 
 import java.lang.reflect.Field;
@@ -95,7 +95,7 @@ public class BasicColumnAccessor extends FieldColumnAccessor implements ColumnAc
 
 
     @Override
-    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException
     {
         final Object value = data != null && !data.isEmpty() ? data.get() : null;
         if (this.primitive && null == value)

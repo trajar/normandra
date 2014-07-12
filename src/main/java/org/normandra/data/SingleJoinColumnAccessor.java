@@ -1,6 +1,6 @@
 package org.normandra.data;
 
-import org.normandra.DatabaseSession;
+import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.association.AssociationUtils;
 import org.normandra.meta.EntityMeta;
@@ -87,7 +87,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
 
 
     @Override
-    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException
     {
         if (null == data || data.isEmpty())
         {

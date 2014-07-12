@@ -1,5 +1,6 @@
 package org.normandra.orientdb;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -7,6 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.Database;
 import org.normandra.DatabaseConstruction;
@@ -28,6 +30,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.TableGenerator;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,8 +41,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * User: bowen
- * Date: 5/14/14
+ * User: bowen Date: 5/14/14
  */
 public class OrientDatabase implements Database
 {
@@ -63,7 +65,6 @@ public class OrientDatabase implements Database
 
     private final Map<String, OrientQuery> statementsByName = new ConcurrentHashMap<>();
 
-
     public OrientDatabase(final String url, final String user, final String pwd, final DatabaseConstruction mode)
     {
         if (null == url || url.isEmpty())
@@ -80,19 +81,16 @@ public class OrientDatabase implements Database
         this.constructionMode = mode;
     }
 
-
     protected final ODatabaseDocumentTx createDatabase()
     {
         return this.pool.acquire(this.url, this.userId, this.password);
     }
-
 
     @Override
     public OrientDatabaseSession createSession()
     {
         return new OrientDatabaseSession(this.createDatabase(), this.statementsByName);
     }
-
 
     @Override
     public void refresh(final DatabaseMeta meta) throws NormandraException
@@ -105,6 +103,37 @@ public class OrientDatabase implements Database
         if (DatabaseConstruction.NONE.equals(this.constructionMode))
         {
             return;
+        }
+
+        if (this.url.toLowerCase().startsWith("plocal:") || this.url.toLowerCase().startsWith("local:"))
+        {
+            // initialize directory structure as necessary
+            final int index = this.url.indexOf(":");
+            final File path = new File(this.url.substring(index + 1));
+            try
+            {
+                if (!path.exists())
+                {
+                    FileUtils.forceMkdir(path);
+                }
+                if (path.list() == null || path.list().length <= 0)
+                {
+                    final ODatabase db = new ODatabaseDocumentTx(this.url);
+                    try
+                    {
+                        db.setProperty("storage.keepOpen", Boolean.FALSE);
+                        db.create();
+                    }
+                    finally
+                    {
+                        db.close();
+                    }
+                }
+            }
+            catch (final Exception e)
+            {
+                throw new NormandraException("Unable to create local directory structure.", e);
+            }
         }
 
         // setup entity schema
@@ -129,7 +158,6 @@ public class OrientDatabase implements Database
             database.close();
         }
     }
-
 
     private void refreshGenerators(final EntityMeta entity, final ODatabaseDocumentTx database)
     {
@@ -243,7 +271,6 @@ public class OrientDatabase implements Database
         }
     }
 
-
     private void refreshEntity(final EntityMeta entity, final TableMeta table, final ODatabaseDocumentTx database)
     {
         final String indexName = OrientUtils.keyIndex(table);
@@ -289,7 +316,6 @@ public class OrientDatabase implements Database
         }
     }
 
-
     @Override
     public boolean registerQuery(final EntityContext entity, final String name, final String query) throws NormandraException
     {
@@ -317,7 +343,6 @@ public class OrientDatabase implements Database
         return true;
     }
 
-
     @Override
     public boolean unregisterQuery(final String name) throws NormandraException
     {
@@ -327,7 +352,6 @@ public class OrientDatabase implements Database
         }
         return this.statementsByName.remove(name) != null;
     }
-
 
     public Collection<String> getClasses()
     {
@@ -352,7 +376,6 @@ public class OrientDatabase implements Database
         }
     }
 
-
     public Collection<String> getClusters()
     {
         final ODatabaseDocumentTx database = this.createDatabase();
@@ -370,7 +393,6 @@ public class OrientDatabase implements Database
             database.close();
         }
     }
-
 
     public Collection<String> getIndices()
     {
@@ -390,7 +412,6 @@ public class OrientDatabase implements Database
         }
     }
 
-
     public boolean hasIndex(final String clusterName)
     {
         if (null == clusterName || clusterName.isEmpty())
@@ -406,7 +427,6 @@ public class OrientDatabase implements Database
         }
         return false;
     }
-
 
     public boolean hasCluster(final String clusterName)
     {
@@ -424,7 +444,6 @@ public class OrientDatabase implements Database
         return false;
     }
 
-
     public boolean hasClass(final String className)
     {
         if (null == className || className.isEmpty())
@@ -440,7 +459,6 @@ public class OrientDatabase implements Database
         }
         return false;
     }
-
 
     public boolean hasProperty(final String className, final String fieldName)
     {
@@ -465,7 +483,6 @@ public class OrientDatabase implements Database
         }
     }
 
-
     @Override
     public void close()
     {
@@ -473,12 +490,11 @@ public class OrientDatabase implements Database
         this.pool.close();
     }
 
-
     private static ODatabaseDocumentPool createPool()
     {
         final ODatabaseDocumentPool pool = new ODatabaseDocumentPool();
         pool.setup(0, 10);
-        pool.setName(OrientDatabase.class.getSimpleName() + "-DocumentPoolThread");
+        pool.setName(OrientDatabase.class.getSimpleName() + "-PoolThread");
         return pool;
     }
 }

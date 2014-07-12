@@ -58,7 +58,7 @@ import java.util.TreeSet;
 
 /**
  * a class used to parse jpa annotations
- * <p/>
+ * <p>
  * User: bowen
  * Date: 9/1/13
  */
@@ -501,12 +501,8 @@ public class AnnotationParser
             {
                 if (this.configureField(entity, table, field))
                 {
-                    logger.debug("Configured metadata for [" + field + "] in [" + entity + "].");
+                    logger.info("Configured metadata for [" + field + "] in [" + entity + "].");
                     num++;
-                }
-                else
-                {
-                    logger.warn("Unable to configure metadata for [" + field + "] in [" + entity + "].");
                 }
             }
         }
@@ -678,9 +674,9 @@ public class AnnotationParser
         {
             final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
             final ColumnMeta column = new ColumnMeta(name, field.getName(), type, false, false);
-            table.addColumn(column);
+            boolean modified = table.addColumn(column);
             entity.setAccessor(column, accessor);
-            return true;
+            return modified;
         }
 
         // unsupported column

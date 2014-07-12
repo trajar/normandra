@@ -101,7 +101,7 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
             }
             if (obj instanceof Collection)
             {
-                return new ArrayList<>((Collection) obj);
+                return new ArrayList((Collection) obj);
             }
             else
             {
@@ -118,13 +118,25 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
     @Override
     public boolean equals(Object o)
     {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        if (!super.equals(o))
+        {
+            return false;
+        }
 
         CollectionColumnAccessor that = (CollectionColumnAccessor) o;
 
-        if (generic != null ? !generic.equals(that.generic) : that.generic != null) return false;
+        if (generic != null ? !generic.equals(that.generic) : that.generic != null)
+        {
+            return false;
+        }
 
         return true;
     }

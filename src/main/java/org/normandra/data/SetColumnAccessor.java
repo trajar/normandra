@@ -1,6 +1,6 @@
 package org.normandra.data;
 
-import org.normandra.DatabaseSession;
+import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.association.LazyElementSet;
 
@@ -25,7 +25,7 @@ public class SetColumnAccessor extends CollectionColumnAccessor
 
 
     @Override
-    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException
     {
         if (this.isLazy())
         {

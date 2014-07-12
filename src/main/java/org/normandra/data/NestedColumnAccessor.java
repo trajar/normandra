@@ -1,7 +1,7 @@
 package org.normandra.data;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.DatabaseSession;
+import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 
 import java.lang.reflect.Field;
@@ -66,7 +66,7 @@ public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnA
 
 
     @Override
-    public boolean setValue(final Object entity, final DataHolder data, final DatabaseSession session) throws NormandraException
+    public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException
     {
         Object base;
         try

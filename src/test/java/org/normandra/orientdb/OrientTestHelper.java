@@ -2,6 +2,9 @@ package org.normandra.orientdb;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.BasicConfigurator;
 import org.normandra.DatabaseConstruction;
@@ -9,15 +12,10 @@ import org.normandra.EntityManager;
 import org.normandra.EntityManagerFactory;
 import org.normandra.TestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-
 /**
  * orientdb test utilities
  * <p>
- * User: bowen
- * Date: 6/8/14
+ * User: bowen Date: 6/8/14
  */
 public class OrientTestHelper implements TestHelper
 {
@@ -35,8 +33,9 @@ public class OrientTestHelper implements TestHelper
 
     private OrientDatabaseSession session;
 
-    private EntityManager manager;
+    private EntityManagerFactory factory;
 
+    private EntityManager manager;
 
     public static void setup() throws Exception
     {
@@ -51,13 +50,11 @@ public class OrientTestHelper implements TestHelper
         db.close();
     }
 
-
     @Override
     public OrientDatabase getDatabase()
     {
         return this.database;
     }
-
 
     @Override
     public OrientDatabaseSession getSession()
@@ -65,12 +62,17 @@ public class OrientTestHelper implements TestHelper
         return this.session;
     }
 
+    @Override
+    public EntityManagerFactory getFactory()
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
+    @Override
     public EntityManager getManager()
     {
         return this.manager;
     }
-
 
     @Override
     public void create(final Collection<Class> types) throws Exception
@@ -85,11 +87,11 @@ public class OrientTestHelper implements TestHelper
         {
             builder.withClass(clazz);
         }
-        this.manager = builder.create().create();
+        this.factory = builder.create();
+        this.manager = this.factory.create();
         this.database = new OrientDatabaseFactory(path, user, password, construction).create();
         this.session = this.database.createSession();
     }
-
 
     @Override
     public void destroy() throws IOException

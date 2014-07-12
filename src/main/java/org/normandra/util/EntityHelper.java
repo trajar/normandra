@@ -1,7 +1,7 @@
 package org.normandra.util;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.DatabaseSession;
+import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
@@ -28,10 +28,10 @@ import java.util.TreeMap;
  */
 public class EntityHelper
 {
-    private final DatabaseSession session;
+    private final EntitySession session;
 
 
-    public EntityHelper(final DatabaseSession session)
+    public EntityHelper(final EntitySession session)
     {
         if (null == session)
         {

@@ -13,6 +13,7 @@ public interface TestHelper
     Database getDatabase();
     DatabaseSession getSession();
     EntityManager getManager();
+    EntityManagerFactory getFactory();
     void create(Collection<Class> types) throws Exception;
     void destroy() throws Exception;
 }

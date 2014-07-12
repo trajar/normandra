@@ -1,6 +1,6 @@
 package org.normandra.util;
 
-import org.normandra.DatabaseSession;
+import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHolder;
@@ -25,12 +25,12 @@ import java.util.Map;
  */
 public class EntityBuilder
 {
-    private final DatabaseSession session;
+    private final EntitySession session;
 
     private final DataHolderFactory factory;
 
 
-    public EntityBuilder(final DatabaseSession session, final DataHolderFactory factory)
+    public EntityBuilder(final EntitySession session, final DataHolderFactory factory)
     {
         this.session = session;
         this.factory = factory;

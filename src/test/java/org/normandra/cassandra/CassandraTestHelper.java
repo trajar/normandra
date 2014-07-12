@@ -11,8 +11,7 @@ import java.util.Collection;
 /**
  * common cassandra unit test bootstrap
  * <p>
- * User: bowen
- * Date: 1/20/14
+ * User: bowen Date: 1/20/14
  */
 public class CassandraTestHelper implements TestHelper
 {
@@ -26,8 +25,9 @@ public class CassandraTestHelper implements TestHelper
 
     private CassandraDatabaseSession session;
 
-    private EntityManager manager;
+    private EntityManagerFactory factory;
 
+    private EntityManager manager;
 
     public static void setup() throws Exception
     {
@@ -35,12 +35,17 @@ public class CassandraTestHelper implements TestHelper
         CassandraTestUtil.start("/cassandra-2.0.0.yaml");
     }
 
+    @Override
+    public EntityManagerFactory getFactory()
+    {
+        return this.factory;
+    }
 
+    @Override
     public EntityManager getManager()
     {
         return this.manager;
     }
-
 
     @Override
     public CassandraDatabase getDatabase()
@@ -48,13 +53,11 @@ public class CassandraTestHelper implements TestHelper
         return this.database;
     }
 
-
     @Override
     public CassandraDatabaseSession getSession()
     {
         return this.session;
     }
-
 
     @Override
     public void create(final Collection<Class> types) throws Exception
@@ -69,11 +72,11 @@ public class CassandraTestHelper implements TestHelper
         {
             builder.withClass(clazz);
         }
-        this.manager = builder.create().create();
+        this.factory = builder.create();
+        this.manager = this.factory.create();
         this.database = new CassandraDatabaseFactory(keyspace, "localhost", port, construction).create();
         this.session = this.database.createSession();
     }
-
 
     @Override
     public void destroy() throws Exception

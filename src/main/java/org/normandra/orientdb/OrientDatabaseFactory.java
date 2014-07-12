@@ -7,8 +7,7 @@ import org.normandra.DatabaseFactory;
 /**
  * a database factory
  * <p/>
- * User: bowen
- * Date: 5/14/14
+ * User: bowen Date: 5/14/14
  */
 public class OrientDatabaseFactory implements DatabaseFactory
 {
@@ -19,7 +18,6 @@ public class OrientDatabaseFactory implements DatabaseFactory
     private final String password;
 
     private final DatabaseConstruction constructionMode;
-
 
     public OrientDatabaseFactory(final String url, final String user, final String pwd, final DatabaseConstruction mode)
     {
@@ -36,7 +34,6 @@ public class OrientDatabaseFactory implements DatabaseFactory
         this.password = pwd;
         this.constructionMode = mode;
     }
-
 
     @Override
     public OrientDatabase create()
