@@ -5,9 +5,11 @@ import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 import org.normandra.util.EntityBuilder;
 import org.normandra.util.LazyCollection;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -181,6 +183,17 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         }
 
         final OrientDataFactory factory = new OrientDataFactory(this.session);
-        return (T) new EntityBuilder(this.session, factory).build(this.context, datamap);
+        final T element = (T) new EntityBuilder(this.session, factory).build(this.context, datamap);
+        if (null == element)
+        {
+            return null;
+        }
+        final Object key = this.context.getId().fromEntity(element);
+        if (key instanceof Serializable)
+        {
+            final EntityMeta meta = this.context.findEntity(datamap);
+            this.session.getCache().put(meta, (Serializable) key, element);
+        }
+        return element;
     }
 }

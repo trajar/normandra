@@ -5,6 +5,9 @@ import org.normandra.DatabaseConstruction;
 import org.normandra.EntityManager;
 import org.normandra.EntityManagerFactory;
 import org.normandra.TestHelper;
+import org.normandra.cache.EntityCacheFactory;
+import org.normandra.cache.MapFactory;
+import org.normandra.cache.MemoryCache;
 
 import java.util.Collection;
 
@@ -21,6 +24,8 @@ public class CassandraTestHelper implements TestHelper
 
     public static final DatabaseConstruction construction = DatabaseConstruction.RECREATE;
 
+    private final EntityCacheFactory cache = new MemoryCache.Factory(MapFactory.withConcurrency());
+
     private CassandraDatabase database;
 
     private CassandraDatabaseSession session;
@@ -29,11 +34,13 @@ public class CassandraTestHelper implements TestHelper
 
     private EntityManager manager;
 
+
     public static void setup() throws Exception
     {
         BasicConfigurator.configure();
         CassandraTestUtil.start("/cassandra-2.0.0.yaml");
     }
+
 
     @Override
     public EntityManagerFactory getFactory()
@@ -41,11 +48,13 @@ public class CassandraTestHelper implements TestHelper
         return this.factory;
     }
 
+
     @Override
     public EntityManager getManager()
     {
         return this.manager;
     }
+
 
     @Override
     public CassandraDatabase getDatabase()
@@ -53,30 +62,33 @@ public class CassandraTestHelper implements TestHelper
         return this.database;
     }
 
+
     @Override
     public CassandraDatabaseSession getSession()
     {
         return this.session;
     }
 
+
     @Override
     public void create(final Collection<Class> types) throws Exception
     {
         final EntityManagerFactory.Builder builder = new EntityManagerFactory.Builder()
-                .withType(EntityManagerFactory.Type.CASSANDRA)
-                .withParameter(CassandraDatabase.HOSTS, "localhost")
-                .withParameter(CassandraDatabase.PORT, port)
-                .withParameter(CassandraDatabase.KEYSPACE, keyspace)
-                .withDatabaseConstruction(construction);
+            .withType(EntityManagerFactory.Type.CASSANDRA)
+            .withParameter(CassandraDatabase.HOSTS, "localhost")
+            .withParameter(CassandraDatabase.PORT, port)
+            .withParameter(CassandraDatabase.KEYSPACE, keyspace)
+            .withDatabaseConstruction(construction);
         for (final Class<?> clazz : types)
         {
             builder.withClass(clazz);
         }
         this.factory = builder.create();
         this.manager = this.factory.create();
-        this.database = new CassandraDatabaseFactory(keyspace, "localhost", port, construction).create();
+        this.database = new CassandraDatabaseFactory(keyspace, "localhost", port, cache, construction).create();
         this.session = this.database.createSession();
     }
+
 
     @Override
     public void destroy() throws Exception

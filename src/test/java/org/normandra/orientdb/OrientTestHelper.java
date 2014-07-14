@@ -2,15 +2,19 @@ package org.normandra.orientdb;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.BasicConfigurator;
 import org.normandra.DatabaseConstruction;
 import org.normandra.EntityManager;
 import org.normandra.EntityManagerFactory;
 import org.normandra.TestHelper;
+import org.normandra.cache.EntityCacheFactory;
+import org.normandra.cache.MapFactory;
+import org.normandra.cache.MemoryCache;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
 
 /**
  * orientdb test utilities
@@ -29,6 +33,8 @@ public class OrientTestHelper implements TestHelper
 
     public static final String password = "admin";
 
+    private EntityCacheFactory cache = new MemoryCache.Factory(MapFactory.withConcurrency());
+
     private OrientDatabase database;
 
     private OrientDatabaseSession session;
@@ -36,6 +42,7 @@ public class OrientTestHelper implements TestHelper
     private EntityManagerFactory factory;
 
     private EntityManager manager;
+
 
     public static void setup() throws Exception
     {
@@ -50,11 +57,13 @@ public class OrientTestHelper implements TestHelper
         db.close();
     }
 
+
     @Override
     public OrientDatabase getDatabase()
     {
         return this.database;
     }
+
 
     @Override
     public OrientDatabaseSession getSession()
@@ -62,11 +71,13 @@ public class OrientTestHelper implements TestHelper
         return this.session;
     }
 
+
     @Override
     public EntityManagerFactory getFactory()
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
 
     @Override
     public EntityManager getManager()
@@ -74,24 +85,26 @@ public class OrientTestHelper implements TestHelper
         return this.manager;
     }
 
+
     @Override
     public void create(final Collection<Class> types) throws Exception
     {
         final EntityManagerFactory.Builder builder = new EntityManagerFactory.Builder()
-                .withType(EntityManagerFactory.Type.ORIENTDB)
-                .withParameter(OrientDatabase.URL, path)
-                .withParameter(OrientDatabase.USER_ID, user)
-                .withParameter(OrientDatabase.PASSWORD, password)
-                .withDatabaseConstruction(construction);
+            .withType(EntityManagerFactory.Type.ORIENTDB)
+            .withParameter(OrientDatabase.URL, path)
+            .withParameter(OrientDatabase.USER_ID, user)
+            .withParameter(OrientDatabase.PASSWORD, password)
+            .withDatabaseConstruction(construction);
         for (final Class<?> clazz : types)
         {
             builder.withClass(clazz);
         }
         this.factory = builder.create();
         this.manager = this.factory.create();
-        this.database = new OrientDatabaseFactory(path, user, password, construction).create();
+        this.database = new OrientDatabaseFactory(path, user, password, cache, construction).create();
         this.session = this.database.createSession();
     }
+
 
     @Override
     public void destroy() throws IOException

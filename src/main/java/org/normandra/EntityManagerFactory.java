@@ -1,6 +1,9 @@
 package org.normandra;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.cache.EntityCacheFactory;
+import org.normandra.cache.MapFactory;
+import org.normandra.cache.MemoryCache;
 import org.normandra.cassandra.CassandraDatabase;
 import org.normandra.cassandra.CassandraDatabaseFactory;
 import org.normandra.meta.AnnotationParser;
@@ -26,7 +29,7 @@ import java.util.TreeMap;
 
 /**
  * entity manager factory
- * <p/>
+ * <p>
  * User: bowen Date: 2/1/14
  */
 public class EntityManagerFactory
@@ -34,6 +37,7 @@ public class EntityManagerFactory
     public static enum Type
     {
         CASSANDRA, ORIENTDB;
+
 
         public static Type parse(final String value)
         {
@@ -63,9 +67,12 @@ public class EntityManagerFactory
 
         private DatabaseConstruction mode = DatabaseConstruction.CREATE;
 
+        private EntityCacheFactory cache = new MemoryCache.Factory(MapFactory.withConcurrency());
+
         private final Set<Class> classes = new HashSet<>();
 
         private final SortedMap<String, Object> parameters = new TreeMap<>();
+
 
         public EntityManagerFactory create() throws NormandraException
         {
@@ -83,14 +90,14 @@ public class EntityManagerFactory
                 final String keyspace = this.getParameter(CassandraDatabase.KEYSPACE, String.class, "normandra");
                 final String hosts = this.getParameter(CassandraDatabase.HOSTS, String.class, CassandraDatabaseFactory.DEFAULT_HOST);
                 final Integer port = this.getParameter(CassandraDatabase.PORT, Integer.class, CassandraDatabaseFactory.DEFAULT_PORT);
-                databaseFactory = new CassandraDatabaseFactory(keyspace, hosts, port.intValue(), this.mode);
+                databaseFactory = new CassandraDatabaseFactory(keyspace, hosts, port.intValue(), this.cache, this.mode);
             }
             else if (Type.ORIENTDB.equals(type))
             {
                 final String url = this.getParameter(OrientDatabase.URL, String.class, "plocal:orientdb");
                 final String userid = this.getParameter(OrientDatabase.USER_ID, String.class, "admin");
                 final String password = this.getParameter(OrientDatabase.PASSWORD, String.class, "admin");
-                databaseFactory = new OrientDatabaseFactory(url, userid, password, this.mode);
+                databaseFactory = new OrientDatabaseFactory(url, userid, password, this.cache, this.mode);
             }
             else
             {
@@ -123,6 +130,7 @@ public class EntityManagerFactory
             return managerFactory;
         }
 
+
         public Builder withType(final Type type)
         {
             if (null == type)
@@ -132,6 +140,7 @@ public class EntityManagerFactory
             this.type = type;
             return this;
         }
+
 
         public Builder withDatabaseConstruction(final DatabaseConstruction mode)
         {
@@ -143,6 +152,7 @@ public class EntityManagerFactory
             return this;
         }
 
+
         public Builder withClass(final Class<?> clazz)
         {
             if (null == clazz)
@@ -152,6 +162,7 @@ public class EntityManagerFactory
             this.classes.add(clazz);
             return this;
         }
+
 
         public Builder withClasses(final Class<?>... clazzes)
         {
@@ -166,6 +177,7 @@ public class EntityManagerFactory
             return this;
         }
 
+
         public Builder withClasses(final Iterable<Class<?>> c)
         {
             if (null == c)
@@ -179,6 +191,7 @@ public class EntityManagerFactory
             return this;
         }
 
+
         public Builder withParameter(final String key, final Object value)
         {
             if (null == key || null == value)
@@ -188,6 +201,7 @@ public class EntityManagerFactory
             this.parameters.put(key, value);
             return this;
         }
+
 
         private <T> T getParameter(final String key, final Class<T> clazz, final T defaultValue)
         {
@@ -210,6 +224,7 @@ public class EntityManagerFactory
 
     private final Map<Class, EntityMeta> classMap;
 
+
     private EntityManagerFactory(final Database db, final DatabaseMeta meta)
     {
         if (null == db)
@@ -231,11 +246,13 @@ public class EntityManagerFactory
         }
     }
 
+
     public EntityManager create()
     {
         final DatabaseSession session = this.database.createSession();
         return new EntityManager(session, this.meta);
     }
+
 
     public <T> boolean registerQuery(final Class<T> clazz, final String name, final String query) throws NormandraException
     {
@@ -260,16 +277,19 @@ public class EntityManagerFactory
         }
     }
 
+
     public boolean unregisterQuery(final String name) throws NormandraException
     {
         return this.database.unregisterQuery(name);
     }
+
 
     public void close()
     {
         this.database.close();
         this.classMap.clear();
     }
+
 
     private List<EntityMeta> findMeta(final Class<?> clazz)
     {

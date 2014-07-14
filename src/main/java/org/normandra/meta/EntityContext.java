@@ -19,6 +19,7 @@ public interface EntityContext
     Set<TableMeta> getTables();
     Set<TableMeta> getPrimaryTables();
     Set<TableMeta> getSecondaryTables();
+    ColumnMeta getPrimaryKey();
     Set<ColumnMeta> getPrimaryKeys();
     Set<ColumnMeta> getColumns();
     EntityMeta findEntity(Map<ColumnMeta, Object> data);

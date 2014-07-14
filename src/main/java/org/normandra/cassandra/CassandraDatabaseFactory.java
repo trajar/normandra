@@ -4,6 +4,7 @@ import com.datastax.driver.core.Cluster;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseConstruction;
 import org.normandra.DatabaseFactory;
+import org.normandra.cache.EntityCacheFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,14 +30,16 @@ public class CassandraDatabaseFactory implements DatabaseFactory
 
     private final DatabaseConstruction mode;
 
+    private final EntityCacheFactory cache;
 
-    public CassandraDatabaseFactory(final String keyspace, final DatabaseConstruction mode)
+
+    public CassandraDatabaseFactory(final String keyspace, final EntityCacheFactory cache, final DatabaseConstruction mode)
     {
-        this(keyspace, DEFAULT_HOST, DEFAULT_PORT, mode);
+        this(keyspace, DEFAULT_HOST, DEFAULT_PORT, cache, mode);
     }
 
 
-    public CassandraDatabaseFactory(final String keyspace, final String host, final int port, final DatabaseConstruction mode)
+    public CassandraDatabaseFactory(final String keyspace, final String host, final int port, final EntityCacheFactory cache, final DatabaseConstruction mode)
     {
         if (null == keyspace)
         {
@@ -46,6 +49,10 @@ public class CassandraDatabaseFactory implements DatabaseFactory
         {
             throw new NullArgumentException("host");
         }
+        if (null == cache)
+        {
+            throw new NullArgumentException("cache factory");
+        }
         if (null == mode)
         {
             throw new NullArgumentException("mode");
@@ -53,6 +60,7 @@ public class CassandraDatabaseFactory implements DatabaseFactory
         this.keyspaceName = keyspace;
         this.host = host;
         this.port = port;
+        this.cache = cache;
         this.mode = mode;
     }
 
@@ -73,7 +81,7 @@ public class CassandraDatabaseFactory implements DatabaseFactory
                 return thread;
             }
         });
-        return new CassandraDatabase(this.keyspaceName, cluster, this.mode, executor);
+        return new CassandraDatabase(this.keyspaceName, cluster, this.cache, this.mode, executor);
     }
 
 

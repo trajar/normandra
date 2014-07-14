@@ -29,7 +29,7 @@ import java.util.concurrent.Future;
 
 /**
  * a class capable of querying and constructing entity instances
- * <p/>
+ * <p>
  * User: bowen
  * Date: 3/23/14
  */
@@ -56,16 +56,13 @@ public class CassandraEntityQuery
             return null;
         }
 
+        // check cache
         if (key instanceof Serializable)
         {
-            // check cache
-            for (final EntityMeta entity : meta.getEntities())
+            final Object existing = this.cache.get(meta, (Serializable) key);
+            if (existing != null)
             {
-                final Object existing = this.cache.get(entity, (Serializable) key);
-                if (existing != null)
-                {
-                    return entity.getType().cast(existing);
-                }
+                return existing;
             }
         }
 
@@ -108,7 +105,10 @@ public class CassandraEntityQuery
             {
                 return null;
             }
-            this.cache.put(entity, instance);
+            if (key instanceof Serializable)
+            {
+                this.cache.put(entity, (Serializable) key, instance);
+            }
 
             // done
             return instance;
@@ -208,11 +208,15 @@ public class CassandraEntityQuery
                     data.putAll(CassandraUtils.unpackValues(table, row));
                 }
                 final Object instance = new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(context, data);
+                final Object key = context.getId().fromEntity(instance);
+                if (key instanceof Serializable)
+                {
+                    this.cache.put(ctx.entity, (Serializable) key, instance);
+                }
                 if (instance != null)
                 {
-                    this.cache.put(ctx.entity, instance);
+                    entities.add(instance);
                 }
-                entities.add(instance);
             }
             return Collections.unmodifiableList(entities);
         }

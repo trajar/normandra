@@ -9,6 +9,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;
 import org.normandra.DatabaseConstruction;
+import org.normandra.cache.NullEntityCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,7 +120,7 @@ public class CassandraTestUtil
         final Cluster cluster = Cluster.builder()
                 .addContactPoint("localhost")
                 .withPort(CassandraTestHelper.port).build();
-        final CassandraDatabase db = new CassandraDatabase(CassandraTestHelper.keyspace, cluster, DatabaseConstruction.RECREATE, executor);
+        final CassandraDatabase db = new CassandraDatabase(CassandraTestHelper.keyspace, cluster, NullEntityCache.getFactory(), DatabaseConstruction.RECREATE, executor);
         for (final String name : Arrays.asList("TestCluster", "Test Cluster"))
         {
             if (db.hasKeyspace(name))

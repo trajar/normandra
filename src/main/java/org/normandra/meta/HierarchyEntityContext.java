@@ -47,10 +47,24 @@ public class HierarchyEntityContext implements EntityContext
     }
 
 
+    private int getNumTables()
+    {
+        int num = 0;
+        for (final EntityMeta entity : this.entities)
+        {
+            for (final TableMeta table : entity)
+            {
+                num++;
+            }
+        }
+        return num;
+    }
+
+
     @Override
     public Set<TableMeta> getTables()
     {
-        final Set<TableMeta> tables = new ArraySet<>();
+        final Set<TableMeta> tables = new ArraySet<>(this.getNumTables());
         for (final EntityMeta entity : this.entities)
         {
             tables.addAll(entity.getTables());
@@ -62,7 +76,7 @@ public class HierarchyEntityContext implements EntityContext
     @Override
     public Set<TableMeta> getPrimaryTables()
     {
-        final Set<TableMeta> tables = new ArraySet<>();
+        final Set<TableMeta> tables = new ArraySet<>(this.getNumTables());
         for (final TableMeta table : this.getTables())
         {
             if (!table.isJoinTable())
@@ -77,7 +91,7 @@ public class HierarchyEntityContext implements EntityContext
     @Override
     public Set<TableMeta> getSecondaryTables()
     {
-        final Set<TableMeta> tables = new ArraySet<>();
+        final Set<TableMeta> tables = new ArraySet<>(this.getNumTables());
         for (final TableMeta table : this.getTables())
         {
             if (table.isJoinTable())
@@ -90,16 +104,39 @@ public class HierarchyEntityContext implements EntityContext
 
 
     @Override
+    public ColumnMeta getPrimaryKey()
+    {
+        for (final TableMeta table : this.getTables())
+        {
+            if (!table.isJoinTable())
+            {
+                for (final ColumnMeta column : table)
+                {
+                    if (column.isPrimaryKey())
+                    {
+                        return column;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+
+    @Override
     public Set<ColumnMeta> getPrimaryKeys()
     {
         final Set<ColumnMeta> columnns = new ArraySet<>();
         for (final TableMeta table : this.getTables())
         {
-            for (final ColumnMeta column : table)
+            if (!table.isJoinTable())
             {
-                if (column.isPrimaryKey())
+                for (final ColumnMeta column : table)
                 {
-                    columnns.add(column);
+                    if (column.isPrimaryKey())
+                    {
+                        columnns.add(column);
+                    }
                 }
             }
         }
@@ -186,12 +223,21 @@ public class HierarchyEntityContext implements EntityContext
     @Override
     public boolean equals(Object o)
     {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
 
         HierarchyEntityContext that = (HierarchyEntityContext) o;
 
-        if (entities != null ? !entities.equals(that.entities) : that.entities != null) return false;
+        if (entities != null ? !entities.equals(that.entities) : that.entities != null)
+        {
+            return false;
+        }
 
         return true;
     }

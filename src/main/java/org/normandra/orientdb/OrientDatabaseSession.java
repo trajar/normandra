@@ -11,7 +11,6 @@ import org.normandra.DatabaseQuery;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
-import org.normandra.cache.MemoryCache;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.log.DatabaseActivity;
 import org.normandra.meta.ColumnMeta;
@@ -46,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class OrientDatabaseSession implements DatabaseSession
 {
-    private final EntityCache cache = new MemoryCache();
+    private final EntityCache cache;
 
     private final List<DatabaseActivity> activities = new ArrayList<>();
 
@@ -57,14 +56,25 @@ public class OrientDatabaseSession implements DatabaseSession
     private final AtomicBoolean userTransaction = new AtomicBoolean(false);
 
 
-    public OrientDatabaseSession(final ODatabaseDocumentTx db, final Map<String, OrientQuery> statements)
+    public OrientDatabaseSession(final ODatabaseDocumentTx db, final Map<String, OrientQuery> statements, final EntityCache cache)
     {
         if (null == db)
         {
             throw new NullArgumentException("document database");
         }
+        if (null == cache)
+        {
+            throw new NullArgumentException("cache");
+        }
+        this.cache = cache;
         this.database = db;
         this.statementsByName = new TreeMap<>(statements);
+    }
+
+
+    final EntityCache getCache()
+    {
+        return this.cache;
     }
 
 
@@ -161,7 +171,11 @@ public class OrientDatabaseSession implements DatabaseSession
             }
             this.activities.add(new OrientUpdateActivity(operation, rids, new Date(), end - start));
 
-            this.cache.put(meta, element);
+            final Object key = meta.getId().fromEntity(element);
+            if (key instanceof Serializable)
+            {
+                this.cache.put(meta, (Serializable) key, element);
+            }
         }
         catch (final Exception e)
         {
@@ -224,7 +238,13 @@ public class OrientDatabaseSession implements DatabaseSession
             {
                 this.database.commit();
             }
-            this.cache.remove(meta, element);
+
+            final Object key = meta.getId().fromEntity(element);
+            if (key instanceof Serializable)
+            {
+                this.cache.remove(meta, (Serializable) key);
+            }
+
             final long end = System.currentTimeMillis();
             this.activities.add(new OrientUpdateActivity(DatabaseActivity.Type.DELETE, rids, new Date(), end - start));
         }
@@ -359,14 +379,10 @@ public class OrientDatabaseSession implements DatabaseSession
 
         if (key instanceof Serializable)
         {
-            // check cache
-            for (final EntityMeta entity : context.getEntities())
+            final Object existing = this.cache.get(context, (Serializable) key);
+            if (existing != null)
             {
-                final Object existing = this.cache.get(entity, (Serializable) key);
-                if (existing != null)
-                {
-                    return entity.getType().cast(existing);
-                }
+                return existing;
             }
         }
 

@@ -13,6 +13,7 @@ import org.apache.commons.lang.NullArgumentException;
 import org.normandra.Database;
 import org.normandra.DatabaseConstruction;
 import org.normandra.NormandraException;
+import org.normandra.cache.EntityCacheFactory;
 import org.normandra.generator.IdGenerator;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
@@ -59,17 +60,24 @@ public class OrientDatabase implements Database
 
     private final String password;
 
+    private final EntityCacheFactory cache;
+
     private final DatabaseConstruction constructionMode;
 
     private final ODatabaseDocumentPool pool = createPool();
 
     private final Map<String, OrientQuery> statementsByName = new ConcurrentHashMap<>();
 
-    public OrientDatabase(final String url, final String user, final String pwd, final DatabaseConstruction mode)
+
+    public OrientDatabase(final String url, final String user, final String pwd, final EntityCacheFactory cache, final DatabaseConstruction mode)
     {
         if (null == url || url.isEmpty())
         {
             throw new IllegalArgumentException("URL cannot be null/empty.");
+        }
+        if (null == cache)
+        {
+            throw new NullArgumentException("cache factory");
         }
         if (null == mode)
         {
@@ -78,19 +86,23 @@ public class OrientDatabase implements Database
         this.url = url;
         this.userId = user;
         this.password = pwd;
+        this.cache = cache;
         this.constructionMode = mode;
     }
+
 
     protected final ODatabaseDocumentTx createDatabase()
     {
         return this.pool.acquire(this.url, this.userId, this.password);
     }
 
+
     @Override
     public OrientDatabaseSession createSession()
     {
-        return new OrientDatabaseSession(this.createDatabase(), this.statementsByName);
+        return new OrientDatabaseSession(this.createDatabase(), this.statementsByName, this.cache.create());
     }
+
 
     @Override
     public void refresh(final DatabaseMeta meta) throws NormandraException
@@ -158,6 +170,7 @@ public class OrientDatabase implements Database
             database.close();
         }
     }
+
 
     private void refreshGenerators(final EntityMeta entity, final ODatabaseDocumentTx database)
     {
@@ -271,6 +284,7 @@ public class OrientDatabase implements Database
         }
     }
 
+
     private void refreshEntity(final EntityMeta entity, final TableMeta table, final ODatabaseDocumentTx database)
     {
         final String indexName = OrientUtils.keyIndex(table);
@@ -316,6 +330,7 @@ public class OrientDatabase implements Database
         }
     }
 
+
     @Override
     public boolean registerQuery(final EntityContext entity, final String name, final String query) throws NormandraException
     {
@@ -343,6 +358,7 @@ public class OrientDatabase implements Database
         return true;
     }
 
+
     @Override
     public boolean unregisterQuery(final String name) throws NormandraException
     {
@@ -352,6 +368,7 @@ public class OrientDatabase implements Database
         }
         return this.statementsByName.remove(name) != null;
     }
+
 
     public Collection<String> getClasses()
     {
@@ -376,6 +393,7 @@ public class OrientDatabase implements Database
         }
     }
 
+
     public Collection<String> getClusters()
     {
         final ODatabaseDocumentTx database = this.createDatabase();
@@ -393,6 +411,7 @@ public class OrientDatabase implements Database
             database.close();
         }
     }
+
 
     public Collection<String> getIndices()
     {
@@ -412,6 +431,7 @@ public class OrientDatabase implements Database
         }
     }
 
+
     public boolean hasIndex(final String clusterName)
     {
         if (null == clusterName || clusterName.isEmpty())
@@ -427,6 +447,7 @@ public class OrientDatabase implements Database
         }
         return false;
     }
+
 
     public boolean hasCluster(final String clusterName)
     {
@@ -444,6 +465,7 @@ public class OrientDatabase implements Database
         return false;
     }
 
+
     public boolean hasClass(final String className)
     {
         if (null == className || className.isEmpty())
@@ -459,6 +481,7 @@ public class OrientDatabase implements Database
         }
         return false;
     }
+
 
     public boolean hasProperty(final String className, final String fieldName)
     {
@@ -483,12 +506,14 @@ public class OrientDatabase implements Database
         }
     }
 
+
     @Override
     public void close()
     {
         // cleanup and shutdown
         this.pool.close();
     }
+
 
     private static ODatabaseDocumentPool createPool()
     {

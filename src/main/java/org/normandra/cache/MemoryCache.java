@@ -1,5 +1,7 @@
 package org.normandra.cache;
 
+import org.apache.commons.lang.NullArgumentException;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,11 +9,10 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * a simple in-memory cache
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/3/14
  */
@@ -20,6 +21,40 @@ public class MemoryCache implements EntityCache
     private static final Logger logger = LoggerFactory.getLogger(MemoryCache.class);
 
     private final Map<EntityMeta, Map<Object, Object>> cache = new TreeMap<>();
+
+    private final MapFactory maps;
+
+    public static class Factory implements EntityCacheFactory
+    {
+        private final MapFactory maps;
+
+
+        public Factory(final MapFactory f)
+        {
+            if (null == f)
+            {
+                throw new NullArgumentException("map factory");
+            }
+            this.maps = f;
+        }
+
+
+        @Override
+        public EntityCache create()
+        {
+            return new MemoryCache(this.maps);
+        }
+    }
+
+
+    public MemoryCache(final MapFactory f)
+    {
+        if (null == f)
+        {
+            throw new NullArgumentException("map factory");
+        }
+        this.maps = f;
+    }
 
 
     @Override
@@ -49,7 +84,27 @@ public class MemoryCache implements EntityCache
             return null;
         }
 
-        return meta.getType().cast(existing);
+//      return meta.getType().cast(existing);
+        return existing;
+    }
+
+
+    @Override
+    public Object get(final EntityContext context, final Serializable key)
+    {
+        if (null == context || null == key)
+        {
+            return null;
+        }
+        for (final EntityMeta meta : context.getEntities())
+        {
+            final Object existing = this.get(meta, key);
+            if (existing != null)
+            {
+                return existing;
+            }
+        }
+        return null;
     }
 
 
@@ -67,45 +122,21 @@ public class MemoryCache implements EntityCache
             return false;
         }
 
-        return entities.remove(key) != null;
-    }
-
-
-    @Override
-    public boolean remove(final EntityMeta meta, final Object instance)
-    {
-        if (null == meta || null == meta.getId() || null == instance)
+        if (entities.remove(key) != null)
         {
-            return false;
+            return true;
         }
-
-        final Map<Object, Object> entities = this.cache.get(meta);
-        if (null == entities)
+        else
         {
-            return false;
-        }
-
-        try
-        {
-            final Object key = meta.getId().fromEntity(instance);
-            if (null == key)
-            {
-                return false;
-            }
-            return entities.remove(key) != null;
-        }
-        catch (final Exception e)
-        {
-            logger.warn("Unable to remove key from cache entity [" + instance + "] of type [" + meta + "].", e);
             return false;
         }
     }
 
 
     @Override
-    public boolean put(final EntityMeta meta, final Object instance)
+    public boolean put(final EntityMeta meta, final Serializable key, final Object instance)
     {
-        if (null == meta || null == meta.getId() || null == instance)
+        if (null == meta || null == key || null == instance)
         {
             return false;
         }
@@ -113,17 +144,12 @@ public class MemoryCache implements EntityCache
         Map<Object, Object> entities = this.cache.get(meta);
         if (null == entities)
         {
-            entities = new ConcurrentHashMap<>();
+            entities = this.maps.create();
             this.cache.put(meta, entities);
         }
 
         try
         {
-            final Object key = meta.getId().fromEntity(instance);
-            if (null == key)
-            {
-                return false;
-            }
             entities.put(key, instance);
             return true;
         }

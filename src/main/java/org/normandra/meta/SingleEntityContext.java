@@ -142,6 +142,26 @@ public class SingleEntityContext implements EntityContext
 
 
     @Override
+    public ColumnMeta getPrimaryKey()
+    {
+        for (final TableMeta table : this.entity)
+        {
+            if (!table.isJoinTable())
+            {
+                for (final ColumnMeta column : table)
+                {
+                    if (column.isPrimaryKey())
+                    {
+                        return column;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+
+    @Override
     public String toString()
     {
         return this.entity.toString();
@@ -151,12 +171,21 @@ public class SingleEntityContext implements EntityContext
     @Override
     public boolean equals(Object o)
     {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
 
         SingleEntityContext that = (SingleEntityContext) o;
 
-        if (entity != null ? !entity.equals(that.entity) : that.entity != null) return false;
+        if (entity != null ? !entity.equals(that.entity) : that.entity != null)
+        {
+            return false;
+        }
 
         return true;
     }

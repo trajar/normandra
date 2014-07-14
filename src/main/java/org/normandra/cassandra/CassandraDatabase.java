@@ -14,6 +14,7 @@ import org.apache.commons.lang.NullArgumentException;
 import org.normandra.Database;
 import org.normandra.DatabaseConstruction;
 import org.normandra.NormandraException;
+import org.normandra.cache.EntityCacheFactory;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DatabaseMeta;
@@ -58,6 +59,8 @@ public class CassandraDatabase implements Database, CassandraAccessor
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraDatabase.class);
 
+    private final EntityCacheFactory cache;
+
     private final Cluster cluster;
 
     private final String keyspaceName;
@@ -71,7 +74,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
     private Session session;
 
 
-    public CassandraDatabase(final String keyspace, final Cluster cluster, final DatabaseConstruction mode, final ExecutorService executor)
+    public CassandraDatabase(final String keyspace, final Cluster cluster, final EntityCacheFactory cache, final DatabaseConstruction mode, final ExecutorService executor)
     {
         if (null == keyspace)
         {
@@ -85,6 +88,10 @@ public class CassandraDatabase implements Database, CassandraAccessor
         {
             throw new NullArgumentException("mode");
         }
+        if (null == cache)
+        {
+            throw new NullArgumentException("cache factory");
+        }
         if (null == executor)
         {
             throw new NullArgumentException("executor");
@@ -92,6 +99,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         this.keyspaceName = keyspace;
         this.cluster = cluster;
         this.constructionMode = mode;
+        this.cache = cache;
         this.executor = executor;
     }
 
@@ -99,7 +107,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
     @Override
     public CassandraDatabaseSession createSession()
     {
-        return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession(), this.statementsByName, this.executor);
+        return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession(), this.statementsByName, this.cache.create(), this.executor);
     }
 
 
@@ -448,6 +456,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
             session.close();
         }
     }
+
 
     protected boolean hasTable(final String table)
     {

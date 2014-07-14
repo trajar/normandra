@@ -78,9 +78,9 @@ public class CassandraSaveTest
 
         session.delete(meta, existing);
         Assert.assertEquals(7, session.listActivity().size());
-        Assert.assertFalse(session.exists(meta, 1));
+        Assert.assertFalse(session.exists(meta, 1L));
         Assert.assertEquals(8, session.listActivity().size());
-        Assert.assertNull(session.get(meta, 1));
+        Assert.assertNull(session.get(meta, 1L));
         Assert.assertEquals(9, session.listActivity().size());
     }
 }

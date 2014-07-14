@@ -17,7 +17,6 @@ import org.normandra.DatabaseQuery;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
-import org.normandra.cache.MemoryCache;
 import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHolder;
@@ -32,6 +31,7 @@ import org.normandra.util.EntityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a cassandra database session
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/1/14
  */
@@ -58,7 +58,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
     private final Session session;
 
-    private final EntityCache cache = new MemoryCache();
+    private final EntityCache cache;
 
     private final List<RegularStatement> statements = new CopyOnWriteArrayList<>();
 
@@ -73,7 +73,7 @@ public class CassandraDatabaseSession implements DatabaseSession
     private final Executor executor;
 
 
-    public CassandraDatabaseSession(final String keyspace, final Session session, final Map<String, CassandraPreparedStatement> map, final Executor executor)
+    public CassandraDatabaseSession(final String keyspace, final Session session, final Map<String, CassandraPreparedStatement> map, final EntityCache cache, final Executor executor)
     {
         if (null == keyspace || keyspace.isEmpty())
         {
@@ -83,12 +83,17 @@ public class CassandraDatabaseSession implements DatabaseSession
         {
             throw new NullArgumentException("session");
         }
+        if (null == cache)
+        {
+            throw new NullArgumentException("cache");
+        }
         if (null == executor)
         {
             throw new NullArgumentException("executor");
         }
         this.keyspaceName = keyspace;
         this.session = session;
+        this.cache = cache;
         this.executor = executor;
         this.preparedStatements = new TreeMap<>(map);
     }
@@ -248,8 +253,8 @@ public class CassandraDatabaseSession implements DatabaseSession
             final TableMeta table = meta.getTables().iterator().next();
             final String[] names = namelist.toArray(new String[namelist.size()]);
             final Select statement = QueryBuilder.select(names)
-                    .from(this.keyspaceName, table.getName())
-                    .limit(1);
+                .from(this.keyspaceName, table.getName())
+                .limit(1);
             boolean hasWhere = false;
             for (final Map.Entry<String, Object> entry : columns.entrySet())
             {
@@ -381,7 +386,12 @@ public class CassandraDatabaseSession implements DatabaseSession
                 batch = QueryBuilder.batch(statements);
             }
 
-            this.cache.remove(meta, element);
+            final Object key = meta.getId().fromEntity(element);
+            if (key instanceof Serializable)
+            {
+                this.cache.remove(meta, (Serializable) key);
+            }
+
             if (this.activeUnitOfWork.get())
             {
                 this.statements.add(batch);
@@ -477,7 +487,12 @@ public class CassandraDatabaseSession implements DatabaseSession
             {
                 this.executeSync(batch, DatabaseActivity.Type.UPDATE);
             }
-            this.cache.put(meta, element);
+
+            final Object key = meta.getId().fromEntity(element);
+            if (key instanceof Serializable)
+            {
+                this.cache.put(meta, (Serializable) key, element);
+            }
         }
         catch (final Exception e)
         {
