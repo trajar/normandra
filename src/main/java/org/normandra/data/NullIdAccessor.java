@@ -1,11 +1,13 @@
 package org.normandra.data;
 
+import org.normandra.meta.ColumnMeta;
+
 import java.util.Collections;
 import java.util.Map;
 
 /**
  * an empty id accessor, used when we have multiple @Id annotations but outside an embeddable type
- * <p/>
+ * <p>
  * User: bowen
  * Date: 3/2/14
  */
@@ -36,6 +38,13 @@ public class NullIdAccessor implements IdAccessor
     public Map<String, Object> fromKey(Object key)
     {
         return Collections.emptyMap();
+    }
+
+
+    @Override
+    public Object fromData(Map<ColumnMeta, Object> data)
+    {
+        return null;
     }
 
 

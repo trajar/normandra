@@ -1,6 +1,7 @@
 package org.normandra.data;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.meta.ColumnMeta;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -9,16 +10,16 @@ import java.util.Map;
 
 /**
  * a simple id accessor based on a single primary key
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/15/14
  */
 public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
 {
-    private final String primary;
+    private final ColumnMeta primary;
 
 
-    public BasicIdAccessor(final Field field, final String key)
+    public BasicIdAccessor(final Field field, final ColumnMeta key)
     {
         super(field);
         if (null == key)
@@ -55,8 +56,19 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
             return Collections.emptyMap();
         }
         final Map<String, Object> map = new HashMap<>(1);
-        map.put(this.primary, key);
+        map.put(this.primary.getName(), key);
         return Collections.unmodifiableMap(map);
+    }
+
+
+    @Override
+    public Object fromData(final Map<ColumnMeta, Object> data)
+    {
+        if (null == data || data.isEmpty())
+        {
+            return null;
+        }
+        return data.get(this.primary);
     }
 
 
@@ -67,20 +79,32 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
         {
             return null;
         }
-        return map.get(this.primary);
+        return map.get(this.primary.getName());
     }
 
 
     @Override
     public boolean equals(Object o)
     {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        if (!super.equals(o))
+        {
+            return false;
+        }
 
         BasicIdAccessor that = (BasicIdAccessor) o;
 
-        if (primary != null ? !primary.equals(that.primary) : that.primary != null) return false;
+        if (primary != null ? !primary.equals(that.primary) : that.primary != null)
+        {
+            return false;
+        }
 
         return true;
     }

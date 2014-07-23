@@ -2,8 +2,6 @@ package org.normandra.orientdb;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.apache.cassandra.serializers.InetAddressSerializer;
-import org.apache.cassandra.serializers.UUIDSerializer;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EmbeddedCollectionMeta;
@@ -11,10 +9,10 @@ import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
+import org.normandra.util.DataUtils;
 
 import java.math.BigDecimal;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +25,7 @@ import java.util.UUID;
 
 /**
  * collection of common orient utilities
- * <p/>
+ * <p>
  * User: bowen
  * Date: 5/15/14
  */
@@ -132,32 +130,6 @@ public class OrientUtils
     }
 
 
-    private static Object unpackPrimitive(final Class<?> clazz, final Object value)
-    {
-        if (UUID.class.equals(clazz))
-        {
-            final byte[] data = (byte[]) value;
-            if (data.length <= 0)
-            {
-                return null;
-            }
-            return UUIDSerializer.instance.deserialize(ByteBuffer.wrap(data));
-        }
-        if (InetAddress.class.equals(clazz))
-        {
-            final byte[] data = (byte[]) value;
-            if (data.length <= 0)
-            {
-                return null;
-            }
-            return InetAddressSerializer.instance.deserialize(ByteBuffer.wrap(data));
-        }
-
-        return value;
-
-    }
-
-
     static Object packRaw(final ColumnMeta column, final Object value)
     {
         if (null == column || null == value)
@@ -190,15 +162,30 @@ public class OrientUtils
     }
 
 
+    static Object unpackPrimitive(final Class<?> clazz, final Object value)
+    {
+        if (UUID.class.equals(clazz))
+        {
+            return DataUtils.bytesToUUID((byte[]) value);
+        }
+        if (InetAddress.class.equals(clazz))
+        {
+            return DataUtils.bytesToInet((byte[]) value);
+        }
+
+        return value;
+    }
+
+
     static Object packPrimitive(final Class<?> clazz, final Object value)
     {
         if (UUID.class.equals(clazz))
         {
-            return UUIDSerializer.instance.serialize((UUID) value).array();
+            return DataUtils.uuidToBytes((UUID) value);
         }
         if (InetAddress.class.equals(clazz))
         {
-            return InetAddressSerializer.instance.serialize((InetAddress) value).array();
+            return DataUtils.inetToBytes((InetAddress) value);
         }
 
         if (Number.class.isAssignableFrom(clazz) && !clazz.equals(value.getClass()))

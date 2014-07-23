@@ -46,6 +46,11 @@ public interface DatabaseSession extends EntitySession
     DatabaseQuery executeDynamciQuery(EntityContext meta, String query, Map<String, Object> parameters) throws NormandraException;
 
     /**
+     * returns true if this session has begun a unit of work (i.e. transaction)
+     */
+    boolean pendingWork();
+
+    /**
      * being unit of work
      */
     void beginWork() throws NormandraException;

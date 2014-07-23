@@ -1,5 +1,7 @@
 package org.normandra.data;
 
+import org.normandra.meta.ColumnMeta;
+
 import java.util.Map;
 
 /**
@@ -12,5 +14,6 @@ public interface IdAccessor
 {
     Object fromEntity(Object entity);
     Map<String, Object> fromKey(Object key);
+    Object fromData(Map<ColumnMeta, Object> data);
     Object toKey(Map<String, Object> map);
 }

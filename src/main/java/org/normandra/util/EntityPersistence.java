@@ -26,12 +26,12 @@ import java.util.TreeMap;
  * User: bowen
  * Date: 5/25/14
  */
-public class EntityHelper
+public class EntityPersistence
 {
     private final EntitySession session;
 
 
-    public EntityHelper(final EntitySession session)
+    public EntityPersistence(final EntitySession session)
     {
         if (null == session)
         {

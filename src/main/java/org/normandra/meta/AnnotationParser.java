@@ -560,7 +560,7 @@ public class AnnotationParser
             final Field key = regularKeys.get(0);
             for (final ColumnMeta column : this.configureId(key, false).keySet())
             {
-                entity.setId(new BasicIdAccessor(key, column.getName()));
+                entity.setId(new BasicIdAccessor(key, column));
                 return true;
             }
         }

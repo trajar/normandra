@@ -10,7 +10,7 @@ import java.util.TreeMap;
 
 /**
  * basic id accessor
- * <p/>
+ * <p>
  * User: bowen
  * Date: 2/15/14
  */
@@ -79,6 +79,33 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
             }
         }
         return Collections.unmodifiableMap(map);
+    }
+
+
+    @Override
+    public Object fromData(final Map<ColumnMeta, Object> data)
+    {
+        if (null == data || data.isEmpty())
+        {
+            return null;
+        }
+        try
+        {
+            final Object instance = this.getField().getType().newInstance();
+            for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet())
+            {
+                final ColumnMeta column = entry.getKey();
+                final ColumnAccessor accessor = entry.getValue();
+                final Object value = data.get(column);
+                final DataHolder holder = new BasicDataHolder(value);
+                accessor.setValue(instance, holder, null);
+            }
+            return instance;
+        }
+        catch (final Exception e)
+        {
+            throw new IllegalStateException("Unable to instantiate composite key from field [" + this.getField() + "].", e);
+        }
     }
 
 

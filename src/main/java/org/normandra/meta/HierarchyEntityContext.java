@@ -126,7 +126,7 @@ public class HierarchyEntityContext implements EntityContext
     @Override
     public Set<ColumnMeta> getPrimaryKeys()
     {
-        final Set<ColumnMeta> columnns = new ArraySet<>();
+        final Set<ColumnMeta> columnns = new ArraySet<>(4);
         for (final TableMeta table : this.getTables())
         {
             if (!table.isJoinTable())

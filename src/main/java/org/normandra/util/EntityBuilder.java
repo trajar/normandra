@@ -14,12 +14,11 @@ import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
  * a set of helper entity instance utilities
- * <p/>
+ * <p>
  * User: bowen
  * Date: 5/15/14
  */
@@ -69,7 +68,7 @@ public class EntityBuilder
             {
                 return null;
             }
-            if (!this.updateInstance(entity, instance, data))
+            if (!this.update(entity, instance, data))
             {
                 return null;
             }
@@ -121,7 +120,7 @@ public class EntityBuilder
     }
 
 
-    private boolean updateInstance(final EntityMeta meta, final Object instance, final Map<ColumnMeta, Object> data) throws IOException, ClassNotFoundException, NormandraException
+    public boolean update(final EntityMeta meta, final Object instance, final Map<ColumnMeta, Object> data) throws NormandraException
     {
         if (null == data || data.isEmpty())
         {

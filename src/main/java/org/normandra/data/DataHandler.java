@@ -1,5 +1,6 @@
 package org.normandra.data;
 
+import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
@@ -15,6 +16,6 @@ import java.util.Map;
  */
 public interface DataHandler
 {
-    boolean save(EntityMeta entity, TableMeta table, Map<ColumnMeta, Object> data);
-    boolean save(EntityMeta entity, TableMeta table, Map<ColumnMeta, Object> keys, ColumnMeta column, Collection<?> items);
+    boolean save(EntityMeta entity, TableMeta table, Map<ColumnMeta, Object> data) throws NormandraException;
+    boolean save(EntityMeta entity, TableMeta table, Map<ColumnMeta, Object> keys, ColumnMeta column, Collection<?> items) throws NormandraException;
 }

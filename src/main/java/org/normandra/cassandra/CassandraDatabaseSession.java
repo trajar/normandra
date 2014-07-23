@@ -27,7 +27,7 @@ import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
-import org.normandra.util.EntityHelper;
+import org.normandra.util.EntityPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,6 +157,13 @@ public class CassandraDatabaseSession implements DatabaseSession
     {
         this.activities.clear();
         this.cache.clear();
+    }
+
+
+    @Override
+    public boolean pendingWork()
+    {
+        return this.activeUnitOfWork.get();
     }
 
 
@@ -463,7 +470,7 @@ public class CassandraDatabaseSession implements DatabaseSession
 
             // generate insert/updateInstance statements
             final CassandraDataHandler helper = new CassandraDataHandler(this);
-            new EntityHelper(this).save(meta, element, helper);
+            new EntityPersistence(this).save(meta, element, helper);
             final List<RegularStatement> operations = helper.getOperations();
             if (operations.isEmpty())
             {

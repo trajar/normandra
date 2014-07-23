@@ -19,7 +19,7 @@ import org.normandra.meta.EntityMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityBuilder;
-import org.normandra.util.EntityHelper;
+import org.normandra.util.EntityPersistence;
 import org.normandra.util.LazyCollection;
 
 import java.io.Serializable;
@@ -94,6 +94,13 @@ public class OrientDatabaseSession implements DatabaseSession
 
 
     @Override
+    public boolean pendingWork()
+    {
+        return this.userTransaction.get();
+    }
+
+
+    @Override
     public void beginWork() throws NormandraException
     {
         if (this.database.getTransaction() != null && this.database.getTransaction().isActive())
@@ -156,7 +163,7 @@ public class OrientDatabaseSession implements DatabaseSession
             final long start = System.currentTimeMillis();
             final DatabaseActivity.Type operation = DatabaseActivity.Type.UPDATE;
             final OrientDataHandler handler = new OrientDataHandler(this);
-            new EntityHelper(this).save(meta, element, handler);
+            new EntityPersistence(this).save(meta, element, handler);
             if (commitWhenDone)
             {
                 this.database.commit();
