@@ -42,8 +42,7 @@
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-all</artifactId>
-      <version>2.0.6</version>
-      <scope>provided</scope>
+      <version>2.0.9</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -62,21 +61,18 @@
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-clientutil</artifactId>
-      <version>2.0.6</version>
-      <scope>provided</scope>
+      <version>2.0.9</version>
     </dependency>
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-thrift</artifactId>
-      <version>2.0.6</version>
-      <scope>provided</scope>
+      <version>2.0.9</version>
     </dependency>
     <!-- datastax driver -->
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>2.0.1</version>
-      <scope>provided</scope>
+      <version>2.0.3</version>
     </dependency>
     <!-- http commons -->
     <dependency>
@@ -112,19 +108,16 @@
       <groupId>com.orientechnologies</groupId>
       <artifactId>orient-commons</artifactId>
       <version>1.7</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-core</artifactId>
       <version>1.7</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-client</artifactId>
       <version>1.7</version>
-      <scope>provided</scope>
     </dependency>
     <!-- osgi -->
     <dependency>
@@ -190,11 +183,13 @@
             <Bundle-Name>normandra</Bundle-Name>
             <Bundle-Activator>org.normandra.Activator</Bundle-Activator>
             <Embed-Dependency>
-              *cassandra*|*datastax*|*orient*|*jamm*|*libthrift*|*lz4*|*concurrentlinkedhashmap*|*guava*
+              cassandra-all|cassandra-clientutil|cassandra-thrift|jamm|libthrift|lz4|guava
             </Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
             <Export-Package>
-              org.normandra.*; version="${project.version}"
+              org.normandra.*; version="${project.version}",
+              org.apache.cassandra.serializers.*,
+              org.apache.cassandra.utils.*
             </Export-Package>
             <Import-Package>
               javax.persistence.*; version="[2.0, 3.0)",

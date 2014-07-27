@@ -15,14 +15,9 @@ import org.normandra.meta.SingleEntityContext;
 import org.normandra.orientdb.OrientDatabase;
 import org.normandra.orientdb.OrientDatabaseFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -32,7 +27,7 @@ import java.util.TreeMap;
  * <p>
  * User: bowen Date: 2/1/14
  */
-public class EntityManagerFactory
+public class EntityManagerFactory extends AbstractEntityLookup
 {
     public static enum Type
     {
@@ -222,35 +217,23 @@ public class EntityManagerFactory
 
     private final DatabaseMeta meta;
 
-    private final Map<Class, EntityMeta> classMap;
-
 
     private EntityManagerFactory(final Database db, final DatabaseMeta meta)
     {
+        super(meta);
         if (null == db)
         {
             throw new NullArgumentException("database");
         }
-        if (null == meta)
-        {
-            throw new NullArgumentException("metadata");
-        }
         this.database = db;
         this.meta = meta;
-
-        final int size = meta.getEntities().size();
-        this.classMap = new HashMap<>(size);
-        for (final EntityMeta entity : this.meta)
-        {
-            this.classMap.put(entity.getType(), entity);
-        }
     }
 
 
     public EntityManager create()
     {
         final DatabaseSession session = this.database.createSession();
-        return new EntityManager(session, this.meta);
+        return new EntityManager(session, this);
     }
 
 
@@ -287,27 +270,5 @@ public class EntityManagerFactory
     public void close()
     {
         this.database.close();
-        this.classMap.clear();
-    }
-
-
-    private List<EntityMeta> findMeta(final Class<?> clazz)
-    {
-        final EntityMeta existing = this.classMap.get(clazz);
-        if (existing != null)
-        {
-            return Arrays.asList(existing);
-        }
-        final List<EntityMeta> list = new ArrayList<>();
-        for (final Map.Entry<Class, EntityMeta> entry : this.classMap.entrySet())
-        {
-            final Class<?> entityClass = entry.getKey();
-            final EntityMeta entityMeta = entry.getValue();
-            if (clazz.isAssignableFrom(entityClass))
-            {
-                list.add(entityMeta);
-            }
-        }
-        return Collections.unmodifiableList(list);
     }
 }

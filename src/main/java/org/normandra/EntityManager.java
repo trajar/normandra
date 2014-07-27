@@ -1,14 +1,12 @@
 package org.normandra;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.HierarchyEntityContext;
 import org.normandra.meta.SingleEntityContext;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,26 +20,21 @@ public class EntityManager
 {
     private final DatabaseSession database;
 
-    private final Map<Class, EntityMeta> classMap;
+    private final EntityLookup lookup;
 
 
-    protected EntityManager(final DatabaseSession db, final Iterable<EntityMeta> metas)
+    protected EntityManager(final DatabaseSession db, final EntityLookup lookup)
     {
         if (null == db)
         {
             throw new NullArgumentException("database");
         }
-        if (null == metas)
+        if (null == lookup)
         {
-            throw new NullArgumentException("metadata");
+            throw new NullArgumentException("lookup");
         }
         this.database = db;
-
-        this.classMap = new HashMap<>();
-        for (final EntityMeta entity : metas)
-        {
-            this.classMap.put(entity.getType(), entity);
-        }
+        this.lookup = lookup;
     }
 
 
@@ -70,7 +63,7 @@ public class EntityManager
             throw new NullArgumentException("type");
         }
 
-        final List<EntityMeta> list = this.findMeta(clazz);
+        final List<EntityMeta> list = this.lookup.findMeta(clazz);
         if (list.isEmpty())
         {
             return null;
@@ -98,7 +91,7 @@ public class EntityManager
             return false;
         }
 
-        final List<EntityMeta> list = this.findMeta(clazz);
+        final List<EntityMeta> list = this.lookup.findMeta(clazz);
         if (list.isEmpty())
         {
             return false;
@@ -124,28 +117,17 @@ public class EntityManager
             return null;
         }
 
-        final List<EntityMeta> list = this.findMeta(clazz);
-        if (list.size() == 1)
+        final EntityContext context = this.lookup.findContext(clazz);
+        if (null == context)
         {
-            // simple entity
-            final EntityMeta meta = list.get(0);
-            final Object obj = this.database.get(new SingleEntityContext(meta), key);
-            if (null == obj)
-            {
-                return null;
-            }
-            return clazz.cast(obj);
+            return null;
         }
-        else
+        final Object obj = this.database.get(context, key);
+        if (null == obj)
         {
-            // inherited entity
-            final Object obj = this.database.get(new HierarchyEntityContext(list), key);
-            if (null == obj)
-            {
-                return null;
-            }
-            return clazz.cast(obj);
+            return null;
         }
+        return clazz.cast(obj);
     }
 
 
@@ -157,7 +139,7 @@ public class EntityManager
         }
 
         final Class<?> clazz = element.getClass();
-        final EntityMeta meta = this.classMap.get(clazz);
+        final EntityMeta meta = this.lookup.getMeta(clazz);
         if (null == meta)
         {
             throw new IllegalArgumentException("Element [" + element + "] is not a registered entity.");
@@ -175,7 +157,7 @@ public class EntityManager
         }
 
         final Class<?> clazz = element.getClass();
-        final EntityMeta meta = this.classMap.get(clazz);
+        final EntityMeta meta = this.lookup.getMeta(clazz);
         if (null == meta)
         {
             throw new IllegalArgumentException("Element [" + element + "] is not a registered entity.");
@@ -209,26 +191,5 @@ public class EntityManager
     public void rollbackWork() throws NormandraException
     {
         this.database.rollbackWork();
-    }
-
-
-    private List<EntityMeta> findMeta(final Class<?> clazz)
-    {
-        final EntityMeta existing = this.classMap.get(clazz);
-        if (existing != null)
-        {
-            return Arrays.asList(existing);
-        }
-        final List<EntityMeta> list = new ArrayList<>();
-        for (final Map.Entry<Class, EntityMeta> entry : this.classMap.entrySet())
-        {
-            final Class<?> entityClass = entry.getKey();
-            final EntityMeta entityMeta = entry.getValue();
-            if (clazz.isAssignableFrom(entityClass))
-            {
-                list.add(entityMeta);
-            }
-        }
-        return Collections.unmodifiableList(list);
     }
 }
