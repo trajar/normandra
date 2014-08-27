@@ -168,6 +168,15 @@ public class EntityManager
 
 
     /**
+     * returns true if this session has begun a unit of work (i.e. transaction)
+     */
+    public boolean pendingWork()
+    {
+        return this.database.pendingWork();
+    }
+
+
+    /**
      * being unit of work
      */
     public void beginWork() throws NormandraException
