@@ -52,7 +52,7 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
             }
             else
             {
-                return collection.isEmpty();
+                return !collection.isEmpty();
             }
         }
         catch (final Exception e)

@@ -240,11 +240,13 @@ public class OrientUtils
         }
         else if (List.class.isAssignableFrom(clazz))
         {
-            return OType.LINKLIST;
+//          return OType.LINKLIST;
+            return OType.EMBEDDEDLIST;
         }
         else if (Collection.class.isAssignableFrom(clazz))
         {
-            return OType.LINKSET;
+//          return OType.LINKSET;
+            return OType.EMBEDDEDSET;
         }
 
         // handle regular values

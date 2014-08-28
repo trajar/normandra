@@ -28,10 +28,10 @@ public class BasicColumnAccessor extends FieldColumnAccessor implements ColumnAc
         }
         this.clazz = clazz;
         if (this.clazz.equals(long.class) ||
-                this.clazz.equals(int.class) ||
-                this.clazz.equals(char.class) ||
-                this.clazz.equals(short.class) ||
-                this.clazz.equals(boolean.class))
+            this.clazz.equals(int.class) ||
+            this.clazz.equals(char.class) ||
+            this.clazz.equals(short.class) ||
+            this.clazz.equals(boolean.class))
         {
             this.primitive = true;
         }
