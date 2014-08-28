@@ -858,7 +858,7 @@ public class AnnotationParser
         }
 
         final ColumnAccessor accessor;
-        if (type.isInstance(Set.class))
+        if (Set.class.isAssignableFrom(type))
         {
             accessor = new SetColumnAccessor(field, parameterizedClass, lazy);
         }
