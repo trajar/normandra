@@ -220,9 +220,6 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
                 {
                     this.setGenerator(column, UUIDGenerator.getInstance());
                 }
-            }
-            if (!this.accessors.containsKey(column))
-            {
                 this.setAccessor(column, accessor);
             }
         }
