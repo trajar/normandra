@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.AbstractTransactional;
 import org.normandra.DatabaseQuery;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
@@ -43,7 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 5/14/14
  */
-public class OrientDatabaseSession implements DatabaseSession
+public class OrientDatabaseSession extends AbstractTransactional implements DatabaseSession
 {
     private final EntityCache cache;
 

@@ -13,6 +13,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.querybuilder.Update;
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.AbstractTransactional;
 import org.normandra.DatabaseQuery;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
@@ -50,7 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: bowen
  * Date: 2/1/14
  */
-public class CassandraDatabaseSession implements DatabaseSession
+public class CassandraDatabaseSession extends AbstractTransactional implements DatabaseSession
 {
     private static final Logger logger = LoggerFactory.getLogger(CassandraDatabaseSession.class);
 

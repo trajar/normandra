@@ -54,7 +54,7 @@
     <orderEntry type="library" name="Maven: com.github.stephenc:jamm:0.2.5" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty:3.6.6.Final" level="project" />
     <orderEntry type="library" name="Maven: org.apache.cassandra:cassandra-clientutil:2.0.9" level="project" />
-    <orderEntry type="library" name="Maven: com.datastax.cassandra:cassandra-driver-core:2.0.3" level="project" />
+    <orderEntry type="library" name="Maven: com.datastax.cassandra:cassandra-driver-core:2.0.5" level="project" />
     <orderEntry type="library" name="Maven: com.codahale.metrics:metrics-core:3.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient-osgi:4.3.4" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpmime:4.3.4" level="project" />

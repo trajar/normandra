@@ -16,7 +16,7 @@ import java.util.Map;
  * User: bowen
  * Date: 8/31/13
  */
-public class EntityManager
+public class EntityManager implements Transactional
 {
     private final DatabaseSession database;
 
@@ -167,36 +167,42 @@ public class EntityManager
     }
 
 
-    /**
-     * returns true if this session has begun a unit of work (i.e. transaction)
-     */
+    @Override
+    public void withTransaction(Runnable worker) throws NormandraException
+    {
+        this.database.withTransaction(worker);
+    }
+
+
+    @Override
+    public Transaction beginTransaction()
+    {
+        return this.database.beginTransaction();
+    }
+
+
+    @Override
     public boolean pendingWork()
     {
         return this.database.pendingWork();
     }
 
 
-    /**
-     * being unit of work
-     */
+    @Override
     public void beginWork() throws NormandraException
     {
         this.database.beginWork();
     }
 
 
-    /**
-     * commit unit of work, executing any stored/batched operations
-     */
+    @Override
     public void commitWork() throws NormandraException
     {
         this.database.commitWork();
     }
 
 
-    /**
-     * rollback unit of work, clearing stored/batched operations
-     */
+    @Override
     public void rollbackWork() throws NormandraException
     {
         this.database.rollbackWork();

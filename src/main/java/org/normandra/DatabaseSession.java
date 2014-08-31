@@ -13,7 +13,7 @@ import java.util.Map;
  * User: bowen
  * Date: 2/1/14
  */
-public interface DatabaseSession extends EntitySession
+public interface DatabaseSession extends EntitySession, Transactional
 {
     /**
      * close session, release any associated resources
@@ -44,26 +44,6 @@ public interface DatabaseSession extends EntitySession
      * query database using string with mapped parameters
      */
     DatabaseQuery executeDynamciQuery(EntityContext meta, String query, Map<String, Object> parameters) throws NormandraException;
-
-    /**
-     * returns true if this session has begun a unit of work (i.e. transaction)
-     */
-    boolean pendingWork();
-
-    /**
-     * being unit of work
-     */
-    void beginWork() throws NormandraException;
-
-    /**
-     * commit unit of work, executing any stored/batched operations
-     */
-    void commitWork() throws NormandraException;
-
-    /**
-     * rollback unit of work, clearing stored/batched operations
-     */
-    void rollbackWork() throws NormandraException;
 
     /**
      * provides a set of listActivity from this session

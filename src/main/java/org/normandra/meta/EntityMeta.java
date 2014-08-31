@@ -214,14 +214,12 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         {
             final ColumnMeta column = entry.getKey();
             final ColumnAccessor accessor = entry.getValue();
-            if (table.addColumn(column))
+            table.addColumn(column);
+            if (column.isPrimaryKey() && column.getType().equals(UUID.class))
             {
-                if (column.isPrimaryKey() && column.getType().equals(UUID.class))
-                {
-                    this.setGenerator(column, UUIDGenerator.getInstance());
-                }
-                this.setAccessor(column, accessor);
+                this.setGenerator(column, UUIDGenerator.getInstance());
             }
+            this.setAccessor(column, accessor);
         }
         return true;
     }
