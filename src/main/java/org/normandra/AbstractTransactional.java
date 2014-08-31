@@ -23,7 +23,7 @@ abstract public class AbstractTransactional implements Transactional
 
 
     @Override
-    public Transaction beginTransaction()
+    public Transaction beginTransaction() throws NormandraException
     {
         return new Transaction(this);
     }

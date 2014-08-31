@@ -12,20 +12,39 @@ public class Transaction implements AutoCloseable
 {
     private final Transactional sesssion;
 
-    private boolean ownsTransaction = false;
+    private boolean ownsTransaction;
 
-    private int numOperations = 0;
-
-    private boolean success = true;
+    private boolean success = false;
 
 
-    public Transaction(final Transactional session)
+    public Transaction(final Transactional session) throws NormandraException
     {
         if (null == session)
         {
             throw new NullArgumentException("session");
         }
         this.sesssion = session;
+        if (this.sesssion.pendingWork())
+        {
+            this.ownsTransaction = false;
+        }
+        else
+        {
+            this.ownsTransaction = true;
+            this.sesssion.beginWork();
+        }
+    }
+
+
+    public void success()
+    {
+        this.success = true;
+    }
+
+
+    public void failure()
+    {
+        this.success = false;
     }
 
 
@@ -49,7 +68,6 @@ public class Transaction implements AutoCloseable
         try
         {
             worker.run();
-            this.numOperations++;
             return true;
         }
         catch (final Exception e)
@@ -67,13 +85,13 @@ public class Transaction implements AutoCloseable
         {
             return;
         }
-        if (this.numOperations <= 0 || !this.success)
+        if (this.success)
         {
-            this.sesssion.rollbackWork();
+            this.sesssion.commitWork();
         }
         else
         {
-            this.sesssion.commitWork();
+            this.sesssion.rollbackWork();
         }
     }
 }

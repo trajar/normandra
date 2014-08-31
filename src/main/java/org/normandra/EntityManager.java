@@ -175,7 +175,7 @@ public class EntityManager implements Transactional
 
 
     @Override
-    public Transaction beginTransaction()
+    public Transaction beginTransaction() throws NormandraException
     {
         return this.database.beginTransaction();
     }

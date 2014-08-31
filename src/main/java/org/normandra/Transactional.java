@@ -18,7 +18,7 @@ public interface Transactional
      *
      * @return Returns a transaction instance, which should be closed.
      */
-    Transaction beginTransaction();
+    Transaction beginTransaction() throws NormandraException;
 
     /**
      * @return Returns true if we have begun a unit of work (i.e. transaction).
