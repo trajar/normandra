@@ -14,7 +14,7 @@ public class Transaction implements AutoCloseable
 
     private boolean ownsTransaction;
 
-    private boolean success = false;
+    private Boolean success = null;
 
 
     public Transaction(final Transactional session) throws NormandraException
@@ -38,13 +38,13 @@ public class Transaction implements AutoCloseable
 
     public void success()
     {
-        this.success = true;
+        this.success = Boolean.TRUE;
     }
 
 
     public void failure()
     {
-        this.success = false;
+        this.success = Boolean.FALSE;
     }
 
 
@@ -54,7 +54,8 @@ public class Transaction implements AutoCloseable
         {
             return false;
         }
-        if (!this.success)
+
+        if (Boolean.FALSE.equals(this.success))
         {
             return false;
         }
@@ -68,11 +69,12 @@ public class Transaction implements AutoCloseable
         try
         {
             worker.run();
+            this.success = Boolean.TRUE;
             return true;
         }
         catch (final Exception e)
         {
-            this.success = false;
+            this.success = Boolean.FALSE;
             throw new NormandraException("Unable to execute unit of work.", e);
         }
     }
@@ -85,7 +87,7 @@ public class Transaction implements AutoCloseable
         {
             return;
         }
-        if (this.success)
+        if (Boolean.TRUE.equals(this.success))
         {
             this.sesssion.commitWork();
         }
