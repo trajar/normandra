@@ -13,6 +13,8 @@ import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -24,6 +26,8 @@ import java.util.Map;
  */
 public class EntityBuilder
 {
+    private static final Logger logger = LoggerFactory.getLogger(EntityBuilder.class);
+
     private final EntitySession session;
 
     private final DataHolderFactory factory;
@@ -91,7 +95,7 @@ public class EntityBuilder
                 if (column.isLazyLoaded())
                 {
                     final ColumnAccessor accessor = entity.getAccessor(column);
-                    if (accessor != null)
+                    if (accessor != null && !accessor.isLoaded(instance))
                     {
                         final EntityContext context = new SingleEntityContext(entity);
                         final DataHolder lazy;
@@ -111,7 +115,14 @@ public class EntityBuilder
                         {
                             lazy = this.factory.createLazy(new SingleEntityContext(entity), table, column, key);
                         }
-                        accessor.setValue(instance, lazy, this.session);
+                        if (lazy != null)
+                        {
+                            accessor.setValue(instance, lazy, this.session);
+                        }
+                        else
+                        {
+                            logger.warn("Unable to create data holder for [" + column + "] on entity [" + entity + "].");
+                        }
                     }
                 }
             }
