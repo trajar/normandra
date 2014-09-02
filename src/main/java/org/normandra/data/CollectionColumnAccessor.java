@@ -46,6 +46,7 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
         try
         {
             final Collection<?> collection = this.getCollection(entity);
+
             if (collection instanceof LazyLoadedCollection)
             {
                 return ((LazyLoadedCollection) collection).isLoaded();
@@ -97,7 +98,7 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
             final Object obj = this.get(entity);
             if (null == obj)
             {
-                return null;
+                return Collections.emptyList();
             }
             if (obj instanceof Collection)
             {

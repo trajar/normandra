@@ -46,10 +46,18 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
         }
         try
         {
-            final Collection<?> collection = this.getCollection(entity);
-            if (collection instanceof LazyLoadedCollection)
+            final Object value = this.get(entity);
+            if (null == value)
             {
-                return ((LazyLoadedCollection) collection).isLoaded();
+                return false;
+            }
+            if (!(value instanceof Collection))
+            {
+                return false;
+            }
+            if (value instanceof LazyLoadedCollection)
+            {
+                return ((LazyLoadedCollection) value).isLoaded();
             }
             else
             {
