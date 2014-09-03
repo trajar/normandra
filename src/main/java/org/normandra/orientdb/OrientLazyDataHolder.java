@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 
@@ -15,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a lazy-loaded orientdb data holder based on key/index lookup
- * <p/>
+ * <p>
  * User: bowen
  * Date: 4/5/14
  */
@@ -25,7 +24,7 @@ public class OrientLazyDataHolder implements DataHolder
 
     private final OrientDatabaseSession session;
 
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
     private final TableMeta table;
 
@@ -36,7 +35,7 @@ public class OrientLazyDataHolder implements DataHolder
     private ODocument document;
 
 
-    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityContext meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
+    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityMeta meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
     {
         this.session = session;
         this.entity = meta;
@@ -70,7 +69,7 @@ public class OrientLazyDataHolder implements DataHolder
         }
         try
         {
-            return OrientUtils.unpackValue(this.entity, doc, this.column);
+            return OrientUtils.unpackValue(doc, this.column);
         }
         catch (final Exception e)
         {
@@ -93,14 +92,10 @@ public class OrientLazyDataHolder implements DataHolder
             }
             try
             {
-                for (final EntityMeta entity : this.entity.getEntities())
+                final ORID rid = this.session.findIdByMap(this.entity, this.table, this.key);
+                if (rid != null)
                 {
-                    final ORID rid = this.session.findIdByMap(entity, this.table, this.key);
-                    if (rid != null)
-                    {
-                        this.document = this.session.findDocument(rid);
-                        break;
-                    }
+                    this.document = this.session.findDocument(rid);
                 }
                 this.loaded.getAndSet(true);
             }

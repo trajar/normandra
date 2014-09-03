@@ -31,9 +31,9 @@ import java.util.UUID;
  */
 public class OrientUtils
 {
-    public static Object unpackValue(final EntityContext context, final ODocument document, final ColumnMeta column)
+    public static Object unpackValue(final ODocument document, final ColumnMeta column)
     {
-        if (null == context || null == document || null == column)
+        if (null == document || null == column)
         {
             return null;
         }
@@ -70,7 +70,7 @@ public class OrientUtils
         final Map<String, Object> data = new TreeMap<>();
         for (final ColumnMeta column : columns)
         {
-            final Object value = unpackValue(context, document, column);
+            final Object value = unpackValue(document, column);
             if (value != null)
             {
                 data.put(column.getName(), value);

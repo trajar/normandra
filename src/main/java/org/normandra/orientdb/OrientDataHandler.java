@@ -5,9 +5,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.data.DataHandler;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 
 import java.util.ArrayList;
@@ -104,12 +102,11 @@ public class OrientDataHandler implements DataHandler
         }
 
         // get existing collection values
-        final EntityContext context = new SingleEntityContext(entity);
         final Iterable<ODocument> documents = this.findDocuments(entity, table, keys);
         final List<Object> removed = new ArrayList<>();
         for (final ODocument document : documents)
         {
-            final Object item = OrientUtils.unpackValue(context, document, column);
+            final Object item = OrientUtils.unpackValue(document, column);
             if (item != null)
             {
                 if (!items.contains(item))

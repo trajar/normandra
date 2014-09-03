@@ -1,5 +1,6 @@
 package org.normandra.util;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.data.ColumnAccessor;
@@ -11,7 +12,6 @@ import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
-import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,8 +56,12 @@ public class EntityBuilder
     }
 
 
-    public Object build(final EntityMeta entity, final Map<ColumnMeta, Object> data) throws NormandraException
+    public Object build(final EntityMeta meta, final Map<ColumnMeta, Object> data) throws NormandraException
     {
+        if (null == meta)
+        {
+            throw new NullArgumentException("entity meta");
+        }
         if (null == data || data.isEmpty())
         {
             return null;
@@ -67,53 +71,52 @@ public class EntityBuilder
         final Object instance;
         try
         {
-            instance = entity.getType().newInstance();
+            instance = meta.getType().newInstance();
             if (null == instance)
             {
                 return null;
             }
-            if (!this.update(entity, instance, data))
+            if (!this.update(meta, instance, data))
             {
                 return null;
             }
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to construct instance for entity [" + entity + "].", e);
+            throw new NormandraException("Unable to construct instance for entity [" + meta + "].", e);
         }
 
         // setup lazy loaded properties
-        final Object key = entity.getId().fromEntity(instance);
+        final Object key = meta.getId().fromEntity(instance);
         if (null == key)
         {
             return null;
         }
-        for (final TableMeta table : entity.getTables())
+        for (final TableMeta table : meta.getTables())
         {
             for (final ColumnMeta column : table)
             {
                 if (column.isLazyLoaded())
                 {
-                    final ColumnAccessor accessor = entity.getAccessor(column);
+                    final ColumnAccessor accessor = meta.getAccessor(column);
                     if (accessor != null && !accessor.isLoaded(instance))
                     {
-                        final EntityContext context = new SingleEntityContext(entity);
                         final DataHolder lazy;
                         if (column instanceof JoinColumnMeta)
                         {
-                            lazy = this.factory.createJoinColumn(context, table, (JoinColumnMeta) column, key);
+                            lazy = this.factory.createJoinColumn(meta, table, (JoinColumnMeta) column, key);
                         }
                         else if (column instanceof JoinCollectionMeta)
                         {
-                            lazy = this.factory.createJoinCollection(context, table, (JoinCollectionMeta) column, key);
+                            lazy = this.factory.createJoinCollection(meta, table, (JoinCollectionMeta) column, key);
                         }
                         else if (column instanceof MappedColumnMeta)
                         {
-                            lazy = this.factory.createMappedColumn(context, (MappedColumnMeta) column, key);
+                            lazy = this.factory.createMappedColumn(meta, (MappedColumnMeta) column, key);
                         }
                         else
                         {
-                            lazy = this.factory.createLazy(new SingleEntityContext(entity), table, column, key);
+                            lazy = this.factory.createLazy(meta, table, column, key);
                         }
                         if (lazy != null)
                         {
@@ -121,7 +124,7 @@ public class EntityBuilder
                         }
                         else
                         {
-                            logger.warn("Unable to create data holder for [" + column + "] on entity [" + entity + "].");
+                            logger.warn("Unable to create data holder for [" + column + "] on entity [" + meta + "].");
                         }
                     }
                 }

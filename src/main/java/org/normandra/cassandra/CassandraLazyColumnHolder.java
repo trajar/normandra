@@ -6,7 +6,7 @@ import com.datastax.driver.core.querybuilder.Select;
 import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
@@ -30,7 +30,7 @@ public class CassandraLazyColumnHolder implements DataHolder
 
     private final CassandraDatabaseSession session;
 
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
     private final TableMeta table;
 
@@ -41,7 +41,7 @@ public class CassandraLazyColumnHolder implements DataHolder
     private final List<Row> rows = new ArrayList<>();
 
 
-    public CassandraLazyColumnHolder(final CassandraDatabaseSession session, final EntityContext meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
+    public CassandraLazyColumnHolder(final CassandraDatabaseSession session, final EntityMeta meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
     {
         this.session = session;
         this.entity = meta;

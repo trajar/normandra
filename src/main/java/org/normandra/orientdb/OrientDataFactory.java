@@ -12,6 +12,7 @@ import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
+import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
@@ -23,7 +24,7 @@ import java.util.Set;
 
 /**
  * orientdb data holder factory
- * <p/>
+ * <p>
  * User: bowen
  * Date: 6/1/14
  */
@@ -46,7 +47,7 @@ public class OrientDataFactory implements DataHolderFactory
 
 
     @Override
-    public DataHolder createLazy(final EntityContext entity, final TableMeta table, final ColumnMeta column, final Object key)
+    public DataHolder createLazy(final EntityMeta entity, final TableMeta table, final ColumnMeta column, final Object key)
     {
         if (null == entity || null == table || null == column || null == key)
         {
@@ -62,7 +63,7 @@ public class OrientDataFactory implements DataHolderFactory
 
 
     @Override
-    public DataHolder createJoinCollection(final EntityContext entity, final TableMeta table, final JoinCollectionMeta column, Object key)
+    public DataHolder createJoinCollection(final EntityMeta entity, final TableMeta table, final JoinCollectionMeta column, Object key)
     {
         if (null == entity || null == table || null == column || null == key)
         {
@@ -96,15 +97,15 @@ public class OrientDataFactory implements DataHolderFactory
             @Override
             public Object convert(ODocument document)
             {
-                return OrientUtils.unpackValue(entity, document, column);
+                return OrientUtils.unpackValue(document, column);
             }
         };
-        return new OrientLazyQueryHolder(this.session, entity, table, column.isCollection(), query.toString(), parameters, handler);
+        return new OrientLazyQueryHolder(this.session, new SingleEntityContext(entity), table, column.isCollection(), query.toString(), parameters, handler);
     }
 
 
     @Override
-    public DataHolder createJoinColumn(final EntityContext entity, final TableMeta table, final JoinColumnMeta column, final Object key)
+    public DataHolder createJoinColumn(final EntityMeta entity, final TableMeta table, final JoinColumnMeta column, final Object key)
     {
         if (null == entity || null == table || null == column || null == key)
         {
@@ -138,15 +139,15 @@ public class OrientDataFactory implements DataHolderFactory
             @Override
             public Object convert(ODocument document)
             {
-                return OrientUtils.unpackKey(entity, document);
+                return OrientUtils.unpackKey(new SingleEntityContext(entity), document);
             }
         };
-        return new OrientLazyQueryHolder(this.session, entity, table, column.isCollection(), query.toString(), parameters, handler);
+        return new OrientLazyQueryHolder(this.session, new SingleEntityContext(entity), table, column.isCollection(), query.toString(), parameters, handler);
     }
 
 
     @Override
-    public DataHolder createMappedColumn(final EntityContext entity, final MappedColumnMeta column, final Object key)
+    public DataHolder createMappedColumn(final EntityMeta entity, final MappedColumnMeta column, final Object key)
     {
         if (null == entity || null == column || null == key)
         {
