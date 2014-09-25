@@ -3,7 +3,6 @@ package org.normandra.association;
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.EntityContext;
-import org.normandra.meta.EntityMeta;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,9 +15,9 @@ import java.util.ListIterator;
  */
 public class LazyEntityList<T> extends LazyEntityCollection<T> implements List<T>
 {
-    public LazyEntityList(EntitySession session, EntityContext meta, DataHolder data)
+    public LazyEntityList(EntitySession session, EntityContext meta, DataHolder data, ElementFactory<T> factory)
     {
-        super(session, meta, data, new CollectionFactory<T>()
+        super(session, meta, data, factory, new CollectionFactory<T>()
         {
             @Override
             public Collection<T> create(int size)
@@ -32,7 +31,7 @@ public class LazyEntityList<T> extends LazyEntityCollection<T> implements List<T
     @Override
     public LazyEntityList<T> duplicate()
     {
-        return new LazyEntityList<>(this.session, this.entity, this.data);
+        return new LazyEntityList<>(this.session, this.entity, this.data, this.elementFactory);
     }
 
 

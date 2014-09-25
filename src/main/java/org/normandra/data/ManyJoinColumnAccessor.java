@@ -2,6 +2,7 @@ package org.normandra.data;
 
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
+import org.normandra.association.ElementFactory;
 import org.normandra.association.LazyEntityList;
 import org.normandra.association.LazyEntitySet;
 import org.normandra.association.LazyLoadedCollection;
@@ -10,7 +11,6 @@ import org.normandra.util.ArraySet;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -24,16 +24,31 @@ import java.util.Set;
  */
 public class ManyJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
+    private final ElementFactory factory;
+
     private final EntityContext entity;
 
     private final boolean lazy;
 
 
-    public ManyJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy)
+    public ManyJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final ElementFactory factory)
     {
         super(field);
+        this.factory = factory;
         this.entity = meta;
         this.lazy = lazy;
+    }
+
+
+    public EntityContext getEntity()
+    {
+        return entity;
+    }
+
+
+    public boolean isLazy()
+    {
+        return lazy;
     }
 
 
@@ -71,7 +86,7 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
     }
 
 
-    private Collection<?> getCollection(final Object entity) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException
+    protected final Collection<?> getCollection(final Object entity) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException
     {
         final Object obj = this.get(entity);
         if (null == obj)
@@ -104,7 +119,7 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
 
 
     @Override
-    public Object getValue(final Object entity) throws NormandraException
+    public Object getValue(final Object entity, EntitySession session) throws NormandraException
     {
         try
         {
@@ -121,22 +136,14 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
             {
                 return Collections.emptyList();
             }
-            final List set = new ArrayList(elements.size());
-            for (final Object associated : this.getCollection(entity))
-            {
-                final Object key = this.entity.getId().fromEntity(associated);
-                if (key != null)
-                {
-                    set.add(key);
-                }
-            }
+            final List keys = this.factory.pack(session, this.getCollection(entity).toArray());
             if (Set.class.isAssignableFrom(this.getField().getType()))
             {
-                return Collections.unmodifiableSet(new ArraySet(set));
+                return Collections.unmodifiableSet(new ArraySet(keys));
             }
             else
             {
-                return Collections.unmodifiableList(set);
+                return Collections.unmodifiableList(keys);
             }
         }
         catch (final Exception e)
@@ -156,11 +163,11 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
                 // setup lazy loaded collection
                 if (Set.class.isAssignableFrom(this.getField().getType()))
                 {
-                    return this.set(entity, new LazyEntitySet(session, this.entity, data));
+                    return this.set(entity, new LazyEntitySet(session, this.entity, data, this.factory));
                 }
                 else
                 {
-                    return this.set(entity, new LazyEntityList(session, this.entity, data));
+                    return this.set(entity, new LazyEntityList(session, this.entity, data, this.factory));
                 }
             }
             catch (final Exception e)

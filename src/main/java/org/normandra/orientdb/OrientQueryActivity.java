@@ -162,15 +162,15 @@ public class OrientQueryActivity implements DatabaseActivity, OCommandResultList
             {
                 if (!parameterList.isEmpty())
                 {
-                    database.query(asynch, parameterList.toArray());
+                    database.command(asynch).execute(parameterList.toArray());
                 }
                 else if (!parameterMap.isEmpty())
                 {
-                    database.query(asynch, parameterMap);
+                    database.command(asynch).execute(parameterMap);
                 }
                 else
                 {
-                    database.query(asynch);
+                    database.command(asynch).execute();
                 }
             }
         };

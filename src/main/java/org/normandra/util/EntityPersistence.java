@@ -86,7 +86,7 @@ public class EntityPersistence
                     for (final ColumnMeta keyColumn : new SingleEntityContext(entity).getPrimaryKeys())
                     {
                         final ColumnAccessor keyAccessor = entity.getAccessor(keyColumn);
-                        final Object keyValue = keyAccessor != null ? keyAccessor.getValue(instance) : null;
+                        final Object keyValue = keyAccessor != null ? keyAccessor.getValue(instance, session) : null;
                         if (keyValue != null)
                         {
                             keys.put(keyColumn, keyValue);
@@ -99,7 +99,7 @@ public class EntityPersistence
                         final ColumnAccessor accessor = column.isVirtual() ? null : entity.getAccessor(column);
                         if (accessor != null && accessor.isLoaded(instance))
                         {
-                            final Object value = accessor.getValue(instance);
+                            final Object value = accessor.getValue(instance, session);
                             final Collection list = value != null ? (Collection) value : Collections.emptyList();
                             handler.save(entity, table, keys, column, list);
                         }
@@ -126,7 +126,7 @@ public class EntityPersistence
                 final ColumnAccessor accessor = entity.getAccessor(column);
                 if (accessor != null && accessor.isLoaded(instance))
                 {
-                    final Object value = accessor.getValue(instance);
+                    final Object value = accessor.getValue(instance, session);
                     if (value != null)
                     {
                         data.put(column, value);

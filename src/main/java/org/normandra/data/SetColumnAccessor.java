@@ -40,7 +40,7 @@ public class SetColumnAccessor extends CollectionColumnAccessor
 
 
     @Override
-    public Set getValue(final Object entity) throws NormandraException
+    public Set getValue(final Object entity, EntitySession session) throws NormandraException
     {
         final Collection<?> list = this.getCollection(entity);
         return Collections.unmodifiableSet(new HashSet<>(list));

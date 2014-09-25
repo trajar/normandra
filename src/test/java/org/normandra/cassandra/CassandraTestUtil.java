@@ -118,8 +118,8 @@ public class CassandraTestUtil
     {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         final Cluster cluster = Cluster.builder()
-                .addContactPoint("localhost")
-                .withPort(CassandraTestHelper.port).build();
+            .addContactPoint("localhost")
+            .withPort(CassandraTestHelper.port).build();
         final CassandraDatabase db = new CassandraDatabase(CassandraTestHelper.keyspace, cluster, NullEntityCache.getFactory(), DatabaseConstruction.RECREATE, executor);
         for (final String name : Arrays.asList("TestCluster", "Test Cluster"))
         {

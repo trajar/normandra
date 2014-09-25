@@ -58,7 +58,7 @@ public class OrientDataFactory implements DataHolderFactory
         {
             return null;
         }
-        return new OrientLazyDataHolder(this.session, entity, table, column, keymap);
+        return new OrientLazyDataHolder(this.session, new SingleEntityContext(entity), table, column, keymap);
     }
 
 
@@ -139,7 +139,7 @@ public class OrientDataFactory implements DataHolderFactory
             @Override
             public Object convert(ODocument document)
             {
-                return OrientUtils.unpackKey(new SingleEntityContext(entity), document);
+                return OrientUtils.unpackKey(entity, document);
             }
         };
         return new OrientLazyQueryHolder(this.session, new SingleEntityContext(entity), table, column.isCollection(), query.toString(), parameters, handler);

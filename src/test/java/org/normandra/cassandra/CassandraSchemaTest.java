@@ -5,6 +5,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.normandra.data.BasicColumnAccessorFactory;
 import org.normandra.data.CompositeIdAccessor;
 import org.normandra.data.NullIdAccessor;
 import org.normandra.entities.*;
@@ -55,7 +56,7 @@ public class CassandraSchemaTest
     {
         // we should start with clean keyspace
         final CassandraDatabase database = helper.getDatabase();
-        final AnnotationParser parser = new AnnotationParser(SimpleEntity.class);
+        final AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), SimpleEntity.class);
         final EntityMeta entity = parser.read().iterator().next();
         Assert.assertNotNull(entity);
         for (final TableMeta table : entity.getTables())
@@ -92,7 +93,7 @@ public class CassandraSchemaTest
         final Set<EntityMeta> list = new ArraySet<>();
         for (final Class<?> clazz : Arrays.asList(CatEntity.class, DogEntity.class))
         {
-            final AnnotationParser parser = new AnnotationParser(clazz);
+            final AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), clazz);
             list.addAll(parser.read());
         }
 
@@ -111,7 +112,7 @@ public class CassandraSchemaTest
     @Test
     public void testComposite() throws Exception
     {
-        final AnnotationParser parser = new AnnotationParser(StudentIndexEntity.class, CompositeIndexEntity.class);
+        final AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), StudentIndexEntity.class, CompositeIndexEntity.class);
         final Collection<EntityMeta> list = parser.read();
         Assert.assertFalse(list.isEmpty());
         Assert.assertEquals(2, list.size());
@@ -146,7 +147,7 @@ public class CassandraSchemaTest
     @Test
     public void testJoinTable() throws Exception
     {
-        final AnnotationParser parser = new AnnotationParser(StudentEntity.class, StudentDirectoryEntity.class, ClassEntity.class);
+        final AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), StudentEntity.class, StudentDirectoryEntity.class, ClassEntity.class);
         final Collection<EntityMeta> list = parser.read();
         Assert.assertFalse(list.isEmpty());
         Assert.assertEquals(3, list.size());

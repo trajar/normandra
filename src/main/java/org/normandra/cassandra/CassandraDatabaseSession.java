@@ -366,7 +366,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
                 {
                     final String name = column.getName();
                     final ColumnAccessor accessor = meta.getAccessor(column);
-                    final Object value = accessor != null ? accessor.getValue(element) : null;
+                    final Object value = accessor != null ? accessor.getValue(element, this) : null;
                     if (value != null)
                     {
                         hasValue = true;

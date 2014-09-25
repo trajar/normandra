@@ -1,11 +1,12 @@
 package org.normandra.orientdb;
 
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.data.DataHandler;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public class OrientDataHandler implements DataHandler
         }
 
         final ODocument document;
-        final ORID existing = this.session.findIdByMap(entity, table, keymap);
+        final OIdentifiable existing = this.session.findIdByMap(new SingleEntityContext(entity), table, keymap);
         if (existing != null)
         {
             document = this.session.findDocument(existing);
@@ -76,7 +77,7 @@ public class OrientDataHandler implements DataHandler
                 {
                     final String name = column.getName();
                     final OType type = OrientUtils.columnType(column);
-                    final Object packed = OrientUtils.packRaw(column, value);
+                    final Object packed = OrientUtils.packValue(column, value);
                     document.field(name, packed, type);
                 }
             }
@@ -93,7 +94,7 @@ public class OrientDataHandler implements DataHandler
         {
             // clear all items with key
             boolean updated = false;
-            for (final ODocument document : this.findDocuments(entity, table, keys))
+            for (final ODocument document : this.findDocuments(table, keys))
             {
                 document.delete();
                 updated = true;
@@ -102,7 +103,7 @@ public class OrientDataHandler implements DataHandler
         }
 
         // get existing collection values
-        final Iterable<ODocument> documents = this.findDocuments(entity, table, keys);
+        final Iterable<ODocument> documents = this.findDocuments(table, keys);
         final List<Object> removed = new ArrayList<>();
         for (final ODocument document : documents)
         {
@@ -123,7 +124,7 @@ public class OrientDataHandler implements DataHandler
         {
             // clear all items with key
             datamap.put(column, item);
-            for (final ODocument document : this.findDocuments(entity, table, datamap))
+            for (final ODocument document : this.findDocuments(table, datamap))
             {
                 document.delete();
                 updated = true;
@@ -145,7 +146,7 @@ public class OrientDataHandler implements DataHandler
             // setup document
             keymap.put(column.getName(), item);
             final ODocument document;
-            final ORID rid = this.session.findIdByMap(entity, table, keymap);
+            final OIdentifiable rid = this.session.findIdByMap(new SingleEntityContext(entity), table, keymap);
             if (rid != null)
             {
                 document = this.session.findDocument(rid);
@@ -162,13 +163,13 @@ public class OrientDataHandler implements DataHandler
                 final Object value = entry.getValue();
                 final String name = key.getName();
                 final OType type = OrientUtils.columnType(key);
-                final Object packed = OrientUtils.packRaw(key, value);
+                final Object packed = OrientUtils.packValue(key, value);
                 document.field(name, packed, type);
             }
             // save column value
             final String name = column.getName();
             final OType type = OrientUtils.columnType(column);
-            final Object packed = OrientUtils.packRaw(column, item);
+            final Object packed = OrientUtils.packValue(column, item);
             document.field(name, packed, type);
             document.save();
             updated |= this.documents.add(document);
@@ -177,7 +178,7 @@ public class OrientDataHandler implements DataHandler
     }
 
 
-    private Iterable<ODocument> findDocuments(final EntityMeta entity, final TableMeta table, final Map<ColumnMeta, Object> keys)
+    private Iterable<ODocument> findDocuments(final TableMeta table, final Map<ColumnMeta, Object> keys)
     {
         final List<Object> parameters = new ArrayList<>(keys.size());
         final StringBuilder query = new StringBuilder();
@@ -187,7 +188,7 @@ public class OrientDataHandler implements DataHandler
         for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
         {
             final String columnName = entry.getKey().getName();
-            final Object value = OrientUtils.packRaw(entry.getKey(), entry.getValue());
+            final Object value = OrientUtils.packValue(entry.getKey(), entry.getValue());
             if (!first)
             {
                 query.append(" and ");

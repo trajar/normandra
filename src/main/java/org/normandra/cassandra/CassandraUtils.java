@@ -11,6 +11,7 @@ import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EmbeddedCollectionMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
@@ -30,7 +31,7 @@ import java.util.UUID;
 
 /**
  * cassandra utility methods
- * <p/>
+ * <p>
  * User: bowen
  * Date: 9/7/13
  */
@@ -106,9 +107,22 @@ public class CassandraUtils
             return null;
         }
 
-        if (column instanceof EmbeddedCollectionMeta)
+        if (column.isCollection() && column.isEmbedded())
         {
-            return unpackEmbeddedCollection(row, (EmbeddedCollectionMeta) column);
+            final Class<?> generic;
+            if (column instanceof EmbeddedCollectionMeta)
+            {
+                generic = ((EmbeddedCollectionMeta) column).getGeneric();
+            }
+            else if (column instanceof JoinCollectionMeta)
+            {
+                generic = ((JoinCollectionMeta) column).getEntity().getPrimaryKey().getType();
+            }
+            else
+            {
+                throw new IllegalArgumentException("Unable to build column type for [" + column + "].");
+            }
+            return unpackCollection(row, column.getType(), generic, columnName);
         }
 
         final DataType type = row.getColumnDefinitions().getType(columnName);
@@ -177,22 +191,9 @@ public class CassandraUtils
     }
 
 
-    private static Collection<?> unpackEmbeddedCollection(final Row row, final EmbeddedCollectionMeta column)
+    private static Collection<?> unpackCollection(final Row row, final Class<?> type, final Class<?> generic, final String columnName)
     {
-        final Class<?> clazz = column.getType();
-        final String columnName = column.getName();
-        if (Set.class.isAssignableFrom(clazz))
-        {
-            if (null == row || row.isNull(columnName))
-            {
-                return Collections.emptySet();
-            }
-            else
-            {
-                return row.getSet(columnName, column.getGeneric());
-            }
-        }
-        else if (Collection.class.isAssignableFrom(clazz) || List.class.isAssignableFrom(clazz))
+        if (List.class.isAssignableFrom(type))
         {
             if (null == row || row.isNull(columnName))
             {
@@ -200,12 +201,19 @@ public class CassandraUtils
             }
             else
             {
-                return row.getList(columnName, column.getGeneric());
+                return row.getList(columnName, generic);
             }
         }
         else
         {
-            throw new UnsupportedOperationException("Unable to unpack cassandra collection of type [" + clazz + "].");
+            if (null == row || row.isNull(columnName))
+            {
+                return Collections.emptySet();
+            }
+            else
+            {
+                return row.getSet(columnName, generic);
+            }
         }
     }
 
@@ -219,22 +227,29 @@ public class CassandraUtils
 
         final Class<?> clazz = column.getType();
 
-        if (column instanceof EmbeddedCollectionMeta)
+        if (column.isCollection() && column.isEmbedded())
         {
-            final EmbeddedCollectionMeta collection = (EmbeddedCollectionMeta) column;
-            final Class<?> generic = collection.getGeneric();
-            final String type = columnType(generic);
-            if (Set.class.isAssignableFrom(clazz))
+            final Class<?> generic;
+            if (column instanceof EmbeddedCollectionMeta)
             {
-                return "set<" + type + ">";
+                generic = ((EmbeddedCollectionMeta) column).getGeneric();
             }
-            else if (Collection.class.isAssignableFrom(clazz) || List.class.isAssignableFrom(clazz))
+            else if (column instanceof JoinCollectionMeta)
+            {
+                generic = ((JoinCollectionMeta) column).getEntity().getPrimaryKey().getType();
+            }
+            else
+            {
+                throw new IllegalArgumentException("Unable to build column type for [" + column + "].");
+            }
+            final String type = columnType(generic);
+            if (List.class.isAssignableFrom(clazz))
             {
                 return "list<" + type + ">";
             }
             else
             {
-                throw new UnsupportedOperationException("Unable to construct cassandra collection of type [" + clazz + "].");
+                return "set<" + type + ">";
             }
         }
         else

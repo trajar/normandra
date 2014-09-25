@@ -51,7 +51,7 @@ public class AssociationUtils
     }
 
 
-    public static Object createProxy(final EntityMeta meta, final Object key, final EntitySession session) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
+    public static Object createProxy(final EntityMeta meta, final Object key, final EntitySession session, final ElementFactory factory) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
     {
         if (null == meta)
         {
@@ -62,10 +62,10 @@ public class AssociationUtils
         Class<?> proxy = proxies.get(clazz);
         if (null == proxy)
         {
-            final ProxyFactory factory = new ProxyFactory();
-            factory.setSuperclass(clazz);
-            factory.setUseCache(false);
-            proxy = factory.createClass();
+            final ProxyFactory proxyFactory = new ProxyFactory();
+            proxyFactory.setSuperclass(clazz);
+            proxyFactory.setUseCache(false);
+            proxy = proxyFactory.createClass();
             proxies.put(clazz, proxy);
         }
 
@@ -75,7 +75,7 @@ public class AssociationUtils
             return null;
         }
 
-        final AssociationAccessor accessor = new ManyToOneAccessor(meta, key, session);
+        final AssociationAccessor accessor = new ManyToOneAccessor(key, session, factory);
         final LazyAssociationHandler handler = new LazyAssociationHandler(meta, accessor, session);
         ((ProxyObject) instance).setHandler(handler);
         return clazz.cast(instance);

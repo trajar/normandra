@@ -15,6 +15,7 @@ import org.normandra.Database;
 import org.normandra.DatabaseConstruction;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCacheFactory;
+import org.normandra.data.BasicColumnAccessorFactory;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DatabaseMeta;
@@ -220,7 +221,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         for (final EntityMeta entity : meta)
         {
             final Class<?> entityType = entity.getType();
-            final AnnotationParser parser = new AnnotationParser(entityType);
+            final AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), entityType);
             for (final Map.Entry<Field, GeneratedValue> entry : parser.getGenerators(entityType).entrySet())
             {
                 final Field field = entry.getKey();

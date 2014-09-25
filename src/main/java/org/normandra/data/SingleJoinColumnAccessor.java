@@ -3,8 +3,9 @@ package org.normandra.data;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.association.AssociationUtils;
+import org.normandra.association.ElementFactory;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
 
 import java.lang.reflect.Field;
 
@@ -16,16 +17,19 @@ import java.lang.reflect.Field;
  */
 public class SingleJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
-    private final EntityMeta entity;
+    private final ElementFactory factory;
+
+    private final EntityContext entity;
 
     private final boolean lazy;
 
 
-    public SingleJoinColumnAccessor(final Field field, final EntityMeta meta, final boolean lazy)
+    public SingleJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final ElementFactory factory)
     {
         super(field);
         this.entity = meta;
         this.lazy = lazy;
+        this.factory = factory;
     }
 
 
@@ -67,7 +71,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
 
 
     @Override
-    public Object getValue(final Object entity) throws NormandraException
+    public Object getValue(final Object entity, EntitySession session) throws NormandraException
     {
         final Object associatedEntity;
         try
@@ -82,7 +86,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
         {
             return null;
         }
-        return this.entity.getId().fromEntity(associatedEntity);
+        return this.factory.pack(session, associatedEntity);
     }
 
 
@@ -109,11 +113,16 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
                 final Object associated;
                 if (this.lazy)
                 {
-                    associated = AssociationUtils.createProxy(this.entity, key, session);
+                    if (this.entity.getEntities().size() > 1)
+                    {
+                        throw new IllegalStateException("Proxy instances for inherited entities not currently supported.");
+                    }
+                    final EntityMeta meta = this.entity.getEntities().iterator().next();
+                    associated = AssociationUtils.createProxy(meta, key, session, this.factory);
                 }
                 else
                 {
-                    associated = session.get(new SingleEntityContext(this.entity), key);
+                    associated = this.factory.unpack(session, key);
                 }
                 this.set(entity, associated);
                 return true;

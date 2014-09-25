@@ -67,7 +67,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
             final ColumnAccessor accessor = entry.getValue();
             try
             {
-                final Object value = accessor.getValue(key);
+                final Object value = accessor.getValue(key, null);
                 if (value != null)
                 {
                     map.put(column.getName(), value);

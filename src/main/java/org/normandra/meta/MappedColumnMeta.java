@@ -2,7 +2,7 @@ package org.normandra.meta;
 
 /**
  * a column that is mapped to another table, which ultimately owns the data
- * <p/>
+ * <p>
  * User: bowen
  * Date: 5/31/14
  */
@@ -48,36 +48,10 @@ public class MappedColumnMeta extends ColumnMeta
         return true;
     }
 
+
     @Override
     public boolean isEmbedded()
     {
         return false;
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        MappedColumnMeta that = (MappedColumnMeta) o;
-
-        if (column != null ? !column.equals(that.column) : that.column != null) return false;
-        if (entity != null ? !entity.equals(that.entity) : that.entity != null) return false;
-        if (table != null ? !table.equals(that.table) : that.table != null) return false;
-
-        return true;
-    }
-
-
-    @Override
-    public int hashCode()
-    {
-        int result = super.hashCode();
-        result = 31 * result + (entity != null ? entity.hashCode() : 0);
-        result = 31 * result + (table != null ? table.hashCode() : 0);
-        result = 31 * result + (column != null ? column.hashCode() : 0);
-        return result;
     }
 }

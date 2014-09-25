@@ -52,7 +52,7 @@ public class BasicColumnAccessor extends FieldColumnAccessor implements ColumnAc
     @Override
     public boolean isEmpty(final Object entity) throws NormandraException
     {
-        final Object obj = this.getValue(entity);
+        final Object obj = this.getValue(entity, null);
         if (null == obj)
         {
             return true;
@@ -69,7 +69,7 @@ public class BasicColumnAccessor extends FieldColumnAccessor implements ColumnAc
 
 
     @Override
-    public Object getValue(final Object entity) throws NormandraException
+    public Object getValue(final Object entity, EntitySession session) throws NormandraException
     {
         try
         {

@@ -2,6 +2,7 @@ package org.normandra.meta;
 
 import junit.framework.Assert;
 import org.junit.Test;
+import org.normandra.data.BasicColumnAccessorFactory;
 import org.normandra.entities.CatEntity;
 import org.normandra.entities.ClassEntity;
 import org.normandra.entities.StudentEntity;
@@ -20,7 +21,7 @@ public class AnnotationParserTest
     @Test
     public void testInheritance()
     {
-        AnnotationParser parser = new AnnotationParser(CatEntity.class);
+        AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), CatEntity.class);
         Assert.assertTrue(parser.isEntity(CatEntity.class));
         Assert.assertEquals("CatEntity", parser.getEntity(CatEntity.class));
         EntityMeta meta = parser.read().iterator().next();
@@ -34,7 +35,7 @@ public class AnnotationParserTest
     @Test
     public void testJoinColumn()
     {
-        AnnotationParser parser = new AnnotationParser(ClassEntity.class, StudentEntity.class);
+        AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), ClassEntity.class, StudentEntity.class);
         Assert.assertTrue(parser.isEntity(ClassEntity.class));
         Assert.assertTrue(parser.isEntity(StudentEntity.class));
         List<EntityMeta> entities = new ArrayList<>(parser.read());
@@ -45,6 +46,6 @@ public class AnnotationParserTest
         Assert.assertTrue(table.hasColumn("class_id"));
         Assert.assertEquals(Long.class, table.getColumn("class_id").getType());
         Assert.assertTrue(table.getColumn("class_id") instanceof JoinColumnMeta);
-        Assert.assertEquals(entities.get(0), ((JoinColumnMeta) table.getColumn("class_id")).getEntity());
+        Assert.assertEquals(new SingleEntityContext(entities.get(0)), ((JoinColumnMeta) table.getColumn("class_id")).getEntity());
     }
 }

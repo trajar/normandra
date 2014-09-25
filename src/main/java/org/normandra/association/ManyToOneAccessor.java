@@ -3,8 +3,6 @@ package org.normandra.association;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
-import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
 
 /**
  * a single entity accessor - for one-to-one or many-to-one n relationships
@@ -14,19 +12,15 @@ import org.normandra.meta.SingleEntityContext;
  */
 public class ManyToOneAccessor implements AssociationAccessor
 {
-    private final EntityMeta meta;
+    private final ElementFactory factory;
 
     private final Object key;
 
     private final EntitySession session;
 
 
-    public ManyToOneAccessor(final EntityMeta meta, final Object key, final EntitySession session)
+    public ManyToOneAccessor(final Object key, final EntitySession session, final ElementFactory factory)
     {
-        if (null == meta)
-        {
-            throw new NullArgumentException("entity meta");
-        }
         if (null == key)
         {
             throw new NullArgumentException("key");
@@ -35,15 +29,19 @@ public class ManyToOneAccessor implements AssociationAccessor
         {
             throw new NullArgumentException("session");
         }
-        this.meta = meta;
+        if (null == factory)
+        {
+            throw new NullArgumentException("factory");
+        }
         this.key = key;
         this.session = session;
+        this.factory = factory;
     }
 
 
     @Override
     public Object get() throws NormandraException
     {
-        return this.session.get(new SingleEntityContext(this.meta), this.key);
+        return this.factory.unpack(this.session, this.key);
     }
 }

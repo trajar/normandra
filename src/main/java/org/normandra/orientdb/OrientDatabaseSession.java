@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.AbstractTransactional;
@@ -221,25 +222,26 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
         try
         {
+            final EntityContext context = new SingleEntityContext(meta);
             final long start = System.currentTimeMillis();
-            final List<ORID> rids = new LinkedList<>();
+            final List<OIdentifiable> rids = new LinkedList<>();
             for (final TableMeta table : meta)
             {
                 final Map<String, Object> datamap = new TreeMap<>();
                 for (final ColumnMeta column : table.getPrimaryKeys())
                 {
                     final ColumnAccessor accessor = meta.getAccessor(column);
-                    final Object value = accessor != null ? accessor.getValue(element) : null;
+                    final Object value = accessor != null ? accessor.getValue(element, this) : null;
                     if (value != null)
                     {
                         datamap.put(column.getName(), value);
                     }
                 }
-                final ORID rid = this.findIdByMap(meta, table, datamap);
+                final OIdentifiable rid = this.findIdByMap(context, table, datamap);
                 if (rid != null)
                 {
                     rids.add(rid);
-                    this.database.delete(rid);
+                    this.database.delete(rid.getIdentity());
                 }
             }
             if (commitWhenDone)
@@ -353,18 +355,8 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
         try
         {
-            for (final TableMeta table : meta)
-            {
-                if (!table.isJoinTable())
-                {
-                    final ORID rid = this.findIdByKey(meta, table, key);
-                    if (rid != null)
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            final OIdentifiable rid = this.findIdByKey(new SingleEntityContext(meta), key);
+            return rid != null;
         }
         catch (final Exception e)
         {
@@ -399,7 +391,8 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             final Map<ColumnMeta, Object> data = new TreeMap<>();
             for (final TableMeta table : context.getPrimaryTables())
             {
-                final ODocument document = this.findDocument(context, table, key);
+                final OIdentifiable rid = this.findDocument(context, table, key);
+                final ODocument document = this.findDocument(rid);
                 if (document != null)
                 {
                     data.putAll(OrientUtils.unpackValues(context, document));
@@ -446,16 +439,13 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
 
         // query ids for each entity context
-        final Set<ORID> rids = new TreeSet<>();
-        for (final EntityMeta meta : context.getEntities())
+        final Set<OIdentifiable> rids = new TreeSet<>();
+        for (final TableMeta table : context.getPrimaryTables())
         {
-            for (final TableMeta table : context.getPrimaryTables())
-            {
-                rids.addAll(this.findIdByKeys(meta, table, Arrays.asList(keys)));
-            }
+            rids.addAll(this.findIdByKeys(context, table, Arrays.asList(keys)));
         }
         final Map<Object, Map<ColumnMeta, Object>> entityData = new HashMap<>(rids.size());
-        for (final ORID rid : rids)
+        for (final OIdentifiable rid : rids)
         {
             final ODocument document = this.findDocument(rid);
             if (document != null)
@@ -514,8 +504,17 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
 
-    protected final ODocument findDocument(final ORID rid)
+    protected final ODocument findDocument(final OIdentifiable item)
     {
+        if (null == item)
+        {
+            return null;
+        }
+        if (item instanceof ODocument)
+        {
+            return (ODocument) item;
+        }
+        final ORID rid = item.getIdentity();
         if (null == rid)
         {
             return null;
@@ -531,7 +530,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
     protected final ODocument findDocument(final EntityMeta meta, final TableMeta table, final Object key) throws NormandraException
     {
-        final ORID rid = this.findIdByKey(meta, table, key);
+        final OIdentifiable rid = this.findIdByKey(new SingleEntityContext(meta), table, key);
         if (null == rid)
         {
             return null;
@@ -547,24 +546,24 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             return null;
         }
 
-        if (key instanceof ORID)
+        if (key instanceof OIdentifiable)
         {
-            return this.findDocument((ORID) key);
+            return this.findDocument((OIdentifiable) key);
         }
 
-        for (final EntityMeta meta : context.getEntities())
+        final OIdentifiable rid = this.findIdByKey(context, table, key);
+        if (rid != null)
         {
-            final ORID rid = this.findIdByKey(meta, table, key);
-            if (rid != null)
-            {
-                return this.findDocument(rid);
-            }
+            return this.findDocument(rid);
         }
-        return null;
+        else
+        {
+            return null;
+        }
     }
 
 
-    protected final Collection<ORID> findIdByKeys(final EntityMeta meta, final TableMeta table, final Collection<Object> keys) throws NormandraException
+    protected final Collection<OIdentifiable> findIdByKeys(final EntityContext meta, final TableMeta table, final Collection<Object> keys) throws NormandraException
     {
         if (null == meta || null == table || null == keys || keys.isEmpty())
         {
@@ -572,17 +571,21 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
 
         final List<Object> unknown = new ArrayList<>(keys.size());
-        final List<ORID> result = new ArrayList<>(keys.size());
+        final List<OIdentifiable> result = new ArrayList<>(keys.size());
         for (final Object key : keys)
         {
-            if (key instanceof ORID)
+            if (key instanceof OIdentifiable)
             {
-                result.add((ORID) key);
+                result.add((OIdentifiable) key);
             }
             else
             {
                 unknown.add(key);
             }
+        }
+        if (unknown.isEmpty())
+        {
+            return Collections.unmodifiableList(result);
         }
 
         final long start = System.currentTimeMillis();
@@ -613,7 +616,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
                 }
                 if (value != null)
                 {
-                    packed.add(OrientUtils.packRaw(column, value));
+                    packed.add(OrientUtils.packValue(column, value));
                 }
                 else
                 {
@@ -637,10 +640,11 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
         for (final Object key : query)
         {
-            final ORID rid = (ORID) keyIdx.get(key);
-            if (rid != null)
+            final OIdentifiable rid = (ORID) keyIdx.get(key);
+            final ORecord record = rid != null ? this.database.load(rid.getIdentity()) : null;
+            if (record != null)
             {
-                result.add(rid);
+                result.add(record);
             }
         }
         final long end = System.currentTimeMillis();
@@ -649,7 +653,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
 
-    protected final ORID findIdByMap(final EntityMeta meta, final TableMeta table, final Map<String, Object> map)
+    protected final OIdentifiable findIdByMap(final EntityContext meta, final TableMeta table, final Map<String, Object> map)
     {
         if (null == meta || null == table || null == map || map.isEmpty())
         {
@@ -676,7 +680,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             }
             if (value != null)
             {
-                packed.add(OrientUtils.packRaw(column, value));
+                packed.add(OrientUtils.packValue(column, value));
             }
             else
             {
@@ -698,24 +702,20 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
         final long end = System.currentTimeMillis();
         this.activities.add(new OrientIndexActivity(DatabaseActivity.Type.SELECT, indexName, Arrays.asList(guid), new Date(), end - start));
-        if (null == guid)
-        {
-            return null;
-        }
-        return guid.getIdentity();
+        return guid;
     }
 
 
-    protected final ORID findIdByKey(final EntityMeta meta, final TableMeta table, final Object key) throws NormandraException
+    protected final OIdentifiable findIdByKey(final EntityContext meta, final TableMeta table, final Object key) throws NormandraException
     {
         if (null == meta || null == table || null == key)
         {
             return null;
         }
 
-        if (key instanceof ORID)
+        if (key instanceof OIdentifiable)
         {
-            return (ORID) key;
+            return (OIdentifiable) key;
         }
 
         final Map<String, Object> keymap = meta.getId().fromKey(key);
@@ -725,5 +725,35 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
 
         return this.findIdByMap(meta, table, keymap);
+    }
+
+
+    protected final OIdentifiable findIdByKey(final EntityContext meta, final Object key) throws NormandraException
+    {
+        if (null == meta || null == key)
+        {
+            return null;
+        }
+
+        if (key instanceof OIdentifiable)
+        {
+            return (OIdentifiable) key;
+        }
+
+        final Map<String, Object> keymap = meta.getId().fromKey(key);
+        if (keymap.isEmpty())
+        {
+            return null;
+        }
+
+        for (final TableMeta table : meta.getPrimaryTables())
+        {
+            final OIdentifiable rid = this.findIdByMap(meta, table, keymap);
+            if (rid != null)
+            {
+                return rid;
+            }
+        }
+        return null;
     }
 }

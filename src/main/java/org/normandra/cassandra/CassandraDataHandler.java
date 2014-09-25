@@ -23,8 +23,8 @@ import java.util.Set;
 
 /**
  * a cassandra data handler, used in coordination with entity helper to standardize save/delete operations
- * <p/>
- * <p/>
+ * <p>
+ * <p>
  * User: bowen
  * Date: 5/27/14
  */

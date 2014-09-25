@@ -106,7 +106,7 @@ public class LazyAssociationHandler implements MethodHandler
         for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.meta.getAccessors())
         {
             final ColumnAccessor accessor = entry.getValue();
-            final Object columnValue = accessor.getValue(entity);
+            final Object columnValue = accessor.getValue(entity, session);
             final DataHolder data = new BasicDataHolder(columnValue);
             accessor.setValue(self, data, this.session);
         }

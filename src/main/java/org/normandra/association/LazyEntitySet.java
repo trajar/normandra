@@ -16,9 +16,9 @@ import java.util.Set;
  */
 public class LazyEntitySet<T> extends LazyEntityCollection<T> implements Set<T>
 {
-    public LazyEntitySet(EntitySession session, EntityContext meta, DataHolder data)
+    public LazyEntitySet(EntitySession session, EntityContext meta, DataHolder data, ElementFactory<T> factory)
     {
-        super(session, meta, data, new CollectionFactory<T>()
+        super(session, meta, data, factory, new CollectionFactory<T>()
         {
             @Override
             public Collection<T> create(int size)
@@ -32,6 +32,6 @@ public class LazyEntitySet<T> extends LazyEntityCollection<T> implements Set<T>
     @Override
     public LazyEntitySet<T> duplicate()
     {
-        return new LazyEntitySet<>(this.session, this.entity, this.data);
+        return new LazyEntitySet<>(this.session, this.entity, this.data, this.elementFactory);
     }
 }

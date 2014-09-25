@@ -35,7 +35,7 @@ public class ReadOnlyColumnAccessor implements ColumnAccessor
 
 
     @Override
-    public Object getValue(Object entity)
+    public Object getValue(Object entity, EntitySession session)
     {
         return this.value;
     }

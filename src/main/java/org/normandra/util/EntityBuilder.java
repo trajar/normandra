@@ -96,7 +96,7 @@ public class EntityBuilder
         {
             for (final ColumnMeta column : table)
             {
-                if (column.isLazyLoaded())
+                if (column.isLazyLoaded() && !data.containsKey(column))
                 {
                     final ColumnAccessor accessor = meta.getAccessor(column);
                     if (accessor != null && !accessor.isLoaded(instance))

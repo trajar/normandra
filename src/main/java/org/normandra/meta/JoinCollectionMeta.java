@@ -2,7 +2,7 @@ package org.normandra.meta;
 
 /**
  * joined collection column, usually from one-to-many association
- * <p/>
+ * <p>
  * User: bowen
  * Date: 3/22/14
  */
@@ -10,11 +10,14 @@ public class JoinCollectionMeta extends ColumnMeta
 {
     private final EntityContext entity;
 
+    private final boolean embedded;
 
-    public JoinCollectionMeta(final String name, final String property, final Class<?> clazz, final EntityContext associated, final boolean primary, final boolean lazy)
+
+    public JoinCollectionMeta(final String name, final String property, final Class<?> clazz, final EntityContext associated, final boolean primary, final boolean lazy, final boolean embedded)
     {
         super(name, property, clazz, primary, lazy);
         this.entity = associated;
+        this.embedded = embedded;
     }
 
 
@@ -28,36 +31,12 @@ public class JoinCollectionMeta extends ColumnMeta
     @Override
     public boolean isEmbedded()
     {
-        return false;
+        return this.embedded;
     }
 
 
     public EntityContext getEntity()
     {
         return this.entity;
-    }
-
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        JoinCollectionMeta that = (JoinCollectionMeta) o;
-
-        if (entity != null ? !entity.equals(that.entity) : that.entity != null) return false;
-
-        return true;
-    }
-
-
-    @Override
-    public int hashCode()
-    {
-        int result = super.hashCode();
-        result = 31 * result + (entity != null ? entity.hashCode() : 0);
-        return result;
     }
 }

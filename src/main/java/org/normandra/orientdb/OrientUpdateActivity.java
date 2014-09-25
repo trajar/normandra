@@ -1,6 +1,6 @@
 package org.normandra.orientdb;
 
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.normandra.log.DatabaseActivity;
 
 import java.util.ArrayList;
@@ -18,14 +18,14 @@ public class OrientUpdateActivity implements DatabaseActivity
 {
     private final Type type;
 
-    private final List<ORID> rids;
+    private final List<OIdentifiable> rids;
 
     private final Date date;
 
     private final long duration;
 
 
-    public OrientUpdateActivity(Type type, Collection<ORID> rids, Date date, long duration)
+    public OrientUpdateActivity(Type type, Collection<? extends OIdentifiable> rids, Date date, long duration)
     {
         this.type = type;
         this.rids = new ArrayList<>(rids);

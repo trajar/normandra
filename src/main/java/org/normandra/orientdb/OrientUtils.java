@@ -1,5 +1,6 @@
 package org.normandra.orientdb;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.meta.ColumnMeta;
@@ -7,6 +8,9 @@ import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EmbeddedCollectionMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.JoinCollectionMeta;
+import org.normandra.meta.JoinColumnMeta;
+import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 import org.normandra.util.DataUtils;
@@ -44,6 +48,7 @@ public class OrientUtils
         {
             return null;
         }
+
         return OrientUtils.unpackRaw(column, raw);
     }
 
@@ -80,6 +85,35 @@ public class OrientUtils
     }
 
 
+    public static Object unpackKey(final EntityMeta meta, final ODocument document)
+    {
+        if (null == meta || null == document)
+        {
+            return null;
+        }
+
+        final Collection<ColumnMeta> keys = new SingleEntityContext(meta).getPrimaryKeys();
+        final Set<ColumnMeta> columns = new ArraySet<>(keys.size() + 1);
+        columns.addAll(keys);
+        final DiscriminatorMeta descrim = meta.getDiscriminator();
+        if (descrim != null)
+        {
+            columns.add(descrim.getColumn());
+        }
+
+        final Map<String, Object> data = new TreeMap<>();
+        for (final ColumnMeta column : columns)
+        {
+            final Object value = unpackValue(document, column);
+            if (value != null)
+            {
+                data.put(column.getName(), value);
+            }
+        }
+        return meta.getId().toKey(data);
+    }
+
+
     public static Map<ColumnMeta, Object> unpackValues(final EntityContext context, final ODocument document)
     {
         if (null == context || null == document)
@@ -105,7 +139,7 @@ public class OrientUtils
     }
 
 
-    static Object unpackRaw(final ColumnMeta column, final Object value)
+    private static Object unpackRaw(final ColumnMeta column, final Object value)
     {
         if (null == column || null == value)
         {
@@ -130,7 +164,7 @@ public class OrientUtils
     }
 
 
-    static Object packRaw(final ColumnMeta column, final Object value)
+    public static Object packValue(final ColumnMeta column, final Object value)
     {
         if (null == column || null == value)
         {
@@ -152,7 +186,7 @@ public class OrientUtils
             {
                 return new ArrayList<>(packed);
             }
-            if (Collection.class.isAssignableFrom(clazz))
+            else if (Collection.class.isAssignableFrom(clazz))
             {
                 return new ArraySet<>(packed);
             }
@@ -162,8 +196,12 @@ public class OrientUtils
     }
 
 
-    static Object unpackPrimitive(final Class<?> clazz, final Object value)
+    private static Object unpackPrimitive(final Class<?> clazz, final Object value)
     {
+        if (value instanceof ORID)
+        {
+            return value;
+        }
         if (UUID.class.equals(clazz))
         {
             return DataUtils.bytesToUUID((byte[]) value);
@@ -177,8 +215,12 @@ public class OrientUtils
     }
 
 
-    static Object packPrimitive(final Class<?> clazz, final Object value)
+    private static Object packPrimitive(final Class<?> clazz, final Object value)
     {
+        if (value instanceof ORID)
+        {
+            return value;
+        }
         if (UUID.class.equals(clazz))
         {
             return DataUtils.uuidToBytes((UUID) value);
@@ -187,7 +229,6 @@ public class OrientUtils
         {
             return DataUtils.inetToBytes((InetAddress) value);
         }
-
         if (Number.class.isAssignableFrom(clazz) && !clazz.equals(value.getClass()))
         {
             final Number number = (Number) value;
@@ -238,14 +279,27 @@ public class OrientUtils
                 return OType.EMBEDDEDSET;
             }
         }
+        else if (column instanceof JoinColumnMeta)
+        {
+            return OType.LINK;
+        }
+        else if (column instanceof JoinCollectionMeta)
+        {
+            if (List.class.isAssignableFrom(clazz))
+            {
+                return OType.LINKLIST;
+            }
+            else if (Collection.class.isAssignableFrom(clazz))
+            {
+                return OType.LINKSET;
+            }
+        }
         else if (List.class.isAssignableFrom(clazz))
         {
-//          return OType.LINKLIST;
             return OType.EMBEDDEDLIST;
         }
         else if (Collection.class.isAssignableFrom(clazz))
         {
-//          return OType.LINKSET;
             return OType.EMBEDDEDSET;
         }
 

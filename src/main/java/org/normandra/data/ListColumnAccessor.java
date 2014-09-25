@@ -40,7 +40,7 @@ public class ListColumnAccessor extends CollectionColumnAccessor
 
 
     @Override
-    public List getValue(final Object entity) throws NormandraException
+    public List getValue(final Object entity, EntitySession session) throws NormandraException
     {
         final Collection<?> list = this.getCollection(entity);
         return Collections.unmodifiableList(new ArrayList<>(list));

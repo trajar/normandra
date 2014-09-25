@@ -53,7 +53,7 @@ public class OrientSchemaTest
     {
         // we should start with clean database
         final OrientDatabase database = helper.getDatabase();
-        final AnnotationParser parser = new AnnotationParser(SimpleEntity.class);
+        final AnnotationParser parser = new AnnotationParser(new OrientAccessorFactory(), SimpleEntity.class);
         final EntityMeta entity = parser.read().iterator().next();
         Assert.assertNotNull(entity);
         for (final TableMeta table : entity.getTables())

@@ -1,11 +1,11 @@
 package org.normandra.orientdb;
 
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityMeta;
+import org.normandra.meta.EntityContext;
 import org.normandra.meta.TableMeta;
 
 import java.util.Map;
@@ -24,7 +24,7 @@ public class OrientLazyDataHolder implements DataHolder
 
     private final OrientDatabaseSession session;
 
-    private final EntityMeta entity;
+    private final EntityContext entity;
 
     private final TableMeta table;
 
@@ -35,7 +35,7 @@ public class OrientLazyDataHolder implements DataHolder
     private ODocument document;
 
 
-    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityMeta meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
+    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityContext meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
     {
         this.session = session;
         this.entity = meta;
@@ -92,7 +92,7 @@ public class OrientLazyDataHolder implements DataHolder
             }
             try
             {
-                final ORID rid = this.session.findIdByMap(this.entity, this.table, this.key);
+                final OIdentifiable rid = this.session.findIdByMap(this.entity, this.table, this.key);
                 if (rid != null)
                 {
                     this.document = this.session.findDocument(rid);

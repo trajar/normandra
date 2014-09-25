@@ -176,7 +176,7 @@ public class OrientDatabase implements Database
     {
         // setup any table sequence/id generators
         final Class<?> entityType = entity.getType();
-        final AnnotationParser parser = new AnnotationParser(entityType);
+        final AnnotationParser parser = new AnnotationParser(new OrientAccessorFactory(), entityType);
         for (final Map.Entry<Field, GeneratedValue> entry : parser.getGenerators(entityType).entrySet())
         {
             final Field field = entry.getKey();

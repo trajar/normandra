@@ -6,12 +6,15 @@ import org.normandra.cache.MapFactory;
 import org.normandra.cache.MemoryCache;
 import org.normandra.cassandra.CassandraDatabase;
 import org.normandra.cassandra.CassandraDatabaseFactory;
+import org.normandra.data.BasicColumnAccessorFactory;
+import org.normandra.data.ColumnAccessorFactory;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.HierarchyEntityContext;
 import org.normandra.meta.QueryMeta;
 import org.normandra.meta.SingleEntityContext;
+import org.normandra.orientdb.OrientAccessorFactory;
 import org.normandra.orientdb.OrientDatabase;
 import org.normandra.orientdb.OrientDatabaseFactory;
 
@@ -71,15 +74,9 @@ public class EntityManagerFactory extends AbstractEntityLookup
 
         public EntityManagerFactory create() throws NormandraException
         {
-            // read all entities
-            final AnnotationParser parser = new AnnotationParser(this.classes);
-            final Collection<EntityMeta> entities = parser.read();
-
-            // setup database
-            final DatabaseMeta meta = new DatabaseMeta(entities);
-
             // create entity manager
             DatabaseFactory databaseFactory = null;
+            ColumnAccessorFactory accessorFactory = new BasicColumnAccessorFactory();
             if (Type.CASSANDRA.equals(type))
             {
                 final String keyspace = this.getParameter(CassandraDatabase.KEYSPACE, String.class, "normandra");
@@ -93,11 +90,19 @@ public class EntityManagerFactory extends AbstractEntityLookup
                 final String userid = this.getParameter(OrientDatabase.USER_ID, String.class, "admin");
                 final String password = this.getParameter(OrientDatabase.PASSWORD, String.class, "admin");
                 databaseFactory = new OrientDatabaseFactory(url, userid, password, this.cache, this.mode);
+                accessorFactory = new OrientAccessorFactory();
             }
             else
             {
                 throw new IllegalArgumentException("Unknown database type [" + type + "].");
             }
+
+            // read all entities
+            final AnnotationParser parser = new AnnotationParser(accessorFactory, this.classes);
+            final Collection<EntityMeta> entities = parser.read();
+
+            // setup database
+            final DatabaseMeta meta = new DatabaseMeta(entities);
             final Database database = databaseFactory.create();
             if (null == database)
             {

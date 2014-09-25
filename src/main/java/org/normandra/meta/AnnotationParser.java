@@ -1,17 +1,15 @@
 package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.data.BasicColumnAccessor;
 import org.normandra.data.BasicIdAccessor;
 import org.normandra.data.ColumnAccessor;
+import org.normandra.data.ColumnAccessorFactory;
 import org.normandra.data.CompositeIdAccessor;
 import org.normandra.data.ListColumnAccessor;
-import org.normandra.data.ManyJoinColumnAccessor;
 import org.normandra.data.NestedColumnAccessor;
 import org.normandra.data.NullIdAccessor;
 import org.normandra.data.ReadOnlyColumnAccessor;
 import org.normandra.data.SetColumnAccessor;
-import org.normandra.data.SingleJoinColumnAccessor;
 import org.normandra.util.ArraySet;
 import org.normandra.util.CaseUtils;
 import org.slf4j.Logger;
@@ -68,17 +66,24 @@ public class AnnotationParser
 
     private final List<Class> classes;
 
+    private final ColumnAccessorFactory factory;
+
     private final Map<Class, EntityMeta> entities = new LinkedHashMap<>();
 
     private final Map<String, TableMeta> tables = new TreeMap<>();
 
 
-    public AnnotationParser(final Class clazz, final Class... list)
+    public AnnotationParser(final ColumnAccessorFactory factory, final Class clazz, final Class... list)
     {
+        if (null == factory)
+        {
+            throw new NullArgumentException("factory");
+        }
         if (null == clazz)
         {
             throw new NullArgumentException("class");
         }
+        this.factory = factory;
         this.classes = new ArrayList<>();
         this.classes.add(clazz);
         if (list != null && list.length > 0)
@@ -94,12 +99,17 @@ public class AnnotationParser
     }
 
 
-    public AnnotationParser(final Collection<Class> c)
+    public AnnotationParser(final ColumnAccessorFactory factory, final Collection<Class> c)
     {
+        if (null == factory)
+        {
+            throw new NullArgumentException("factory");
+        }
         if (null == c)
         {
             throw new NullArgumentException("classes");
         }
+        this.factory = factory;
         this.classes = new ArrayList<>(c);
     }
 
@@ -227,7 +237,14 @@ public class AnnotationParser
             {
                 return null;
             }
-            return new HierarchyEntityContext(metas);
+            else if (metas.size() == 1)
+            {
+                return new SingleEntityContext(metas.get(0));
+            }
+            else
+            {
+                return new HierarchyEntityContext(metas);
+            }
         }
     }
 
@@ -597,7 +614,7 @@ public class AnnotationParser
             final String name = this.getColumnName(field);
             final String property = field.getName();
             final ColumnMeta column = new ColumnMeta(name, property, type, true, false);
-            final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
+            final ColumnAccessor accessor = this.factory.createBasic(field, type);
             final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
             map.put(column, accessor);
             return Collections.unmodifiableMap(map);
@@ -612,13 +629,13 @@ public class AnnotationParser
                 throw new IllegalStateException("Class [" + type + "] does not have Embeddable annotation.");
             }
             final Map<ColumnMeta, ColumnAccessor> map = new LinkedHashMap<>();
-            for (final Field embeddedColumn : new AnnotationParser(type).getFields(type))
+            for (final Field embeddedColumn : new AnnotationParser(this.factory, type).getFields(type))
             {
                 final Class<?> embeddedClass = embeddedColumn.getType();
                 final String embeddedName = this.getColumnName(embeddedColumn);
                 final String property = field.getName() + "." + embeddedColumn.getName();
                 final ColumnMeta column = new ColumnMeta(embeddedName, property, embeddedClass, true, false);
-                final ColumnAccessor basic = new BasicColumnAccessor(embeddedColumn, embeddedClass);
+                final ColumnAccessor basic = this.factory.createBasic(embeddedColumn, embeddedClass);
                 final ColumnAccessor accessor;
                 if (useNested)
                 {
@@ -672,7 +689,7 @@ public class AnnotationParser
         // regular column
         if (field.getAnnotation(Column.class) != null)
         {
-            final ColumnAccessor accessor = new BasicColumnAccessor(field, type);
+            final ColumnAccessor accessor = this.factory.createBasic(field, type);
             final ColumnMeta column = new ColumnMeta(name, field.getName(), type, false, false);
             boolean modified = table.addColumn(column);
             entity.setAccessor(column, accessor);
@@ -693,14 +710,13 @@ public class AnnotationParser
         {
             // create table column for this relationship
             final Class<?> type = field.getType();
-            final EntityMeta entity = this.readEntity(type);
+            final EntityContext entity = this.readContext(type);
             if (null == entity)
             {
                 throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
             }
-            final EntityContext context = new SingleEntityContext(entity);
-            final ColumnAccessor accessor = new SingleJoinColumnAccessor(field, entity, lazy);
-            final ColumnMeta primary = context.getPrimaryKeys().iterator().next();
+            final ColumnAccessor accessor = this.factory.createSingleJoin(field, entity, lazy);
+            final ColumnMeta primary = entity.getPrimaryKeys().iterator().next();
             final ColumnMeta column = new JoinColumnMeta(name, property, primary.getType(), entity, false);
             final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
             map.put(column, accessor);
@@ -719,14 +735,13 @@ public class AnnotationParser
         final ManyToOne manyToOne = field.getAnnotation(ManyToOne.class);
         final boolean lazy = FetchType.LAZY.equals(manyToOne.fetch());
         final Class<?> type = field.getType();
-        final EntityMeta entity = this.readEntity(type);
+        final EntityContext entity = this.readContext(type);
         if (null == entity)
         {
             throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
         }
-        final EntityContext context = new SingleEntityContext(entity);
-        final ColumnAccessor accessor = new SingleJoinColumnAccessor(field, entity, lazy);
-        final ColumnMeta primary = context.getPrimaryKeys().iterator().next();
+        final ColumnAccessor accessor = this.factory.createSingleJoin(field, entity, lazy);
+        final ColumnMeta primary = entity.getPrimaryKeys().iterator().next();
         final ColumnMeta column = new JoinColumnMeta(name, property, primary.getType(), entity, false);
         final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
         map.put(column, accessor);
@@ -785,9 +800,9 @@ public class AnnotationParser
             {
                 join.addColumn(primary);
             }
-            final ColumnMeta primary = associatedEntity.getPrimaryKeys().iterator().next();
-            final ColumnMeta column = new JoinCollectionMeta(name, property, primary.getType(), associatedEntity, true, lazy);
-            final ColumnAccessor accessor = new ManyJoinColumnAccessor(field, associatedEntity, lazy);
+            final ColumnMeta primary = associatedEntity.getPrimaryKey();
+            final ColumnMeta column = new JoinCollectionMeta(name, property, primary.getType(), associatedEntity, true, lazy, false);
+            final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy);
             join.addColumn(column);
             parentEntity.setAccessor(column, accessor);
             return true;
@@ -816,7 +831,7 @@ public class AnnotationParser
                 throw new IllegalStateException("Unable to locate column [" + oneToMany.mappedBy() + "] within [" + associatedEntity + "].");
             }
             // setup column meta and accessor
-            final ColumnAccessor accessor = new ManyJoinColumnAccessor(field, associatedEntity, lazy);
+            final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy);
             final ColumnMeta column = new MappedColumnMeta(associatedEntity, mappedTable, mappedColumn, name, property, field.getType(), lazy);
             table.addColumn(column);
             parentEntity.setAccessor(column, accessor);
@@ -828,10 +843,9 @@ public class AnnotationParser
         }
         else
         {
-            // use embedded collection
-            final ColumnAccessor accessor = new ManyJoinColumnAccessor(field, associatedEntity, lazy);
-            final ColumnMeta primary = associatedEntity.getPrimaryKeys().iterator().next();
-            final ColumnMeta column = new EmbeddedCollectionMeta(name, property, field.getType(), primary.getType(), false, lazy);
+            // use embedded join-collection
+            final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy);
+            final ColumnMeta column = new JoinCollectionMeta(name, property, field.getType(), associatedEntity, false, lazy, true);
             table.addColumn(column);
             parentEntity.setAccessor(column, accessor);
             return true;

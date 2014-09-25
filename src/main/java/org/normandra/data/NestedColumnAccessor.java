@@ -41,12 +41,12 @@ public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnA
     @Override
     public boolean isEmpty(final Object entity) throws NormandraException
     {
-        return this.getValue(entity) == null;
+        return this.getValue(entity, null) == null;
     }
 
 
     @Override
-    public Object getValue(final Object entity) throws NormandraException
+    public Object getValue(final Object entity, EntitySession session) throws NormandraException
     {
         final Object base;
         try
@@ -61,7 +61,7 @@ public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnA
         {
             return null;
         }
-        return this.delegate.getValue(base);
+        return this.delegate.getValue(base, session);
     }
 
 

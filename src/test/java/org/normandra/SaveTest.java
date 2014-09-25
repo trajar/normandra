@@ -89,6 +89,35 @@ public class SaveTest extends BaseTest
 
 
     @Test
+    public void testMultiJoin() throws Exception
+    {
+        for (final TestHelper helper : helpers)
+        {
+            final Database database = helper.getDatabase();
+            final DatabaseSession session = helper.getSession();
+            final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, DogEntity.class, CatEntity.class, ZooEntity.class);
+
+            DogEntity dog = new DogEntity("fido", 12);
+            session.save(entityMap.get(DogEntity.class), dog);
+            Assert.assertEquals(Long.valueOf(1), dog.getId());
+            CatEntity cat = new CatEntity("hank", true);
+            session.save(entityMap.get(CatEntity.class), cat);
+            Assert.assertEquals(Long.valueOf(2), cat.getId());
+
+            ZooEntity zoo = new ZooEntity(Arrays.asList(dog, cat));
+            session.save(entityMap.get(ZooEntity.class), zoo);
+
+            session.clear();
+
+            ZooEntity existing = (ZooEntity) session.get(entityMap.get(ZooEntity.class), zoo.getId());
+            Assert.assertNotNull(existing);
+            Assert.assertTrue(zoo.getAnimals().containsAll(existing.getAnimals()));
+            Assert.assertTrue(existing.getAnimals().containsAll(zoo.getAnimals()));
+        }
+    }
+
+
+    @Test
     public void testJoinTable() throws Exception
     {
         for (final TestHelper helper : helpers)

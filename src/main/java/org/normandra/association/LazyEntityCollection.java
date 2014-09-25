@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a lazy loaded entity collection
- * <p/>
+ * <p>
  * User: bowen
  * Date: 3/25/14
  */
@@ -24,7 +24,9 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
 
     protected final EntitySession session;
 
-    private final CollectionFactory<T> factory;
+    protected final CollectionFactory<T> collectionFactory;
+
+    protected final ElementFactory<T> elementFactory;
 
     private Object[] keys;
 
@@ -35,7 +37,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
 
-    public LazyEntityCollection(final EntitySession session, final EntityContext meta, final DataHolder data, final CollectionFactory<T> factory)
+    public LazyEntityCollection(final EntitySession session, final EntityContext meta, final DataHolder data, ElementFactory<T> ef, final CollectionFactory<T> cf)
     {
         if (null == data)
         {
@@ -49,14 +51,19 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         {
             throw new NullArgumentException("entity");
         }
-        if (null == factory)
+        if (null == ef)
+        {
+            throw new NullArgumentException("element factory");
+        }
+        if (null == cf)
         {
             throw new NullArgumentException("collection factory");
         }
         this.data = data;
         this.session = session;
         this.entity = meta;
-        this.factory = factory;
+        this.elementFactory = ef;
+        this.collectionFactory = cf;
     }
 
 
@@ -101,13 +108,13 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
                 this.loaded.getAndSet(true);
                 if (this.keys.length <= 0)
                 {
-                    this.entities = this.factory.create(0);
+                    this.entities = this.collectionFactory.create(0);
                     return this.entities;
                 }
                 else
                 {
-                    final List results = this.session.get(this.entity, keys);
-                    this.entities = this.factory.create(results.size());
+                    final List<T> results = this.elementFactory.unpack(this.session, this.keys);
+                    this.entities = this.collectionFactory.create(results.size());
                     this.entities.addAll(results);
                     return this.entities;
                 }
