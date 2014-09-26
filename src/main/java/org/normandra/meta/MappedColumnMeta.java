@@ -43,13 +43,6 @@ public class MappedColumnMeta extends ColumnMeta
 
 
     @Override
-    public boolean isVirtual()
-    {
-        return true;
-    }
-
-
-    @Override
     public boolean isEmbedded()
     {
         return false;

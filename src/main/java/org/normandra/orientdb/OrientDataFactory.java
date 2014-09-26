@@ -183,6 +183,7 @@ public class OrientDataFactory implements DataHolderFactory
                 return OrientUtils.unpackKey(mappedEntity, document);
             }
         };
-        return new OrientLazyQueryHolder(this.session, mappedEntity, mappedTable, column.isCollection(), query.toString(), Arrays.asList(key), handler);
+        final Object rid = this.session.findIdByKey(new SingleEntityContext(entity), key);
+        return new OrientLazyQueryHolder(this.session, mappedEntity, mappedTable, column.isCollection(), query.toString(), Arrays.asList(rid), handler);
     }
 }

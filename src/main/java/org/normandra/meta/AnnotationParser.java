@@ -802,7 +802,7 @@ public class AnnotationParser
             }
             final ColumnMeta primary = associatedEntity.getPrimaryKey();
             final ColumnMeta column = new JoinCollectionMeta(name, property, primary.getType(), associatedEntity, true, lazy, false);
-            final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy);
+            final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy, false);
             join.addColumn(column);
             parentEntity.setAccessor(column, accessor);
             return true;
@@ -831,7 +831,7 @@ public class AnnotationParser
                 throw new IllegalStateException("Unable to locate column [" + oneToMany.mappedBy() + "] within [" + associatedEntity + "].");
             }
             // setup column meta and accessor
-            final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy);
+            final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy, true);
             final ColumnMeta column = new MappedColumnMeta(associatedEntity, mappedTable, mappedColumn, name, property, field.getType(), lazy);
             table.addColumn(column);
             parentEntity.setAccessor(column, accessor);
@@ -844,7 +844,7 @@ public class AnnotationParser
         else
         {
             // use embedded join-collection
-            final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy);
+            final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy, false);
             final ColumnMeta column = new JoinCollectionMeta(name, property, field.getType(), associatedEntity, false, lazy, true);
             table.addColumn(column);
             parentEntity.setAccessor(column, accessor);

@@ -13,6 +13,6 @@ import java.lang.reflect.Field;
 public interface ColumnAccessorFactory
 {
     ColumnAccessor createBasic(Field field, Class<?> clazz);
-    ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy);
+    ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy, boolean mapped);
     ColumnAccessor createSingleJoin(Field field, EntityContext meta, boolean lazy);
 }

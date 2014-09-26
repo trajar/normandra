@@ -22,7 +22,7 @@ import java.util.TreeMap;
 
 /**
  * basic entity handler api
- * <p/>
+ * <p>
  * User: bowen
  * Date: 5/25/14
  */
@@ -96,7 +96,7 @@ public class EntityPersistence
                     // we will need to create a new entry for each collection item
                     for (final ColumnMeta column : collections)
                     {
-                        final ColumnAccessor accessor = column.isVirtual() ? null : entity.getAccessor(column);
+                        final ColumnAccessor accessor = entity.getAccessor(column);
                         if (accessor != null && accessor.isLoaded(instance))
                         {
                             final Object value = accessor.getValue(instance, session);
@@ -121,16 +121,13 @@ public class EntityPersistence
         final Map<ColumnMeta, Object> data = new TreeMap<>();
         for (final ColumnMeta column : table)
         {
-            if (!column.isVirtual())
+            final ColumnAccessor accessor = entity.getAccessor(column);
+            if (accessor != null && accessor.isLoaded(instance))
             {
-                final ColumnAccessor accessor = entity.getAccessor(column);
-                if (accessor != null && accessor.isLoaded(instance))
+                final Object value = accessor.getValue(instance, session);
+                if (value != null)
                 {
-                    final Object value = accessor.getValue(instance, session);
-                    if (value != null)
-                    {
-                        data.put(column, value);
-                    }
+                    data.put(column, value);
                 }
             }
         }

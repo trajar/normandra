@@ -528,7 +528,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
 
-    protected final ODocument findDocument(final EntityMeta meta, final TableMeta table, final Object key) throws NormandraException
+    protected final ODocument findDocument(final EntityMeta meta, final TableMeta table, final Object key)
     {
         final OIdentifiable rid = this.findIdByKey(new SingleEntityContext(meta), table, key);
         if (null == rid)
@@ -539,7 +539,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
 
-    protected final ODocument findDocument(final EntityContext context, final TableMeta table, final Object key) throws NormandraException
+    protected final ODocument findDocument(final EntityContext context, final TableMeta table, final Object key)
     {
         if (null == context || null == key)
         {
@@ -563,7 +563,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
 
-    protected final Collection<OIdentifiable> findIdByKeys(final EntityContext meta, final TableMeta table, final Collection<Object> keys) throws NormandraException
+    protected final Collection<OIdentifiable> findIdByKeys(final EntityContext meta, final TableMeta table, final Collection<Object> keys)
     {
         if (null == meta || null == table || null == keys || keys.isEmpty())
         {
@@ -706,7 +706,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
 
-    protected final OIdentifiable findIdByKey(final EntityContext meta, final TableMeta table, final Object key) throws NormandraException
+    protected final OIdentifiable findIdByKey(final EntityContext meta, final TableMeta table, final Object key)
     {
         if (null == meta || null == table || null == key)
         {
@@ -728,7 +728,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
 
-    protected final OIdentifiable findIdByKey(final EntityContext meta, final Object key) throws NormandraException
+    protected final OIdentifiable findIdByKey(final EntityContext meta, final Object key)
     {
         if (null == meta || null == key)
         {

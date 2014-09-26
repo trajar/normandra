@@ -12,6 +12,7 @@ import org.normandra.meta.EmbeddedCollectionMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
+import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
@@ -220,7 +221,11 @@ public class CassandraUtils
 
     public static String columnType(final ColumnMeta column)
     {
-        if (null == column || column.isVirtual())
+        if (null == column)
+        {
+            return null;
+        }
+        if (column instanceof MappedColumnMeta)
         {
             return null;
         }

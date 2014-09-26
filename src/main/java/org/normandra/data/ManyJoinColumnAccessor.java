@@ -31,7 +31,7 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
     private final boolean lazy;
 
 
-    public ManyJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final ElementFactory factory)
+    public ManyJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final boolean mapped, final ElementFactory factory)
     {
         super(field);
         this.factory = factory;

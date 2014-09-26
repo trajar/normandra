@@ -10,6 +10,7 @@ import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.JoinColumnMeta;
+import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
@@ -260,7 +261,11 @@ public class OrientUtils
 
     public static OType columnType(final ColumnMeta column)
     {
-        if (null == column || column.isVirtual())
+        if (null == column)
+        {
+            return null;
+        }
+        if (column instanceof MappedColumnMeta)
         {
             return null;
         }

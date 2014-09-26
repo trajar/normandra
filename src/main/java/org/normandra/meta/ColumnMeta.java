@@ -6,7 +6,7 @@ import java.util.Collection;
 
 /**
  * column meta-data
- * <p/>
+ * <p>
  * User: bowen
  * Date: 9/1/13
  */
@@ -69,18 +69,6 @@ public class ColumnMeta implements Comparable<ColumnMeta>
     }
 
 
-    /**
-     * @return Returns true if this column is a virtual or void column, possibly a column mapped to another table.
-     */
-    public boolean isVirtual()
-    {
-        return Void.class.equals(this.type);
-    }
-
-
-    /**
-     * @return Returns true if this column is embedded within the table, else a joined or mapped column.
-     */
     public boolean isEmbedded()
     {
         return true;
@@ -120,16 +108,37 @@ public class ColumnMeta implements Comparable<ColumnMeta>
     @Override
     public boolean equals(Object o)
     {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
 
         ColumnMeta that = (ColumnMeta) o;
 
-        if (lazy != that.lazy) return false;
-        if (primaryKey != that.primaryKey) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (property != null ? !property.equals(that.property) : that.property != null) return false;
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
+        if (lazy != that.lazy)
+        {
+            return false;
+        }
+        if (primaryKey != that.primaryKey)
+        {
+            return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null)
+        {
+            return false;
+        }
+        if (property != null ? !property.equals(that.property) : that.property != null)
+        {
+            return false;
+        }
+        if (type != null ? !type.equals(that.type) : that.type != null)
+        {
+            return false;
+        }
 
         return true;
     }

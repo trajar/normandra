@@ -21,9 +21,9 @@ public class BasicColumnAccessorFactory implements ColumnAccessorFactory
 
 
     @Override
-    public ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy)
+    public ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy, boolean mapped)
     {
-        return new ManyJoinColumnAccessor(field, meta, lazy, new BasicElementFactory(meta));
+        return new ManyJoinColumnAccessor(field, meta, lazy, mapped, new BasicElementFactory(meta));
     }
 
 

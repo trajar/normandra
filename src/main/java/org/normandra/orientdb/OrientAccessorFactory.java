@@ -25,9 +25,9 @@ public class OrientAccessorFactory implements ColumnAccessorFactory
 
 
     @Override
-    public ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy)
+    public ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy, boolean mapped)
     {
-        return new ManyJoinColumnAccessor(field, meta, lazy, new OrientElementFactory(meta));
+        return new ManyJoinColumnAccessor(field, meta, lazy, mapped, new OrientElementFactory(meta));
     }
 
 

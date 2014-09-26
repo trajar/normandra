@@ -71,15 +71,12 @@ public class OrientDataHandler implements DataHandler
         {
             final ColumnMeta column = entry.getKey();
             final Object value = entry.getValue();
-            if (!column.isVirtual())
+            if (value != null)
             {
-                if (value != null)
-                {
-                    final String name = column.getName();
-                    final OType type = OrientUtils.columnType(column);
-                    final Object packed = OrientUtils.packValue(column, value);
-                    document.field(name, packed, type);
-                }
+                final String name = column.getName();
+                final OType type = OrientUtils.columnType(column);
+                final Object packed = OrientUtils.packValue(column, value);
+                document.field(name, packed, type);
             }
         }
         document.save();
