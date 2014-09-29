@@ -3,7 +3,7 @@ package org.normandra.data;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.association.AssociationUtils;
-import org.normandra.association.ElementFactory;
+import org.normandra.association.ElementIdentity;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 
@@ -17,14 +17,14 @@ import java.lang.reflect.Field;
  */
 public class SingleJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
-    private final ElementFactory factory;
+    private final ElementIdentity factory;
 
     private final EntityContext entity;
 
     private final boolean lazy;
 
 
-    public SingleJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final ElementFactory factory)
+    public SingleJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final ElementIdentity factory)
     {
         super(field);
         this.entity = meta;
@@ -86,7 +86,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
         {
             return null;
         }
-        return this.factory.pack(session, associatedEntity);
+        return this.factory.fromEntity(session, associatedEntity);
     }
 
 
@@ -122,7 +122,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
                 }
                 else
                 {
-                    associated = this.factory.unpack(session, key);
+                    associated = this.factory.toEntity(session, key);
                 }
                 this.set(entity, associated);
                 return true;

@@ -15,12 +15,12 @@ import java.util.List;
  * User: bowen
  * Date: 9/23/14
  */
-public class BasicElementFactory<T> implements ElementFactory<T>
+public class BasicElementIdentity<T> implements ElementIdentity<T>
 {
     private final EntityContext entity;
 
 
-    public BasicElementFactory(final EntityContext entity)
+    public BasicElementIdentity(final EntityContext entity)
     {
         if (null == entity)
         {
@@ -37,14 +37,21 @@ public class BasicElementFactory<T> implements ElementFactory<T>
 
 
     @Override
-    public Object pack(EntitySession session, final T value) throws NormandraException
+    public Object fromKey(EntitySession session, Object key) throws NormandraException
+    {
+        return key;
+    }
+
+
+    @Override
+    public Object fromEntity(EntitySession session, final T value) throws NormandraException
     {
         return this.entity.getId().fromEntity(value);
     }
 
 
     @Override
-    public List<?> pack(EntitySession session, final T... values) throws NormandraException
+    public List<?> fromEntities(EntitySession session, final T... values) throws NormandraException
     {
         if (null == values || values.length <= 0)
         {
@@ -64,14 +71,14 @@ public class BasicElementFactory<T> implements ElementFactory<T>
 
 
     @Override
-    public T unpack(final EntitySession session, final Object value) throws NormandraException
+    public T toEntity(final EntitySession session, final Object value) throws NormandraException
     {
         return (T) session.get(this.entity, value);
     }
 
 
     @Override
-    public List unpack(final EntitySession session, final Object... values) throws NormandraException
+    public List toEntities(final EntitySession session, final Object... values) throws NormandraException
     {
         return session.get(this.entity, values);
     }

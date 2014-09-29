@@ -12,14 +12,14 @@ import org.normandra.NormandraException;
  */
 public class ManyToOneAccessor implements AssociationAccessor
 {
-    private final ElementFactory factory;
+    private final ElementIdentity factory;
 
     private final Object key;
 
     private final EntitySession session;
 
 
-    public ManyToOneAccessor(final Object key, final EntitySession session, final ElementFactory factory)
+    public ManyToOneAccessor(final Object key, final EntitySession session, final ElementIdentity factory)
     {
         if (null == key)
         {
@@ -42,6 +42,6 @@ public class ManyToOneAccessor implements AssociationAccessor
     @Override
     public Object get() throws NormandraException
     {
-        return this.factory.unpack(this.session, this.key);
+        return this.factory.toEntity(this.session, this.key);
     }
 }

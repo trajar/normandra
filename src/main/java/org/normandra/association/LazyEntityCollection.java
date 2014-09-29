@@ -26,7 +26,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
 
     protected final CollectionFactory<T> collectionFactory;
 
-    protected final ElementFactory<T> elementFactory;
+    protected final ElementIdentity<T> elementFactory;
 
     private Object[] keys;
 
@@ -37,7 +37,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
 
-    public LazyEntityCollection(final EntitySession session, final EntityContext meta, final DataHolder data, ElementFactory<T> ef, final CollectionFactory<T> cf)
+    public LazyEntityCollection(final EntitySession session, final EntityContext meta, final DataHolder data, ElementIdentity<T> ef, final CollectionFactory<T> cf)
     {
         if (null == data)
         {
@@ -113,7 +113,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
                 }
                 else
                 {
-                    final List<T> results = this.elementFactory.unpack(this.session, this.keys);
+                    final List<T> results = this.elementFactory.toEntities(this.session, this.keys);
                     this.entities = this.collectionFactory.create(results.size());
                     this.entities.addAll(results);
                     return this.entities;

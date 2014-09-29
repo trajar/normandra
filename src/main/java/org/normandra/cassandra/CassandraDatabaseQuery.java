@@ -199,7 +199,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to unpack row values [" + row + "].", e);
+            throw new NormandraException("Unable to toEntity row values [" + row + "].", e);
         }
         if (null == data || data.isEmpty())
         {

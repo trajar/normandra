@@ -1,12 +1,10 @@
 package org.normandra.orientdb;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.apache.commons.lang.StringUtils;
 import org.normandra.data.BasicDataHolder;
 import org.normandra.data.DataHolder;
 import org.normandra.data.DataHolderFactory;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
@@ -14,13 +12,11 @@ import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
-import org.normandra.util.ArraySet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * orientdb data holder factory
@@ -53,12 +49,7 @@ public class OrientDataFactory implements DataHolderFactory
         {
             return null;
         }
-        final Map<String, Object> keymap = entity.getId().fromKey(key);
-        if (null == keymap || keymap.isEmpty())
-        {
-            return null;
-        }
-        return new OrientLazyDataHolder(this.session, new SingleEntityContext(entity), table, column, keymap);
+        return new OrientLazyDataHolder(this.session, new SingleEntityContext(entity), column, key);
     }
 
 
@@ -158,22 +149,8 @@ public class OrientDataFactory implements DataHolderFactory
         final TableMeta mappedTable = column.getTable();
         final ColumnMeta mappedColumn = column.getColumn();
 
-        final Set<String> columnNames = new ArraySet<>();
-        for (final ColumnMeta mappedKey : mappedEntity.getPrimaryKeys())
-        {
-            columnNames.add(mappedKey.getName());
-        }
-        for (final EntityMeta meta : mappedEntity.getEntities())
-        {
-            final DiscriminatorMeta descrim = meta.getDiscriminator();
-            if (descrim != null)
-            {
-                columnNames.add(descrim.getColumn().getName());
-            }
-        }
-
         final StringBuilder query = new StringBuilder();
-        query.append("select ").append(StringUtils.join(columnNames, ", ")).append(" from ").append(mappedTable.getName());
+        query.append("select from ").append(mappedTable.getName());
         query.append(" where ").append(mappedColumn.getName()).append(" = ?");
         final OrientDocumentHandler handler = new OrientDocumentHandler()
         {

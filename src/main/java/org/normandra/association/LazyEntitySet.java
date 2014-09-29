@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public class LazyEntitySet<T> extends LazyEntityCollection<T> implements Set<T>
 {
-    public LazyEntitySet(EntitySession session, EntityContext meta, DataHolder data, ElementFactory<T> factory)
+    public LazyEntitySet(EntitySession session, EntityContext meta, DataHolder data, ElementIdentity<T> factory)
     {
         super(session, meta, data, factory, new CollectionFactory<T>()
         {

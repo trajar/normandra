@@ -75,7 +75,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
             }
             catch (final Exception e)
             {
-                throw new IllegalStateException("Unable to unpack key properties from [" + key + "].", e);
+                throw new IllegalStateException("Unable to toEntity key properties from [" + key + "].", e);
             }
         }
         return Collections.unmodifiableMap(map);

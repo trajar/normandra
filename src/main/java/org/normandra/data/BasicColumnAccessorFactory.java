@@ -1,6 +1,6 @@
 package org.normandra.data;
 
-import org.normandra.association.BasicElementFactory;
+import org.normandra.association.BasicElementIdentity;
 import org.normandra.meta.EntityContext;
 
 import java.lang.reflect.Field;
@@ -21,15 +21,15 @@ public class BasicColumnAccessorFactory implements ColumnAccessorFactory
 
 
     @Override
-    public ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy, boolean mapped)
+    public ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy)
     {
-        return new ManyJoinColumnAccessor(field, meta, lazy, mapped, new BasicElementFactory(meta));
+        return new ManyJoinColumnAccessor(field, meta, lazy, new BasicElementIdentity(meta));
     }
 
 
     @Override
     public ColumnAccessor createSingleJoin(Field field, EntityContext meta, boolean lazy)
     {
-        return new SingleJoinColumnAccessor(field, meta, lazy, new BasicElementFactory(meta));
+        return new SingleJoinColumnAccessor(field, meta, lazy, new BasicElementIdentity(meta));
     }
 }

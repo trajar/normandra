@@ -15,7 +15,7 @@ import java.util.ListIterator;
  */
 public class LazyEntityList<T> extends LazyEntityCollection<T> implements List<T>
 {
-    public LazyEntityList(EntitySession session, EntityContext meta, DataHolder data, ElementFactory<T> factory)
+    public LazyEntityList(EntitySession session, EntityContext meta, DataHolder data, ElementIdentity<T> factory)
     {
         super(session, meta, data, factory, new CollectionFactory<T>()
         {

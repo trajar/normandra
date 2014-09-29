@@ -51,7 +51,7 @@ public class AssociationUtils
     }
 
 
-    public static Object createProxy(final EntityMeta meta, final Object key, final EntitySession session, final ElementFactory factory) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
+    public static Object createProxy(final EntityMeta meta, final Object key, final EntitySession session, final ElementIdentity factory) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
     {
         if (null == meta)
         {

@@ -6,10 +6,7 @@ import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
-import org.normandra.meta.TableMeta;
 
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -26,22 +23,19 @@ public class OrientLazyDataHolder implements DataHolder
 
     private final EntityContext entity;
 
-    private final TableMeta table;
-
     private final ColumnMeta column;
 
-    private final Map<String, Object> key;
+    private final Object key;
 
     private ODocument document;
 
 
-    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityContext meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
+    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityContext meta, final ColumnMeta column, final Object key)
     {
         this.session = session;
         this.entity = meta;
-        this.table = table;
         this.column = column;
-        this.key = new TreeMap<>(keys);
+        this.key = key;
     }
 
 
@@ -73,7 +67,7 @@ public class OrientLazyDataHolder implements DataHolder
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to unpack lazy loaded results for column [" + this.column + "] on entity [" + this.entity + "].", e);
+            throw new NormandraException("Unable to toEntity lazy loaded results for column [" + this.column + "] on entity [" + this.entity + "].", e);
         }
     }
 
@@ -92,11 +86,8 @@ public class OrientLazyDataHolder implements DataHolder
             }
             try
             {
-                final OIdentifiable rid = this.session.findIdByMap(this.entity, this.table, this.key);
-                if (rid != null)
-                {
-                    this.document = this.session.findDocument(rid);
-                }
+                final OIdentifiable record = new OrientElementIdentity(this.entity).fromKey(this.session, this.key);
+                this.document = this.session.findDocument(record);
                 this.loaded.getAndSet(true);
             }
             catch (final Exception e)

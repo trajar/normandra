@@ -1,5 +1,6 @@
 package org.normandra.orientdb;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -156,7 +157,10 @@ public class OrientUtils
             for (final Object item : list)
             {
                 final Object pack = unpackPrimitive(clazz, item);
-                packed.add(pack);
+                if (pack != null)
+                {
+                    packed.add(pack);
+                }
             }
             return packed;
         }
@@ -199,7 +203,7 @@ public class OrientUtils
 
     private static Object unpackPrimitive(final Class<?> clazz, final Object value)
     {
-        if (value instanceof ORID)
+        if (value instanceof OIdentifiable)
         {
             return value;
         }
@@ -279,7 +283,7 @@ public class OrientUtils
             {
                 return OType.EMBEDDEDLIST;
             }
-            else if (Collection.class.isAssignableFrom(clazz))
+            else
             {
                 return OType.EMBEDDEDSET;
             }
@@ -290,24 +294,31 @@ public class OrientUtils
         }
         else if (column instanceof JoinCollectionMeta)
         {
-            if (List.class.isAssignableFrom(clazz))
+            if (column.isEmbedded())
             {
-                return OType.LINKLIST;
+                if (List.class.isAssignableFrom(clazz))
+                {
+                    return OType.LINKLIST;
+                }
+                else
+                {
+                    return OType.LINKSET;
+                }
             }
-            else if (Collection.class.isAssignableFrom(clazz))
+            else
             {
-                return OType.LINKSET;
+                return OType.LINK;
             }
         }
-        else if (List.class.isAssignableFrom(clazz))
+        else
         {
-            return OType.EMBEDDEDLIST;
+            return primitiveType(clazz);
         }
-        else if (Collection.class.isAssignableFrom(clazz))
-        {
-            return OType.EMBEDDEDSET;
-        }
+    }
 
+
+    private static OType primitiveType(final Class<?> clazz)
+    {
         // handle regular values
         if (String.class.equals(clazz))
         {

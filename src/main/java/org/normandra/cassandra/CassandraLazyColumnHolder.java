@@ -102,7 +102,7 @@ public class CassandraLazyColumnHolder implements DataHolder
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to unpack lazy loaded results for entity [" + this.entity + "] on column [" + this.column + "].", e);
+            throw new NormandraException("Unable to toEntity lazy loaded results for entity [" + this.entity + "] on column [" + this.column + "].", e);
         }
     }
 

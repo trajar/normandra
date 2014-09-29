@@ -2,7 +2,7 @@ package org.normandra.data;
 
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
-import org.normandra.association.ElementFactory;
+import org.normandra.association.ElementIdentity;
 import org.normandra.association.LazyEntityList;
 import org.normandra.association.LazyEntitySet;
 import org.normandra.association.LazyLoadedCollection;
@@ -24,14 +24,14 @@ import java.util.Set;
  */
 public class ManyJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
-    private final ElementFactory factory;
+    private final ElementIdentity factory;
 
     private final EntityContext entity;
 
     private final boolean lazy;
 
 
-    public ManyJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final boolean mapped, final ElementFactory factory)
+    public ManyJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final ElementIdentity factory)
     {
         super(field);
         this.factory = factory;
@@ -119,7 +119,7 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
 
 
     @Override
-    public Object getValue(final Object entity, EntitySession session) throws NormandraException
+    public Collection getValue(final Object entity, EntitySession session) throws NormandraException
     {
         try
         {
@@ -136,7 +136,7 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
             {
                 return Collections.emptyList();
             }
-            final List keys = this.factory.pack(session, this.getCollection(entity).toArray());
+            final List keys = this.factory.fromEntities(session, this.getCollection(entity).toArray());
             if (Set.class.isAssignableFrom(this.getField().getType()))
             {
                 return Collections.unmodifiableSet(new ArraySet(keys));

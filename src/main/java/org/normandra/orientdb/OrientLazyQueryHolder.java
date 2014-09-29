@@ -95,7 +95,7 @@ public class OrientLazyQueryHolder implements DataHolder
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to unpack lazy loaded results for table [" + this.table + "] on entity [" + this.entity + "].", e);
+            throw new NormandraException("Unable to toEntity lazy loaded results for table [" + this.table + "] on entity [" + this.entity + "].", e);
         }
     }
 

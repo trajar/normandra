@@ -4,8 +4,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
-import org.normandra.association.BasicElementFactory;
+import org.normandra.association.BasicElementIdentity;
 import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.SingleEntityContext;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,18 +17,23 @@ import java.util.List;
  * User: bowen
  * Date: 9/23/14
  */
-public class OrientElementFactory<T> extends BasicElementFactory<T>
+public class OrientElementIdentity<T> extends BasicElementIdentity<T>
 {
-    public OrientElementFactory(final EntityContext entity)
+    public OrientElementIdentity(final EntityMeta entity)
+    {
+        this(new SingleEntityContext(entity));
+    }
+
+
+    public OrientElementIdentity(final EntityContext entity)
     {
         super(entity);
     }
 
 
     @Override
-    public ORID pack(final EntitySession session, final T value) throws NormandraException
+    public ORID fromKey(final EntitySession session, final Object key) throws NormandraException
     {
-        final Object key = this.getEntity().getId().fromEntity(value);
         if (null == key)
         {
             return null;
@@ -38,19 +45,29 @@ public class OrientElementFactory<T> extends BasicElementFactory<T>
 
 
     @Override
-    public List<?> pack(final EntitySession session, final T... values) throws NormandraException
+    public ORID fromEntity(final EntitySession session, final T value) throws NormandraException
+    {
+        if (null == value)
+        {
+            return null;
+        }
+        final Object key = this.getEntity().getId().fromEntity(value);
+        return this.fromKey(session, key);
+    }
+
+
+    @Override
+    public List<?> fromEntities(final EntitySession session, final T... values) throws NormandraException
     {
         if (null == values || values.length <= 0)
         {
             return Collections.emptyList();
         }
-        final OrientDatabaseSession orientdb = (OrientDatabaseSession) session;
         final List<ORID> list = new ArrayList<>(values.length);
         for (final Object value : values)
         {
             final Object key = this.getEntity().getId().fromEntity(value);
-            final OIdentifiable item = orientdb.findIdByKey(this.getEntity(), key);
-            final ORID rid = item != null ? item.getIdentity() : null;
+            final ORID rid = this.fromKey(session, key);
             if (rid != null)
             {
                 list.add(rid);

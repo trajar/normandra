@@ -161,7 +161,7 @@ public class CassandraDataHandler implements DataHandler
                 }
                 catch (final Exception e)
                 {
-                    throw new IllegalStateException("Unable to unpack row [" + row + "] for collection column [" + column + "].", e);
+                    throw new IllegalStateException("Unable to toEntity row [" + row + "] for collection column [" + column + "].", e);
                 }
             }
         }
