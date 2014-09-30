@@ -1,6 +1,8 @@
 package org.normandra.orientdb;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -146,6 +148,15 @@ public class OrientUtils
         if (null == column || null == value)
         {
             return null;
+        }
+
+        if (value instanceof ORecordLazySet)
+        {
+            return value;
+        }
+        if (value instanceof ORecordLazyList)
+        {
+            return value;
         }
 
         final Class<?> clazz = column.getType();
