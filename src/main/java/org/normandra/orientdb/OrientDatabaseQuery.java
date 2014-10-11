@@ -151,7 +151,7 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
                 }
                 catch (final Exception e)
                 {
-                    throw new IllegalStateException("Unable to get next entity [" + context + "] from document [" + doc + "].", e);
+                    throw new IllegalStateException("Unable to get next entity [" + context + "] from document [" + doc.getIdentity() + "].", e);
                 }
             }
         };
