@@ -3,11 +3,15 @@ package org.normandra;
 /**
  * a element capable of handling unit of work operations
  * <p>
- * User: bowen
- * Date: 8/30/14
+ * User: bowen Date: 8/30/14
  */
 public interface Transactional
 {
+    /**
+     * close session, release any associated resources
+     */
+    void close();
+
     /**
      * executes a worker within a transaction context
      */
