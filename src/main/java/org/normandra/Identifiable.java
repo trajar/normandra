@@ -13,4 +13,5 @@ package org.normandra;
 public interface Identifiable
 {
     Object getId();
+    Class<?> getType();
 }
