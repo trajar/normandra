@@ -21,8 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * lazy loaded object handler
  * <p>
- * User: bowen
- * Date: 2/2/14
+ * User: bowen Date: 2/2/14
  */
 public class LazyAssociationHandler implements MethodHandler
 {
@@ -37,7 +36,6 @@ public class LazyAssociationHandler implements MethodHandler
     private final AssociationAccessor accessor;
 
     private final EntitySession session;
-
 
     public LazyAssociationHandler(final EntityMeta meta, final AssociationAccessor accessor, final EntitySession session)
     {
@@ -58,12 +56,10 @@ public class LazyAssociationHandler implements MethodHandler
         this.session = session;
     }
 
-
     public boolean isLoaded()
     {
         return this.loaded.get();
     }
-
 
     @Override
     public Object invoke(final Object self, final Method thisMethod, final Method proceed, final Object[] args) throws Throwable
@@ -85,8 +81,7 @@ public class LazyAssociationHandler implements MethodHandler
         return proceed.invoke(self, args);
     }
 
-
-    synchronized private boolean load(final Object self) throws NormandraException
+    private boolean load(final Object self) throws NormandraException
     {
         if (this.loaded.get())
         {

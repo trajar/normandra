@@ -14,8 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * a cassandra database listActivity, backed by a cql3 statement
  * <p>
- * User: bowen
- * Date: 4/4/14
+ * User: bowen Date: 4/4/14
  */
 public class CassandraDatabaseActivity implements DatabaseActivity
 {
@@ -33,7 +32,6 @@ public class CassandraDatabaseActivity implements DatabaseActivity
 
     private Date date;
 
-
     public CassandraDatabaseActivity(final Statement statement, final Session session, final Type type)
     {
         this.statement = statement;
@@ -41,13 +39,11 @@ public class CassandraDatabaseActivity implements DatabaseActivity
         this.type = type;
     }
 
-
     @Override
     public Type getType()
     {
         return this.type;
     }
-
 
     @Override
     public long getDuration()
@@ -55,13 +51,11 @@ public class CassandraDatabaseActivity implements DatabaseActivity
         return this.duration;
     }
 
-
     @Override
     public Date getDate()
     {
         return this.date;
     }
-
 
     @Override
     public CharSequence getInformation()
@@ -84,8 +78,7 @@ public class CassandraDatabaseActivity implements DatabaseActivity
         }
     }
 
-
-    synchronized public ResultSet execute()
+    public ResultSet execute()
     {
         if (this.results != null)
         {

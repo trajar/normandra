@@ -23,8 +23,7 @@ import java.util.Map;
 /**
  * cassandra database query
  * <p>
- * User: bowen
- * Date: 4/5/14
+ * User: bowen Date: 4/5/14
  */
 public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
 {
@@ -37,7 +36,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
     private ResultSet results;
 
     private final List<Row> rows = new ArrayList<>();
-
 
     public CassandraDatabaseQuery(final EntityContext context, final Statement statement, final CassandraDatabaseSession session)
     {
@@ -57,7 +55,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         this.context = context;
         this.statement = statement;
     }
-
 
     @Override
     public T first() throws NormandraException
@@ -83,7 +80,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         }
     }
 
-
     @Override
     public T last() throws NormandraException
     {
@@ -94,7 +90,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         }
         return list.get(list.size() - 1);
     }
-
 
     @Override
     public List<T> list() throws NormandraException
@@ -112,14 +107,12 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         return Collections.unmodifiableList(elements);
     }
 
-
     @Override
     public int size() throws NormandraException
     {
         this.readAll();
         return this.rows.size();
     }
-
 
     @Override
     public Collection<T> subset(final int offset, final int count) throws NormandraException
@@ -132,7 +125,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         return elements.subList(offset, offset + count);
     }
 
-
     @Override
     public Iterator<T> iterator()
     {
@@ -143,7 +135,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
             {
                 return !ensurResults().isExhausted();
             }
-
 
             @Override
             public T next()
@@ -166,7 +157,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         };
     }
 
-
     private int readAll()
     {
         int num = 0;
@@ -177,7 +167,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         }
         return num;
     }
-
 
     private T build(final Row row) throws NormandraException
     {
@@ -214,8 +203,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         return (T) new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(this.context, data);
     }
 
-
-    synchronized private ResultSet ensurResults()
+    private ResultSet ensurResults()
     {
         if (this.results != null)
         {

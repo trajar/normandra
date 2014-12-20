@@ -1,30 +1,29 @@
-package org.normandra;
-
-import org.apache.commons.lang.NullArgumentException;
-import org.normandra.meta.EntityContext;
-import org.normandra.meta.EntityMeta;
-import org.normandra.meta.HierarchyEntityContext;
-import org.normandra.meta.SingleEntityContext;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.normandra.meta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang.NullArgumentException;
 
 /**
- * an abstract entity lookup class
- * <p>
- * User: bowen
- * Date: 7/23/14
+ * a set of entity meta instances
+ *
+ * @author bowen
  */
-abstract public class AbstractEntityLookup implements EntityLookup
+public class EntityMetaCollection implements EntityMetaLookup
 {
     private final Map<Class, EntityMeta> classMap = new HashMap<>();
 
-
-    public AbstractEntityLookup(final Iterable<EntityMeta> metas)
+    public EntityMetaCollection(final Iterable<EntityMeta> metas)
     {
         if (null == metas)
         {
@@ -35,7 +34,6 @@ abstract public class AbstractEntityLookup implements EntityLookup
             this.classMap.put(entity.getType(), entity);
         }
     }
-
 
     @Override
     public EntityMeta getMeta(final Class<?> clazz)
@@ -60,7 +58,6 @@ abstract public class AbstractEntityLookup implements EntityLookup
         }
     }
 
-
     @Override
     public final EntityMeta getMeta(final String labelOrType)
     {
@@ -74,14 +71,24 @@ abstract public class AbstractEntityLookup implements EntityLookup
             {
                 return meta;
             }
+            for (final TableMeta table : meta)
+            {
+                if (!table.isJoinTable() && labelOrType.equalsIgnoreCase(table.getName()))
+                {
+                    return meta;
+                }
+            }
         }
         return null;
     }
 
-
     @Override
     public final List<EntityMeta> findMeta(final Class<?> clazz)
     {
+        if (null == clazz)
+        {
+            return Collections.emptyList();
+        }
         final EntityMeta existing = this.classMap.get(clazz);
         if (existing != null)
         {
@@ -97,9 +104,15 @@ abstract public class AbstractEntityLookup implements EntityLookup
                 list.add(entityMeta);
             }
         }
-        return Collections.unmodifiableList(list);
+        if (list.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        else
+        {
+            return Collections.unmodifiableList(list);
+        }
     }
-
 
     @Override
     public final EntityContext findContext(final Class<?> clazz)
@@ -120,5 +133,40 @@ abstract public class AbstractEntityLookup implements EntityLookup
             // inherited entity
             return new HierarchyEntityContext(list);
         }
+    }
+
+    @Override
+    public Collection<EntityMeta> list()
+    {
+        return Collections.unmodifiableCollection(this.classMap.values());
+    }
+
+    @Override
+    public boolean contains(final Class<?> clazz)
+    {
+        return !this.findMeta(clazz).isEmpty();
+    }
+
+    @Override
+    public boolean contains(EntityMeta meta)
+    {
+        if (null == meta)
+        {
+            return false;
+        }
+        for (final Map.Entry<Class, EntityMeta> entry : this.classMap.entrySet())
+        {
+            if (meta == entry.getValue() || meta.compareTo(entry.getValue()) == 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int size()
+    {
+        return this.classMap.size();
     }
 }

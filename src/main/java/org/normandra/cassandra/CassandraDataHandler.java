@@ -68,8 +68,12 @@ public class CassandraDataHandler implements DataHandler
             final Object value = entry.getValue();
             if (value != null)
             {
-                hasInsert = true;
-                statement = statement.value(column.getName(), value);
+                final Object packed = CassandraUtils.packValue(column, value);
+                if (packed != null)
+                {
+                    hasInsert = true;
+                    statement = statement.value(column.getName(), packed);
+                }
             }
             else
             {

@@ -10,6 +10,7 @@ import org.normandra.data.DataHolder;
 import org.normandra.generator.IdGenerator;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 
@@ -121,13 +122,16 @@ public class EntityPersistence
         final Map<ColumnMeta, Object> data = new TreeMap<>();
         for (final ColumnMeta column : table)
         {
-            final ColumnAccessor accessor = entity.getAccessor(column);
-            if (accessor != null && accessor.isLoaded(instance))
+            if (!(column instanceof MappedColumnMeta))
             {
-                final Object value = accessor.getValue(instance, session);
-                if (value != null)
+                final ColumnAccessor accessor = entity.getAccessor(column);
+                if (accessor != null && accessor.isLoaded(instance))
                 {
-                    data.put(column, value);
+                    final Object value = accessor.getValue(instance, session);
+                    if (value != null)
+                    {
+                        data.put(column, value);
+                    }
                 }
             }
         }

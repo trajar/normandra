@@ -3,7 +3,6 @@ package org.normandra.orientdb;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.meta.ColumnMeta;
@@ -19,6 +18,7 @@ import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 import org.normandra.util.DataUtils;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -195,7 +195,7 @@ public class OrientUtils
             final List<Object> packed = new ArrayList<>(list.size());
             for (final Object item : list)
             {
-                final Object pack = packPrimitive(clazz, item);
+                final Object pack = packPrimitive(item);
                 packed.add(pack);
             }
             if (List.class.isAssignableFrom(clazz))
@@ -208,12 +208,16 @@ public class OrientUtils
             }
         }
 
-        return packPrimitive(clazz, value);
+        return packPrimitive(value);
     }
 
 
     private static Object unpackPrimitive(final Class<?> clazz, final Object value)
     {
+        if (null == value)
+        {
+            return null;
+        }
         if (value instanceof OIdentifiable)
         {
             return value;
@@ -226,27 +230,64 @@ public class OrientUtils
         {
             return DataUtils.bytesToInet((byte[]) value);
         }
-
+        if (Date.class.equals(clazz))
+        {
+            return value;
+        }
+        if (String.class.equals(clazz))
+        {
+            return value;
+        }
+        if (Number.class.isAssignableFrom(clazz))
+        {
+            return value;
+        }
+        if (byte[].class.equals(clazz))
+        {
+            return value;
+        }
+        if (Serializable.class.isAssignableFrom(clazz))
+        {
+            final Class serialized = clazz;
+            return DataUtils.bytesToObject(serialized, (byte[]) value);
+        }
         return value;
     }
 
 
-    private static Object packPrimitive(final Class<?> clazz, final Object value)
+    private static Object packPrimitive(final Object value)
     {
-        if (value instanceof ORID)
+        if (null == value)
+        {
+            return null;
+        }
+        if (value instanceof OIdentifiable)
         {
             return value;
         }
-        if (UUID.class.equals(clazz))
+        if (value instanceof Date)
+        {
+            return value;
+        }
+        if (value instanceof String)
+        {
+            return value;
+        }
+        if (value instanceof Boolean)
+        {
+            return value;
+        }
+        if (value instanceof UUID)
         {
             return DataUtils.uuidToBytes((UUID) value);
         }
-        if (InetAddress.class.equals(clazz))
+        if (value instanceof InetAddress)
         {
             return DataUtils.inetToBytes((InetAddress) value);
         }
-        if (Number.class.isAssignableFrom(clazz) && !clazz.equals(value.getClass()))
+        if (value instanceof Number)
         {
+            final Class<?> clazz = value.getClass();
             final Number number = (Number) value;
             if (Long.class.equals(clazz))
             {
@@ -268,9 +309,17 @@ public class OrientUtils
             {
                 return number.doubleValue();
             }
+            else
+            {
+                throw new IllegalArgumentException("Unexpected numeric type [" + value + "].");
+            }
+        }
+        if (value instanceof Serializable)
+        {
+            return DataUtils.objectToBytes((Serializable) value);
         }
 
-        return value;
+        throw new IllegalArgumentException("Unexpected value [" + value + "].");
     }
 
 

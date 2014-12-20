@@ -1,8 +1,6 @@
-package org.normandra;
+package org.normandra.meta;
 
-import org.normandra.meta.EntityContext;
-import org.normandra.meta.EntityMeta;
-
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -11,10 +9,14 @@ import java.util.List;
  * User: bowen
  * Date: 7/23/14
  */
-public interface EntityLookup
+public interface EntityMetaLookup
 {
     EntityMeta getMeta(Class<?> clazz);
     EntityMeta getMeta(String labelOrType);
     List<EntityMeta> findMeta(Class<?> clazz);
     EntityContext findContext(Class<?> clazz);
+    boolean contains(Class<?> clazz);
+    boolean contains(EntityMeta meta);
+    Collection<EntityMeta> list();
+    int size();
 }

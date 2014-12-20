@@ -1,6 +1,5 @@
 package org.normandra.cache;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -8,8 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * a generic factory used to create map instances
  * <p>
- * User: bowen
- * Date: 7/14/14
+ * User: bowen Date: 7/14/14
  */
 public interface MapFactory
 {
@@ -20,7 +18,7 @@ public interface MapFactory
             @Override
             public Map create()
             {
-                return Collections.synchronizedMap(new WeakHashMap());
+                return new WeakHashMap();
             }
         };
     }

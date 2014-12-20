@@ -1,18 +1,16 @@
 package org.normandra.association;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * lazy loaded element collection
  * <p>
- * User: bowen
- * Date: 3/29/14
+ * User: bowen Date: 3/29/14
  */
 abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T>
 {
@@ -24,10 +22,7 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
 
     private Collection<T> entities;
 
-    private final Object synch = new Object();
-
     private final AtomicBoolean loaded = new AtomicBoolean(false);
-
 
     public LazyElementCollection(final EntitySession session, final DataHolder data, final CollectionFactory<T> factory)
     {
@@ -48,19 +43,16 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
         this.factory = factory;
     }
 
-
     @Override
     public boolean isLoaded()
     {
         return this.loaded.get();
     }
 
-
     protected Collection<T> getCollection()
     {
         return this.ensureCollection();
     }
-
 
     private Collection<T> ensureCollection()
     {
@@ -69,35 +61,31 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
             return this.entities;
         }
 
-        synchronized (this.synch)
+        try
         {
-            try
+            final Object value = this.data.get();
+            if (null == value)
             {
-                final Object value = this.data.get();
-                if (null == value)
-                {
-                    this.entities = this.factory.create(0);
-                }
-                else if (value instanceof Collection)
-                {
-                    final Collection<T> collection = (Collection) value;
-                    this.entities = this.factory.create(collection.size());
-                    this.entities.addAll(collection);
-                }
-                else
-                {
-                    throw new IllegalStateException("Expected element collection but found value [" + value + "].");
-                }
-                this.loaded.getAndSet(true);
-                return this.entities;
+                this.entities = this.factory.create(0);
             }
-            catch (final Exception e)
+            else if (value instanceof Collection)
             {
-                throw new IllegalStateException("Unable to query lazy element collection with data [" + this.data + "].", e);
+                final Collection<T> collection = (Collection) value;
+                this.entities = this.factory.create(collection.size());
+                this.entities.addAll(collection);
             }
+            else
+            {
+                throw new IllegalStateException("Expected element collection but found value [" + value + "].");
+            }
+            this.loaded.getAndSet(true);
+            return this.entities;
+        }
+        catch (final Exception e)
+        {
+            throw new IllegalStateException("Unable to query lazy element collection with data [" + this.data + "].", e);
         }
     }
-
 
     @Override
     public boolean equals(final Object obj)
@@ -109,13 +97,11 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
         return this.ensureCollection().equals(obj);
     }
 
-
     @Override
     public int hashCode()
     {
         return this.ensureCollection().hashCode();
     }
-
 
     @Override
     public int size()
@@ -123,13 +109,11 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
         return this.ensureCollection().size();
     }
 
-
     @Override
     public boolean isEmpty()
     {
         return this.ensureCollection().isEmpty();
     }
-
 
     @Override
     public boolean contains(final Object o)
@@ -141,13 +125,11 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
         return this.ensureCollection().contains(o);
     }
 
-
     @Override
     public Iterator<T> iterator()
     {
         return this.ensureCollection().iterator();
     }
-
 
     @Override
     public Object[] toArray()
@@ -155,13 +137,11 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
         return this.ensureCollection().toArray();
     }
 
-
     @Override
     public <T> T[] toArray(T[] a)
     {
         return (T[]) this.ensureCollection().toArray(a);
     }
-
 
     @Override
     public boolean add(T o)
@@ -169,13 +149,11 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
         return this.ensureCollection().add(o);
     }
 
-
     @Override
     public boolean remove(Object o)
     {
         return this.ensureCollection().remove(o);
     }
-
 
     @Override
     public boolean containsAll(Collection<?> c)
@@ -183,13 +161,11 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
         return this.ensureCollection().containsAll(c);
     }
 
-
     @Override
     public boolean addAll(Collection c)
     {
         return this.ensureCollection().addAll(c);
     }
-
 
     @Override
     public boolean removeAll(Collection<?> c)
@@ -197,13 +173,11 @@ abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T
         return this.ensureCollection().removeAll(c);
     }
 
-
     @Override
     public boolean retainAll(Collection<?> c)
     {
         return this.ensureCollection().retainAll(c);
     }
-
 
     @Override
     public void clear()

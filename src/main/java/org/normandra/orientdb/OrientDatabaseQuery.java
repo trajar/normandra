@@ -20,8 +20,7 @@ import java.util.Map;
 /**
  * orientdb query api
  * <p>
- * User: bowen
- * Date: 6/9/14
+ * User: bowen Date: 6/9/14
  */
 public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
 {
@@ -33,14 +32,12 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
 
     private LazyCollection<ODocument> lazy = null;
 
-
     public OrientDatabaseQuery(final OrientDatabaseSession session, final EntityContext context, final OrientQueryActivity query)
     {
         this.session = session;
         this.context = context;
         this.query = query;
     }
-
 
     @Override
     public T first() throws NormandraException
@@ -56,7 +53,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         }
         return null;
     }
-
 
     @Override
     public T last() throws NormandraException
@@ -78,7 +74,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         return this.build(last);
     }
 
-
     @Override
     public List<T> list() throws NormandraException
     {
@@ -95,13 +90,11 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         return Collections.unmodifiableList(list);
     }
 
-
     @Override
     public int size() throws NormandraException
     {
         return this.list().size();
     }
-
 
     @Override
     public Collection<T> subset(int offset, int count) throws NormandraException
@@ -123,7 +116,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         return Collections.unmodifiableList(items);
     }
 
-
     @Override
     public Iterator<T> iterator()
     {
@@ -135,7 +127,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
             {
                 return itr.hasNext();
             }
-
 
             @Override
             public T next()
@@ -157,8 +148,7 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         };
     }
 
-
-    synchronized private LazyCollection<ODocument> ensureResults()
+    private LazyCollection<ODocument> ensureResults()
     {
         if (this.lazy != null)
         {
@@ -167,7 +157,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         this.lazy = new LazyCollection<>(this.query.execute());
         return this.lazy;
     }
-
 
     private T build(final ODocument document) throws NormandraException
     {

@@ -19,10 +19,10 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * a lazy-loaded cassandra data holder that pulls the value of a regularly column
+ * a lazy-loaded cassandra data holder that pulls the value of a regularly
+ * column
  * <p/>
- * User: bowen
- * Date: 4/5/14
+ * User: bowen Date: 4/5/14
  */
 public class CassandraLazyColumnHolder implements DataHolder
 {
@@ -40,7 +40,6 @@ public class CassandraLazyColumnHolder implements DataHolder
 
     private final List<Row> rows = new ArrayList<>();
 
-
     public CassandraLazyColumnHolder(final CassandraDatabaseSession session, final EntityMeta meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
     {
         this.session = session;
@@ -49,7 +48,6 @@ public class CassandraLazyColumnHolder implements DataHolder
         this.column = column;
         this.keys = new TreeMap<>(keys);
     }
-
 
     @Override
     public boolean isEmpty()
@@ -63,7 +61,6 @@ public class CassandraLazyColumnHolder implements DataHolder
             throw new IllegalStateException("Unable to query lazy loaded results from table [" + this.table + "] on column [" + this.column + "].", e);
         }
     }
-
 
     @Override
     public Object get() throws NormandraException
@@ -106,39 +103,31 @@ public class CassandraLazyColumnHolder implements DataHolder
         }
     }
 
-
     private List<Row> ensureResults() throws NormandraException
     {
         if (this.loaded.get())
         {
             return this.rows;
         }
-        synchronized (this)
+
+        final Select statement = QueryBuilder.select(this.column.getName()).from(this.session.getKeyspace(), this.table.getName());
+        boolean hasWhere = false;
+        for (final Map.Entry<String, Object> entry : this.keys.entrySet())
         {
-            if (this.loaded.get())
+            final String name = entry.getKey();
+            final Object value = entry.getValue();
+            if (value != null)
             {
-                return this.rows;
+                statement.where(QueryBuilder.eq(name, value));
+                hasWhere = true;
             }
-
-            final Select statement = QueryBuilder.select(this.column.getName()).from(this.session.getKeyspace(), this.table.getName());
-            boolean hasWhere = false;
-            for (final Map.Entry<String, Object> entry : this.keys.entrySet())
-            {
-                final String name = entry.getKey();
-                final Object value = entry.getValue();
-                if (value != null)
-                {
-                    statement.where(QueryBuilder.eq(name, value));
-                    hasWhere = true;
-                }
-            }
-
-            if (hasWhere)
-            {
-                this.rows.addAll(this.session.getSession().execute(statement).all());
-            }
-            this.loaded.getAndSet(true);
         }
+
+        if (hasWhere)
+        {
+            this.rows.addAll(this.session.getSession().execute(statement).all());
+        }
+        this.loaded.getAndSet(true);
         return this.rows;
     }
 }

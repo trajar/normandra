@@ -3,8 +3,6 @@ package org.normandra.cassandra;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.ClassLoaderObjectInputStream;
 import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DiscriminatorMeta;
@@ -15,12 +13,13 @@ import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
+import org.normandra.util.DataUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -91,6 +90,94 @@ public class CassandraUtils
             }
         }
         return entity.getId().toKey(data);
+    }
+
+
+    public static Object packValue(final ColumnMeta column, final Object value)
+    {
+        if (null == column || null == value)
+        {
+            return null;
+        }
+
+        final Class<?> clazz = column.getType();
+
+        if (column.isCollection() && value instanceof Collection)
+        {
+            final Collection list = (Collection) value;
+            final List<Object> packed = new ArrayList<>(list.size());
+            for (final Object item : list)
+            {
+                final Object pack = packPrimitive(item);
+                if (pack != null)
+                {
+                    packed.add(pack);
+                }
+            }
+            if (List.class.isAssignableFrom(clazz))
+            {
+                return new ArrayList<>(packed);
+            }
+            else if (Collection.class.isAssignableFrom(clazz))
+            {
+                return new ArraySet<>(packed);
+            }
+        }
+
+        return packPrimitive(value);
+    }
+
+
+    private static Object packPrimitive(final Object value)
+    {
+        if (null == value)
+        {
+            return null;
+        }
+        if (value instanceof Date)
+        {
+            return value;
+        }
+        if (value instanceof String)
+        {
+            return value;
+        }
+        if (value instanceof Number)
+        {
+            return value;
+        }
+        if(value instanceof Boolean)
+        {
+            return value;
+        }
+        if (value instanceof UUID)
+        {
+            return value;
+        }
+        if (value instanceof InetAddress)
+        {
+            return value;
+        }
+        if (byte[].class.equals(value.getClass()))
+        {
+            final byte[] data = (byte[]) value;
+            if (data.length <= 0)
+            {
+                return null;
+            }
+            return ByteBuffer.wrap(data);
+        }
+        if (value instanceof Serializable)
+        {
+            final byte[] data = DataUtils.objectToBytes((Serializable) value);
+            if (null == data || data.length <= 0)
+            {
+                return null;
+            }
+            return ByteBuffer.wrap(data);
+        }
+
+        throw new IllegalArgumentException("Unexpected value [" + value + "].");
     }
 
 
@@ -166,28 +253,13 @@ public class CassandraUtils
         }
         else
         {
-            return unpackSerialized(row, columnName, column);
-        }
-    }
-
-
-    private static Object unpackSerialized(final Row row, final String column, final ColumnMeta meta) throws IOException, ClassNotFoundException
-    {
-        final ByteBuffer buffer = row.getBytes(column);
-        if (null == buffer)
-        {
-            return null;
-        }
-
-        final ClassLoader cl = meta.getType().getClassLoader();
-        final ObjectInputStream input = new ClassLoaderObjectInputStream(cl, new ByteArrayInputStream(buffer.array()));
-        try
-        {
-            return input.readObject();
-        }
-        finally
-        {
-            IOUtils.closeQuietly(input);
+            final ByteBuffer buffer = row.getBytes(columnName);
+            if (null == buffer)
+            {
+                return null;
+            }
+            final Class serialized = column.getType();
+            return DataUtils.bytesToObject(serialized, buffer.array());
         }
     }
 

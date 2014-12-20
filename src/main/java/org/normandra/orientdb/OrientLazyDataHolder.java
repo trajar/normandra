@@ -12,8 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * a lazy-loaded orientdb data holder based on key/index lookup
  * <p>
- * User: bowen
- * Date: 4/5/14
+ * User: bowen Date: 4/5/14
  */
 public class OrientLazyDataHolder implements DataHolder
 {
@@ -29,7 +28,6 @@ public class OrientLazyDataHolder implements DataHolder
 
     private ODocument document;
 
-
     public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityContext meta, final ColumnMeta column, final Object key)
     {
         this.session = session;
@@ -37,7 +35,6 @@ public class OrientLazyDataHolder implements DataHolder
         this.column = column;
         this.key = key;
     }
-
 
     @Override
     public boolean isEmpty()
@@ -51,7 +48,6 @@ public class OrientLazyDataHolder implements DataHolder
             throw new IllegalStateException("Unable to query lazy loaded results from [" + this.entity + "] column [" + this.column + "].", e);
         }
     }
-
 
     @Override
     public Object get() throws NormandraException
@@ -71,29 +67,21 @@ public class OrientLazyDataHolder implements DataHolder
         }
     }
 
-
     private ODocument ensureResults() throws NormandraException
     {
         if (this.loaded.get())
         {
             return this.document;
         }
-        synchronized (this)
+        try
         {
-            if (this.loaded.get())
-            {
-                return this.document;
-            }
-            try
-            {
-                final OIdentifiable record = new OrientElementIdentity(this.entity).fromKey(this.session, this.key);
-                this.document = this.session.findDocument(record);
-                this.loaded.getAndSet(true);
-            }
-            catch (final Exception e)
-            {
-                throw new NormandraException("Unable to get orientdb document by key [" + this.key + "].", e);
-            }
+            final OIdentifiable record = new OrientElementIdentity(this.entity).fromKey(this.session, this.key);
+            this.document = this.session.findDocument(record);
+            this.loaded.getAndSet(true);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to get orientdb document by key [" + this.key + "].", e);
         }
         return this.document;
     }

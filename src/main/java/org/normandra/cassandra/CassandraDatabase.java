@@ -331,12 +331,11 @@ public class CassandraDatabase implements Database, CassandraAccessor
     private void refreshEntityTable(final String tableName, final DatabaseMeta meta)
     {
         // drop table as required
-        final List<Statement> statements = new ArrayList<>();
         if (DatabaseConstruction.RECREATE.equals(this.constructionMode) && this.hasTable(tableName))
         {
             final StringBuilder cql = new StringBuilder();
             cql.append("DROP TABLE ").append(tableName).append(";");
-            statements.add(new SimpleStatement(cql.toString()));
+            this.ensureSession().execute(new SimpleStatement(cql.toString()));
         }
 
         final Set<ColumnMeta> uniqueSet = new TreeSet<>();
@@ -364,20 +363,20 @@ public class CassandraDatabase implements Database, CassandraAccessor
 
         if (DatabaseConstruction.UPDATE.equals(this.constructionMode))
         {
-            // ensure we create base database with all keys - then updateInstance/add columns in separate comment
-            statements.add(defineTable(tableName, primaryColumns));
+            // ensure we create base database with all keys - then update/add columns in separate comment
+            this.ensureSession().execute(defineTable(tableName, primaryColumns));
             for (final ColumnMeta column : allColumns)
             {
                 final String name = column.getName();
                 if (!column.isPrimaryKey() && !this.hasColumn(tableName, name))
                 {
-                    final StringBuilder cql = new StringBuilder();
                     final String type = CassandraUtils.columnType(column);
                     if (type != null)
                     {
+                        final StringBuilder cql = new StringBuilder();
                         cql.append("ALTER TABLE ").append(tableName).append(IOUtils.LINE_SEPARATOR);
                         cql.append("ADD ").append(name).append(" ").append(type).append(";");
-                        statements.add(new SimpleStatement(cql.toString()));
+                        this.ensureSession().execute(new SimpleStatement(cql.toString()));
                     }
                 }
             }
@@ -385,9 +384,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         else
         {
             // create table and column definitions in one command
-            statements.add(defineTable(tableName, allColumns));
-
-            // create indices as needed
+            this.ensureSession().execute(defineTable(tableName, allColumns));
             for (final EntityMeta entity : meta)
             {
                 final TableMeta table = entity.getTable(tableName);
@@ -395,18 +392,15 @@ public class CassandraDatabase implements Database, CassandraAccessor
                 {
                     for (final ColumnMeta column : entity.getIndexed())
                     {
-                        final StringBuilder cql = new StringBuilder();
-                        cql.append("CREATE INDEX ON ").append(tableName).append(" (").append(column.getName()).append(");");
-                        statements.add(new SimpleStatement(cql.toString()));
+                        if (!column.isPrimaryKey())
+                        {
+                            final StringBuilder cql = new StringBuilder();
+                            cql.append("CREATE INDEX ON ").append(tableName).append(" (").append(column.getName()).append(");");
+                            this.ensureSession().execute(new SimpleStatement(cql.toString()));
+                        }
                     }
                 }
             }
-        }
-
-        // execute statements
-        for (final Statement statement : statements)
-        {
-            this.ensureSession().execute(statement);
         }
     }
 

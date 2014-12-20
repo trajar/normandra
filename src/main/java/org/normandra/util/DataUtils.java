@@ -2,7 +2,16 @@ package org.normandra.util;
 
 import org.apache.cassandra.serializers.InetAddressSerializer;
 import org.apache.cassandra.serializers.UUIDSerializer;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.ClassLoaderObjectInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -20,6 +29,53 @@ import java.util.UUID;
  */
 public class DataUtils
 {
+    private static final Logger logger = LoggerFactory.getLogger(DataUtils.class);
+
+
+    public static byte[] objectToBytes(final Serializable value)
+    {
+        if (null == value)
+        {
+            return new byte[0];
+        }
+        try
+        {
+            final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            final ObjectOutputStream output = new ObjectOutputStream(bytes);
+            output.writeObject(value);
+            IOUtils.closeQuietly(output);
+            return bytes.toByteArray();
+        }
+        catch (final Exception e)
+        {
+            logger.warn("Unable to serialize value [" + value + "].", e);
+            return new byte[0];
+        }
+    }
+
+
+    public static <T extends Serializable> T bytesToObject(final Class<T> clazz, final byte[] value)
+    {
+        if (null == value || value.length <= 0)
+        {
+            return null;
+        }
+        try
+        {
+            final ByteArrayInputStream bytes = new ByteArrayInputStream(value);
+            final ObjectInputStream input = new ClassLoaderObjectInputStream(clazz.getClassLoader(), bytes);
+            final Object instance = input.readObject();
+            IOUtils.closeQuietly(input);
+            return clazz.cast(instance);
+        }
+        catch (final Exception e)
+        {
+            logger.warn("Unable to deserialize value [" + value + "] of type [" + clazz + "].", e);
+            return null;
+        }
+    }
+
+
     public static byte[] inetToBytes(final InetAddress inet)
     {
         if (null == inet)

@@ -15,8 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * a lazy-loaded orientdb data holder based on query string
  * <p>
- * User: bowen
- * Date: 4/5/14
+ * User: bowen Date: 4/5/14
  */
 public class OrientLazyQueryHolder implements DataHolder
 {
@@ -38,7 +37,6 @@ public class OrientLazyQueryHolder implements DataHolder
 
     private final List<ODocument> documents = new ArrayList<>();
 
-
     public OrientLazyQueryHolder(final OrientDatabaseSession session, final EntityContext meta, final TableMeta table, final boolean collection, final String query, final List<Object> params, final OrientDocumentHandler handler)
     {
         this.session = session;
@@ -49,7 +47,6 @@ public class OrientLazyQueryHolder implements DataHolder
         this.parameters = new ArrayList<>(params);
         this.handler = handler;
     }
-
 
     @Override
     public boolean isEmpty()
@@ -63,7 +60,6 @@ public class OrientLazyQueryHolder implements DataHolder
             throw new IllegalStateException("Unable to query lazy loaded results from [" + this.entity + "] table [" + this.table + "].", e);
         }
     }
-
 
     @Override
     public Object get() throws NormandraException
@@ -99,35 +95,28 @@ public class OrientLazyQueryHolder implements DataHolder
         }
     }
 
-
     private List<ODocument> ensureResults() throws NormandraException
     {
         if (this.loaded.get())
         {
             return Collections.unmodifiableList(this.documents);
         }
-        synchronized (this)
+
+        try
         {
-            if (this.loaded.get())
+            this.documents.clear();
+            for (final ODocument doc : this.session.query(this.query, this.parameters))
             {
-                return Collections.unmodifiableList(this.documents);
-            }
-            try
-            {
-                this.documents.clear();
-                for (final ODocument doc : this.session.query(this.query, this.parameters))
+                if (doc != null)
                 {
-                    if (doc != null)
-                    {
-                        this.documents.add(doc);
-                    }
+                    this.documents.add(doc);
                 }
-                this.loaded.getAndSet(true);
             }
-            catch (final Exception e)
-            {
-                throw new NormandraException("Unable to get orientdb document by query [" + this.query + "].", e);
-            }
+            this.loaded.getAndSet(true);
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to get orientdb document by query [" + this.query + "].", e);
         }
         return Collections.unmodifiableList(this.documents);
     }
