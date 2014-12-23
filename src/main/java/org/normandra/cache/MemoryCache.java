@@ -84,7 +84,6 @@ public class MemoryCache implements EntityCache
             return null;
         }
 
-//      return meta.getType().cast(existing);
         return existing;
     }
 
@@ -158,5 +157,22 @@ public class MemoryCache implements EntityCache
             logger.warn("Unable to retrieve key to cache entity [" + instance + "] of type [" + meta + "].", e);
             return false;
         }
+    }
+
+
+    @Override
+    public boolean put(final EntityContext context, final Serializable key, final Object instance)
+    {
+        if (null == context || null == key || null == instance)
+        {
+            return false;
+        }
+
+        boolean updated = false;
+        for (final EntityMeta meta : context.getEntities())
+        {
+            updated |= this.put(meta, key, instance);
+        }
+        return updated;
     }
 }

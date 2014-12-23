@@ -18,4 +18,5 @@ public interface EntityCache
     Object get(EntityContext context, Serializable key);
     boolean remove(EntityMeta meta, Serializable key);
     boolean put(EntityMeta meta, Serializable key, Object entity);
+    boolean put(EntityContext context, Serializable key, Object entity);
 }

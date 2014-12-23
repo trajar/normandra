@@ -1,6 +1,5 @@
 package org.normandra.meta;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -9,13 +8,13 @@ import java.util.TreeSet;
 
 /**
  * database meta-data
- * <p/>
+ * <p>
  * User: bowen
  * Date: 9/4/13
  */
 public class DatabaseMeta implements Iterable<EntityMeta>
 {
-    private final Collection<EntityMeta> entities;
+    private final EntityMetaCollection entities;
 
 
     public DatabaseMeta(final Collection<EntityMeta> c)
@@ -24,7 +23,7 @@ public class DatabaseMeta implements Iterable<EntityMeta>
         {
             throw new IllegalArgumentException("Entities cannot be null/empty.");
         }
-        this.entities = new ArrayList<>(c);
+        this.entities = new EntityMetaCollection(c);
     }
 
 
@@ -44,7 +43,7 @@ public class DatabaseMeta implements Iterable<EntityMeta>
 
     public Collection<EntityMeta> getEntities()
     {
-        return Collections.unmodifiableCollection(this.entities);
+        return this.entities.list();
     }
 
 
@@ -75,19 +74,28 @@ public class DatabaseMeta implements Iterable<EntityMeta>
     @Override
     public Iterator<EntityMeta> iterator()
     {
-        return Collections.unmodifiableCollection(this.entities).iterator();
+        return this.entities.iterator();
     }
 
 
     @Override
     public boolean equals(Object o)
     {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
 
         DatabaseMeta that = (DatabaseMeta) o;
 
-        if (entities != null ? !entities.equals(that.entities) : that.entities != null) return false;
+        if (entities != null ? !entities.equals(that.entities) : that.entities != null)
+        {
+            return false;
+        }
 
         return true;
     }

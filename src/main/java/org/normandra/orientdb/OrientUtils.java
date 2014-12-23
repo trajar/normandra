@@ -440,6 +440,23 @@ public class OrientUtils
     }
 
 
+    public static String schemaName(final EntityMeta meta)
+    {
+        if (null == meta)
+        {
+            return null;
+        }
+        for (final TableMeta table : meta.getTables())
+        {
+            if (!table.isJoinTable())
+            {
+                return table.getName();
+            }
+        }
+        return meta.getName();
+    }
+
+
     private OrientUtils()
     {
     }

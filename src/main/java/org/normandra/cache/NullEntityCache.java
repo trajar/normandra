@@ -76,6 +76,13 @@ public class NullEntityCache implements EntityCache
     }
 
 
+    @Override
+    public boolean put(EntityContext context, Serializable key, Object entity)
+    {
+        return false;
+    }
+
+
     private NullEntityCache()
     {
     }

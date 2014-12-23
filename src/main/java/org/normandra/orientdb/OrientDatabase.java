@@ -1,7 +1,7 @@
 package org.normandra.orientdb;
 
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -56,24 +56,26 @@ public class OrientDatabase implements Database
 
     private final String url;
 
-    private final String userId;
-
-    private final String password;
-
     private final EntityCacheFactory cache;
 
     private final DatabaseConstruction constructionMode;
 
-    private final ODatabaseDocumentPool pool = createPool();
+    private final OPartitionedDatabasePool pool;
 
     private final Map<String, OrientQuery> statementsByName = new ConcurrentHashMap<>();
 
 
     public OrientDatabase(final String url, final String user, final String pwd, final EntityCacheFactory cache, final DatabaseConstruction mode)
     {
-        if (null == url || url.isEmpty())
+        this(url, new OPartitionedDatabasePool(url, user, pwd), cache, mode);
+    }
+
+
+    public OrientDatabase(final String url, final OPartitionedDatabasePool pool, final EntityCacheFactory cache, final DatabaseConstruction mode)
+    {
+        if (null == pool)
         {
-            throw new IllegalArgumentException("URL cannot be null/empty.");
+            throw new NullArgumentException("database pool");
         }
         if (null == cache)
         {
@@ -84,8 +86,7 @@ public class OrientDatabase implements Database
             throw new NullArgumentException("construction mode");
         }
         this.url = url;
-        this.userId = user;
-        this.password = pwd;
+        this.pool = pool;
         this.cache = cache;
         this.constructionMode = mode;
     }
@@ -93,7 +94,7 @@ public class OrientDatabase implements Database
 
     protected final ODatabaseDocumentTx createDatabase()
     {
-        return this.pool.acquire(this.url, this.userId, this.password);
+        return this.pool.acquire();
     }
 
 
@@ -512,14 +513,5 @@ public class OrientDatabase implements Database
     {
         // cleanup and shutdown
         this.pool.close();
-    }
-
-
-    private static ODatabaseDocumentPool createPool()
-    {
-        final ODatabaseDocumentPool pool = new ODatabaseDocumentPool();
-        pool.setup(0, 10);
-        pool.setName(OrientDatabase.class.getSimpleName() + "-PoolThread");
-        return pool;
     }
 }

@@ -5,23 +5,26 @@
  */
 package org.normandra.meta;
 
+import org.apache.commons.lang.NullArgumentException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang.NullArgumentException;
 
 /**
  * a set of entity meta instances
  *
  * @author bowen
  */
-public class EntityMetaCollection implements EntityMetaLookup
+public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMeta>
 {
     private final Map<Class, EntityMeta> classMap = new HashMap<>();
+
 
     public EntityMetaCollection(final Iterable<EntityMeta> metas)
     {
@@ -34,6 +37,7 @@ public class EntityMetaCollection implements EntityMetaLookup
             this.classMap.put(entity.getType(), entity);
         }
     }
+
 
     @Override
     public EntityMeta getMeta(final Class<?> clazz)
@@ -58,6 +62,7 @@ public class EntityMetaCollection implements EntityMetaLookup
         }
     }
 
+
     @Override
     public final EntityMeta getMeta(final String labelOrType)
     {
@@ -81,6 +86,7 @@ public class EntityMetaCollection implements EntityMetaLookup
         }
         return null;
     }
+
 
     @Override
     public final List<EntityMeta> findMeta(final Class<?> clazz)
@@ -114,6 +120,7 @@ public class EntityMetaCollection implements EntityMetaLookup
         }
     }
 
+
     @Override
     public final EntityContext findContext(final Class<?> clazz)
     {
@@ -135,17 +142,20 @@ public class EntityMetaCollection implements EntityMetaLookup
         }
     }
 
+
     @Override
     public Collection<EntityMeta> list()
     {
         return Collections.unmodifiableCollection(this.classMap.values());
     }
 
+
     @Override
     public boolean contains(final Class<?> clazz)
     {
         return !this.findMeta(clazz).isEmpty();
     }
+
 
     @Override
     public boolean contains(EntityMeta meta)
@@ -164,9 +174,17 @@ public class EntityMetaCollection implements EntityMetaLookup
         return false;
     }
 
+
     @Override
     public int size()
     {
         return this.classMap.size();
+    }
+
+
+    @Override
+    public Iterator<EntityMeta> iterator()
+    {
+        return Collections.unmodifiableCollection(this.classMap.values()).iterator();
     }
 }
