@@ -25,7 +25,6 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
 {
     private final Map<Class, EntityMeta> classMap = new HashMap<>();
 
-
     public EntityMetaCollection(final Iterable<EntityMeta> metas)
     {
         if (null == metas)
@@ -37,7 +36,6 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
             this.classMap.put(entity.getType(), entity);
         }
     }
-
 
     @Override
     public EntityMeta getMeta(final Class<?> clazz)
@@ -52,16 +50,16 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
             return existing;
         }
         final List<EntityMeta> list = this.findMeta(clazz);
-        if (list.size() == 1)
-        {
-            return list.get(0);
-        }
-        else
+        if (list.isEmpty())
         {
             return null;
         }
+        if (list.size() != 1)
+        {
+            throw new IllegalArgumentException("Found multiple entities for [" + clazz + "].");
+        }
+        return list.get(0);
     }
-
 
     @Override
     public final EntityMeta getMeta(final String labelOrType)
@@ -86,7 +84,6 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         }
         return null;
     }
-
 
     @Override
     public final List<EntityMeta> findMeta(final Class<?> clazz)
@@ -120,7 +117,6 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         }
     }
 
-
     @Override
     public final EntityContext findContext(final Class<?> clazz)
     {
@@ -142,20 +138,17 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         }
     }
 
-
     @Override
     public Collection<EntityMeta> list()
     {
         return Collections.unmodifiableCollection(this.classMap.values());
     }
 
-
     @Override
     public boolean contains(final Class<?> clazz)
     {
         return !this.findMeta(clazz).isEmpty();
     }
-
 
     @Override
     public boolean contains(EntityMeta meta)
@@ -174,13 +167,11 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         return false;
     }
 
-
     @Override
     public int size()
     {
         return this.classMap.size();
     }
-
 
     @Override
     public Iterator<EntityMeta> iterator()
