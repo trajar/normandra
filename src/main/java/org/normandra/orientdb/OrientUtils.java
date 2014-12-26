@@ -39,6 +39,9 @@ import java.util.UUID;
  */
 public class OrientUtils
 {
+    private static final String genericEdgeLabel = "Edge";
+
+
     public static Object unpackValue(final ODocument document, final ColumnMeta column)
     {
         if (null == document || null == column)
@@ -452,6 +455,16 @@ public class OrientUtils
             {
                 return table.getName();
             }
+        }
+        return meta.getName();
+    }
+
+
+    public static String labelName(final EntityMeta meta)
+    {
+        if (null == meta)
+        {
+            return genericEdgeLabel;
         }
         return meta.getName();
     }

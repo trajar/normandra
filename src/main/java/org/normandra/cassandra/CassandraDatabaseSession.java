@@ -497,10 +497,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             }
 
             final Object key = meta.getId().fromEntity(element);
-            if (key instanceof Serializable)
-            {
-                this.cache.put(meta, (Serializable) key, element);
-            }
+            this.cache.put(meta, key, element);
         }
         catch (final Exception e)
         {

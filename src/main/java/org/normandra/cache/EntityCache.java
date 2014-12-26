@@ -3,7 +3,8 @@ package org.normandra.cache;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 
-import java.io.Serializable;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * entity cache api
@@ -14,9 +15,11 @@ import java.io.Serializable;
 public interface EntityCache
 {
     void clear();
-    Object get(EntityMeta meta, Serializable key);
-    Object get(EntityContext context, Serializable key);
-    boolean remove(EntityMeta meta, Serializable key);
-    boolean put(EntityMeta meta, Serializable key, Object entity);
-    boolean put(EntityContext context, Serializable key, Object entity);
+    <T> T get(EntityMeta meta, Object key, Class<T> clazz);
+    <T> T get(EntityContext context, Object key, Class<T> clazz);
+    <T> Map<Object, T> find(EntityMeta meta, Collection<?> keys, Class<T> clazz);
+    <T> Map<Object, T> find(EntityContext context, Collection<?> keys, Class<T> clazz);
+    boolean remove(EntityMeta meta, Object key);
+    boolean put(EntityMeta meta, Object key, Object entity);
+    boolean put(EntityContext context, Object key, Object entity);
 }

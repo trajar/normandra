@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -181,10 +182,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             this.activities.add(new OrientUpdateActivity(operation, rids, new Date(), end - start));
 
             final Object key = meta.getId().fromEntity(element);
-            if (key instanceof Serializable)
-            {
-                this.cache.put(meta, (Serializable) key, element);
-            }
+            this.cache.put(meta, key, element);
         }
         catch (final Exception e)
         {
@@ -377,13 +375,10 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             throw new NullArgumentException("key");
         }
 
-        if (key instanceof Serializable)
+        final Object existing = this.cache.get(context, key, Object.class);
+        if (existing != null)
         {
-            final Object existing = this.cache.get(context, (Serializable) key);
-            if (existing != null)
-            {
-                return existing;
-            }
+            return existing;
         }
 
         try
@@ -438,11 +433,20 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             return Collections.emptyList();
         }
 
+        // query context
+        final Set<Object> keyset = new HashSet<>(Arrays.asList(keys));
+        final Map<Object, Object> cached = this.cache.find(context, Arrays.asList(keys), Object.class);
+        keyset.removeAll(cached.keySet());
+        if (keyset.isEmpty())
+        {
+            return Collections.unmodifiableList(new ArrayList<>(cached.values()));
+        }
+
         // query ids for each entity context
         final Set<OIdentifiable> rids = new TreeSet<>();
         for (final TableMeta table : context.getPrimaryTables())
         {
-            rids.addAll(this.findIdByKeys(context, table, Arrays.asList(keys)));
+            rids.addAll(this.findIdByKeys(context, table, keyset));
         }
         final Map<Object, Map<ColumnMeta, Object>> entityData = new HashMap<>(rids.size());
         for (final OIdentifiable rid : rids)
@@ -473,17 +477,18 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
                 }
             }
         }
-        if (entityData.isEmpty())
-        {
-            return Collections.emptyList();
-        }
-        final List<Object> result = new ArrayList<>(entityData.size());
+
+        // build entities
+        final List<Object> result = new ArrayList<>(cached.values());
         for (final Map.Entry<Object, Map<ColumnMeta, Object>> entry : entityData.entrySet())
         {
+            final Map<ColumnMeta, Object> data = entry.getValue();
             final EntityBuilder builder = new EntityBuilder(this, new OrientDataFactory(this));
-            final Object instance = builder.build(context, entry.getValue());
+            final Object instance = builder.build(context, data);
             if (instance != null)
             {
+                final Object key = context.findEntity(data);
+                this.cache.put(context, key, instance);
                 result.add(instance);
             }
         }

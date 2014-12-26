@@ -6,7 +6,9 @@ import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -65,7 +67,7 @@ public class MemoryCache implements EntityCache
 
 
     @Override
-    public Object get(final EntityMeta meta, final Serializable key)
+    public <T> T get(final EntityMeta meta, final Object key, final Class<T> clazz)
     {
         if (null == meta || null == key)
         {
@@ -84,12 +86,24 @@ public class MemoryCache implements EntityCache
             return null;
         }
 
-        return existing;
+        if (null == clazz || Object.class.equals(clazz))
+        {
+            return (T) existing;
+        }
+
+        try
+        {
+            return clazz.cast(existing);
+        }
+        catch (final ClassCastException e)
+        {
+            return null;
+        }
     }
 
 
     @Override
-    public Object get(final EntityContext context, final Serializable key)
+    public <T> T get(final EntityContext context, final Object key, final Class<T> clazz)
     {
         if (null == context || null == key)
         {
@@ -97,7 +111,7 @@ public class MemoryCache implements EntityCache
         }
         for (final EntityMeta meta : context.getEntities())
         {
-            final Object existing = this.get(meta, key);
+            final T existing = this.get(meta, key, clazz);
             if (existing != null)
             {
                 return existing;
@@ -108,7 +122,49 @@ public class MemoryCache implements EntityCache
 
 
     @Override
-    public boolean remove(final EntityMeta meta, final Serializable key)
+    public <T> Map<Object, T> find(final EntityMeta meta, final Collection<?> keys, final Class<T> clazz)
+    {
+        if (null == meta || null == keys || keys.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+
+        final Map<Object, T> map = new HashMap<>();
+        for (final Object key : keys)
+        {
+            final T item = this.get(meta, key, clazz);
+            if (item != null)
+            {
+                map.put(key, item);
+            }
+        }
+        return Collections.unmodifiableMap(map);
+    }
+
+
+    @Override
+    public <T> Map<Object, T> find(final EntityContext context, final Collection<?> keys, final Class<T> clazz)
+    {
+        if (null == context || null == keys || keys.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+
+        final Map<Object, T> map = new HashMap<>();
+        for (final Object key : keys)
+        {
+            final T item = this.get(context, key, clazz);
+            if (item != null)
+            {
+                map.put(key, item);
+            }
+        }
+        return Collections.unmodifiableMap(map);
+    }
+
+
+    @Override
+    public boolean remove(final EntityMeta meta, final Object key)
     {
         if (null == meta || null == meta.getId() || null == key)
         {
@@ -133,7 +189,7 @@ public class MemoryCache implements EntityCache
 
 
     @Override
-    public boolean put(final EntityMeta meta, final Serializable key, final Object instance)
+    public boolean put(final EntityMeta meta, final Object key, final Object instance)
     {
         if (null == meta || null == key || null == instance)
         {
@@ -161,7 +217,7 @@ public class MemoryCache implements EntityCache
 
 
     @Override
-    public boolean put(final EntityContext context, final Serializable key, final Object instance)
+    public boolean put(final EntityContext context, final Object key, final Object instance)
     {
         if (null == context || null == key || null == instance)
         {

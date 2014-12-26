@@ -3,7 +3,9 @@ package org.normandra.cache;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 
-import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * an empty cache api that doesn't actually cache elements
@@ -49,35 +51,49 @@ public class NullEntityCache implements EntityCache
 
 
     @Override
-    public Object get(EntityMeta meta, Serializable key)
+    public <T> Map<Object, T> find(EntityMeta meta, Collection<?> keys, Class<T> clazz)
+    {
+        return Collections.emptyMap();
+    }
+
+
+    @Override
+    public <T> Map<Object, T> find(EntityContext context, Collection<?> keys, Class<T> clazz)
+    {
+        return Collections.emptyMap();
+    }
+
+
+    @Override
+    public Object get(EntityMeta meta, Object key, Class clazz)
     {
         return null;
     }
 
 
     @Override
-    public Object get(EntityContext context, Serializable key)
+    public Object get(EntityContext context, Object key, Class clazz)
     {
         return null;
     }
 
 
     @Override
-    public boolean remove(EntityMeta meta, Serializable key)
+    public boolean remove(EntityMeta meta, Object key)
     {
         return false;
     }
 
 
     @Override
-    public boolean put(EntityMeta meta, Serializable key, Object entity)
+    public boolean put(EntityMeta meta, Object key, Object entity)
     {
         return false;
     }
 
 
     @Override
-    public boolean put(EntityContext context, Serializable key, Object entity)
+    public boolean put(EntityContext context, Object key, Object entity)
     {
         return false;
     }
@@ -85,5 +101,6 @@ public class NullEntityCache implements EntityCache
 
     private NullEntityCache()
     {
+
     }
 }
