@@ -11,8 +11,7 @@ import java.util.List;
 /**
  * a generic table meta
  * <p/>
- * User: bowen
- * Date: 3/14/14
+ * User: bowen Date: 3/14/14
  */
 public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
 {
@@ -21,7 +20,6 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
     private final String name;
 
     private final Collection<ColumnMeta> columns = new ArraySet<>();
-
 
     public TableMeta(final String table, final boolean join)
     {
@@ -33,18 +31,15 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
         this.joinTable = join;
     }
 
-
     public boolean isJoinTable()
     {
         return this.joinTable;
     }
 
-
     public String getName()
     {
         return this.name;
     }
-
 
     public Collection<ColumnMeta> getLazyLoaded()
     {
@@ -59,7 +54,6 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
         return Collections.unmodifiableList(list);
     }
 
-
     public Collection<ColumnMeta> getEagerLoaded()
     {
         final List<ColumnMeta> list = new ArrayList<>();
@@ -72,7 +66,6 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
         }
         return Collections.unmodifiableList(list);
     }
-
 
     public Collection<ColumnMeta> getPrimaryKeys()
     {
@@ -87,18 +80,24 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
         return Collections.unmodifiableList(keys);
     }
 
+    public boolean hasColumn(final ColumnMeta column)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        return this.columns.contains(column);
+    }
 
     public boolean hasColumn(final String nameOrProperty)
     {
         return this.getColumn(nameOrProperty) != null;
     }
 
-
     public Collection<ColumnMeta> getColumns()
     {
         return Collections.unmodifiableCollection(this.columns);
     }
-
 
     public ColumnMeta getColumn(final String nameOrProperty)
     {
@@ -120,7 +119,6 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
         return null;
     }
 
-
     boolean addColumn(final ColumnMeta column)
     {
         if (null == column)
@@ -129,7 +127,6 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
         }
         return this.columns.add(column);
     }
-
 
     boolean removeColumn(final ColumnMeta column)
     {
@@ -140,13 +137,11 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
         return this.columns.remove(column);
     }
 
-
     @Override
     public Iterator<ColumnMeta> iterator()
     {
         return Collections.unmodifiableCollection(this.columns).iterator();
     }
-
 
     @Override
     public int compareTo(final TableMeta tbl)
@@ -158,29 +153,41 @@ public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
         return this.name.compareToIgnoreCase(tbl.name);
     }
 
-
     @Override
     public String toString()
     {
         return this.name + " (" + (this.joinTable ? "secondary" : "primary") + ")";
     }
 
-
     @Override
     public boolean equals(Object o)
     {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
 
         TableMeta that = (TableMeta) o;
 
-        if (joinTable != that.joinTable) return false;
-        if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (joinTable != that.joinTable)
+        {
+            return false;
+        }
+        if (columns != null ? !columns.equals(that.columns) : that.columns != null)
+        {
+            return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null)
+        {
+            return false;
+        }
 
         return true;
     }
-
 
     @Override
     public int hashCode()
