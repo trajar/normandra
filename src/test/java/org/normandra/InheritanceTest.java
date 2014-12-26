@@ -29,16 +29,16 @@ public class InheritanceTest extends BaseTest
         for (final TestHelper helper : helpers)
         {
             final EntityManager manager = helper.getManager();
-            Assert.assertFalse(manager.exists(AnimalEntity.class, 1));
-            Assert.assertFalse(manager.exists(AnimalEntity.class, 1));
+            Assert.assertFalse(manager.exists(AnimalEntity.class, 1L));
+            Assert.assertFalse(manager.exists(AnimalEntity.class, 1L));
 
             final DogEntity dog = new DogEntity("sophi", 12);
             manager.save(dog);
 
-            Assert.assertTrue(manager.exists(DogEntity.class, 1));
-            Assert.assertTrue(manager.exists(AnimalEntity.class, 1));
-            Assert.assertEquals(dog, manager.get(DogEntity.class, 1));
-            Assert.assertEquals(dog, manager.get(AnimalEntity.class, 1));
+            Assert.assertTrue(manager.exists(DogEntity.class, 1L));
+            Assert.assertTrue(manager.exists(AnimalEntity.class, 1L));
+            Assert.assertEquals(dog, manager.get(DogEntity.class, 1L));
+            Assert.assertEquals(dog, manager.get(AnimalEntity.class, 1L));
         }
     }
 
