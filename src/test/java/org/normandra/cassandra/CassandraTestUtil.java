@@ -6,8 +6,6 @@ import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.service.EmbeddedCassandraService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.PatternLayout;
 import org.normandra.DatabaseConstruction;
 import org.normandra.cache.NullEntityCache;
 import org.slf4j.Logger;
@@ -166,6 +164,7 @@ public class CassandraTestUtil
 
     private static void log4j(final boolean resetAppenders)
     {
+        /*
         if (resetAppenders)
         {
             final ConsoleAppender console = new ConsoleAppender(); //create appender
@@ -176,11 +175,12 @@ public class CassandraTestUtil
             org.apache.log4j.Logger.getRootLogger().getLoggerRepository().resetConfiguration();
             org.apache.log4j.Logger.getRootLogger().addAppender(console);
         }
-        org.apache.log4j.Logger.getRootLogger().setLevel(org.apache.log4j.Level.WARN);
+        org.apache.log4j..getRootLogger().setLevel(org.apache.log4j.Level.WARN);
         org.apache.log4j.Logger.getLogger("org.apache.cassandra.db.Memtable").setLevel(org.apache.log4j.Level.OFF);
         java.util.logging.Logger.getGlobal().setLevel(java.util.logging.Level.WARNING);
         java.util.logging.Logger.getAnonymousLogger().setLevel(java.util.logging.Level.WARNING);
         java.util.logging.Logger.getLogger("org.apache.cassandra.db.Memtable").setLevel(java.util.logging.Level.OFF);
+        */
     }
 
 

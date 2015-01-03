@@ -1,6 +1,5 @@
 package org.normandra.cassandra;
 
-import org.apache.log4j.BasicConfigurator;
 import org.normandra.DatabaseConstruction;
 import org.normandra.EntityManager;
 import org.normandra.EntityManagerFactory;
@@ -37,7 +36,6 @@ public class CassandraTestHelper implements TestHelper
 
     public static void setup() throws Exception
     {
-        BasicConfigurator.configure();
         CassandraTestUtil.start("/cassandra-2.1.0.yaml");
     }
 

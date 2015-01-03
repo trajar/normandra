@@ -3,7 +3,6 @@ package org.normandra.orientdb;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.BasicConfigurator;
 import org.normandra.DatabaseConstruction;
 import org.normandra.EntityManager;
 import org.normandra.EntityManagerFactory;
@@ -47,7 +46,6 @@ public class OrientTestHelper implements TestHelper
     public static void setup() throws Exception
     {
         // storage.keepOpen=false
-        BasicConfigurator.configure();
         if (dir.exists())
         {
             FileUtils.deleteDirectory(dir);
