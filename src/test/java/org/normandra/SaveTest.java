@@ -1,8 +1,15 @@
 package org.normandra;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
-import org.normandra.entities.*;
+import org.normandra.entities.CatEntity;
+import org.normandra.entities.ClassEntity;
+import org.normandra.entities.CompositeIndexEntity;
+import org.normandra.entities.DogEntity;
+import org.normandra.entities.StudentDirectoryEntity;
+import org.normandra.entities.StudentEntity;
+import org.normandra.entities.StudentIndexEntity;
+import org.normandra.entities.ZooEntity;
 import org.normandra.meta.EntityMeta;
 
 import java.util.Arrays;

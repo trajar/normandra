@@ -1,14 +1,22 @@
 package org.normandra.cassandra;
 
-import junit.framework.Assert;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.normandra.data.BasicColumnAccessorFactory;
 import org.normandra.data.CompositeIdAccessor;
 import org.normandra.data.NullIdAccessor;
-import org.normandra.entities.*;
+import org.normandra.entities.CatEntity;
+import org.normandra.entities.ClassEntity;
+import org.normandra.entities.CompositeIndexEntity;
+import org.normandra.entities.DogEntity;
+import org.normandra.entities.SimpleEntity;
+import org.normandra.entities.StudentDirectoryEntity;
+import org.normandra.entities.StudentEntity;
+import org.normandra.entities.StudentIndexEntity;
+import org.normandra.entities.ZooEntity;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;

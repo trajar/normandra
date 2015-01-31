@@ -1,6 +1,6 @@
 package org.normandra;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 import org.normandra.entities.AnimalEntity;
 import org.normandra.entities.CatEntity;
