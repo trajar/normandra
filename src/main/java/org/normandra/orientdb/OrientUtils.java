@@ -34,13 +34,11 @@ import java.util.UUID;
 /**
  * collection of common orient utilities
  * <p>
- * User: bowen
- * Date: 5/15/14
+ * User: bowen Date: 5/15/14
  */
 public class OrientUtils
 {
     private static final String genericEdgeLabel = "Edge";
-
 
     public static Object unpackValue(final ODocument document, final ColumnMeta column)
     {
@@ -58,7 +56,6 @@ public class OrientUtils
 
         return OrientUtils.unpackRaw(column, raw);
     }
-
 
     public static Object unpackKey(final EntityContext context, final ODocument document)
     {
@@ -91,7 +88,6 @@ public class OrientUtils
         return context.getId().toKey(data);
     }
 
-
     public static Object unpackKey(final EntityMeta meta, final ODocument document)
     {
         if (null == meta || null == document)
@@ -120,7 +116,6 @@ public class OrientUtils
         return meta.getId().toKey(data);
     }
 
-
     public static Map<ColumnMeta, Object> unpackValues(final EntityContext context, final ODocument document)
     {
         if (null == context || null == document)
@@ -145,7 +140,6 @@ public class OrientUtils
         return Collections.unmodifiableMap(data);
     }
 
-
     private static Object unpackRaw(final ColumnMeta column, final Object value)
     {
         if (null == column || null == value)
@@ -167,7 +161,15 @@ public class OrientUtils
         if (column.isCollection() && value instanceof Collection)
         {
             final Collection list = (Collection) value;
-            final List packed = new ArrayList<>(list.size());
+            final Collection packed;
+            if (value instanceof List)
+            {
+                packed = new ArrayList<>(list.size());
+            }
+            else
+            {
+                packed = new ArraySet<>(list.size());
+            }
             for (final Object item : list)
             {
                 final Object pack = unpackPrimitive(clazz, item);
@@ -181,7 +183,6 @@ public class OrientUtils
 
         return unpackPrimitive(clazz, value);
     }
-
 
     public static Object packValue(final ColumnMeta column, final Object value)
     {
@@ -213,7 +214,6 @@ public class OrientUtils
 
         return packPrimitive(value);
     }
-
 
     private static Object unpackPrimitive(final Class<?> clazz, final Object value)
     {
@@ -256,7 +256,6 @@ public class OrientUtils
         }
         return value;
     }
-
 
     private static Object packPrimitive(final Object value)
     {
@@ -325,7 +324,6 @@ public class OrientUtils
         throw new IllegalArgumentException("Unexpected value [" + value + "].");
     }
 
-
     public static OType columnType(final ColumnMeta column)
     {
         if (null == column)
@@ -379,7 +377,6 @@ public class OrientUtils
         }
     }
 
-
     private static OType primitiveType(final Class<?> clazz)
     {
         // handle regular values
@@ -422,7 +419,6 @@ public class OrientUtils
         return OType.BINARY;
     }
 
-
     static String keyIndex(final TableMeta table)
     {
         if (null == table)
@@ -442,7 +438,6 @@ public class OrientUtils
         }
     }
 
-
     public static String schemaName(final EntityMeta meta)
     {
         if (null == meta)
@@ -459,7 +454,6 @@ public class OrientUtils
         return meta.getName();
     }
 
-
     public static String labelName(final EntityMeta meta)
     {
         if (null == meta)
@@ -468,7 +462,6 @@ public class OrientUtils
         }
         return meta.getName();
     }
-
 
     private OrientUtils()
     {
