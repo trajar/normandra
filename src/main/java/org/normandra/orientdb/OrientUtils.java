@@ -161,6 +161,19 @@ public class OrientUtils
         if (column.isCollection() && value instanceof Collection)
         {
             final Collection list = (Collection) value;
+            final Class<?> generic;
+            if (column instanceof EmbeddedCollectionMeta)
+            {
+                generic = ((EmbeddedCollectionMeta) column).getGeneric();
+            }
+            else if (column instanceof JoinCollectionMeta)
+            {
+                generic = ((JoinCollectionMeta) column).getEntity().getPrimaryKey().getType();
+            }
+            else
+            {
+                generic = column.getType();
+            }
             final Collection packed;
             if (value instanceof List)
             {
@@ -172,7 +185,7 @@ public class OrientUtils
             }
             for (final Object item : list)
             {
-                final Object pack = unpackPrimitive(clazz, item);
+                final Object pack = unpackPrimitive(generic, item);
                 if (pack != null)
                 {
                     packed.add(pack);
