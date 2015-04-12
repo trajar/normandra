@@ -3,10 +3,7 @@ package org.normandra.orientdb;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
-import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
-import org.normandra.meta.EntityMeta;
-import org.normandra.util.EntityBuilder;
 import org.normandra.util.LazyCollection;
 
 import java.util.ArrayList;
@@ -14,7 +11,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * orientdb query api
@@ -73,7 +69,7 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         {
             return null;
         }
-        return this.build(last);
+        return this.session.build(this.context, last);
     }
 
 
@@ -112,7 +108,7 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         final List<T> items = new ArrayList<>(subset.size());
         for (final ODocument doc : subset)
         {
-            final T item = this.build(doc);
+            final T item = this.session.build(this.context, doc);
             if (item != null)
             {
                 items.add(item);
@@ -145,7 +141,7 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
                 }
                 try
                 {
-                    return build(doc);
+                    return session.build(context, doc);
                 }
                 catch (final Exception e)
                 {
@@ -164,31 +160,5 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         }
         this.lazy = new LazyCollection<>(this.query.execute());
         return this.lazy;
-    }
-
-
-    private T build(final ODocument document) throws NormandraException
-    {
-        if (null == document)
-        {
-            return null;
-        }
-
-        final Map<ColumnMeta, Object> datamap = OrientUtils.unpackValues(this.context, document);
-        if (null == datamap || datamap.isEmpty())
-        {
-            return null;
-        }
-
-        final OrientDataFactory factory = new OrientDataFactory(this.session);
-        final T element = (T) new EntityBuilder(this.session, factory).build(this.context, datamap);
-        if (null == element)
-        {
-            return null;
-        }
-        final Object key = this.context.getId().fromEntity(element);
-        final EntityMeta meta = this.context.findEntity(datamap);
-        this.session.getCache().put(meta, key, element);
-        return element;
     }
 }

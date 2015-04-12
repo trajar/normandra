@@ -1,9 +1,9 @@
 package org.normandra;
 
-import org.normandra.meta.EntityMetaLookup;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.EntityMetaLookup;
 import org.normandra.meta.HierarchyEntityContext;
 import org.normandra.meta.SingleEntityContext;
 
@@ -24,7 +24,7 @@ public class EntityManager implements Transactional
     private final EntityMetaLookup lookup;
 
 
-    protected EntityManager(final DatabaseSession db, final EntityMetaLookup lookup)
+    public EntityManager(final DatabaseSession db, final EntityMetaLookup lookup)
     {
         if (null == db)
         {

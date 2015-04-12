@@ -75,12 +75,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
 
-    final EntityCache getCache()
-    {
-        return this.cache;
-    }
-
-
     @Override
     public void close()
     {
@@ -760,5 +754,31 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             }
         }
         return null;
+    }
+
+
+    final <T> T build(final EntityContext context, final ODocument document) throws NormandraException
+    {
+        if (null == document)
+        {
+            return null;
+        }
+
+        final Map<ColumnMeta, Object> datamap = OrientUtils.unpackValues(context, document);
+        if (null == datamap || datamap.isEmpty())
+        {
+            return null;
+        }
+
+        final OrientDataFactory factory = new OrientDataFactory(this);
+        final T element = (T) new EntityBuilder(this, factory).build(context, datamap);
+        if (null == element)
+        {
+            return null;
+        }
+        final Object key = context.getId().fromEntity(element);
+        final EntityMeta meta = context.findEntity(datamap);
+        this.cache.put(meta, key, element);
+        return element;
     }
 }
