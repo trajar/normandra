@@ -12,6 +12,7 @@ import org.normandra.AbstractTransactional;
 import org.normandra.DatabaseQuery;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
+import org.normandra.Transaction;
 import org.normandra.cache.EntityCache;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.log.DatabaseActivity;
@@ -24,7 +25,6 @@ import org.normandra.util.EntityBuilder;
 import org.normandra.util.EntityPersistence;
 import org.normandra.util.LazyCollection;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -100,10 +100,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     @Override
     public void beginWork() throws NormandraException
     {
-        if (this.database.getTransaction() != null && this.database.getTransaction().isActive())
-        {
-            throw new NormandraException("Transaction already active.");
-        }
         this.database.begin();
         this.userTransaction.getAndSet(true);
     }
@@ -144,27 +140,13 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             throw new NullArgumentException("element");
         }
 
-        final boolean commitWhenDone;
-        if (this.userTransaction.get())
-        {
-            commitWhenDone = false;
-        }
-        else
-        {
-            commitWhenDone = true;
-            this.database.begin();
-        }
-
-        try
+        try (final Transaction tx = this.beginTransaction())
         {
             final long start = System.currentTimeMillis();
             final DatabaseActivity.Type operation = DatabaseActivity.Type.UPDATE;
             final OrientDataHandler handler = new OrientDataHandler(this);
             new EntityPersistence(this).save(meta, element, handler);
-            if (commitWhenDone)
-            {
-                this.database.commit();
-            }
+            tx.success();
             final long end = System.currentTimeMillis();
 
             final Collection<ODocument> documents = handler.getDocuments();
@@ -180,10 +162,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
         catch (final Exception e)
         {
-            if (commitWhenDone)
-            {
-                this.database.rollback();
-            }
             throw new NormandraException("Unable to create/save new orientdb document.", e);
         }
     }
@@ -201,18 +179,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             throw new NullArgumentException("element");
         }
 
-        final boolean commitWhenDone;
-        if (this.userTransaction.get())
-        {
-            commitWhenDone = false;
-        }
-        else
-        {
-            commitWhenDone = true;
-            this.database.begin();
-        }
-
-        try
+        try (final Transaction tx = this.beginTransaction())
         {
             final EntityContext context = new SingleEntityContext(meta);
             final long start = System.currentTimeMillis();
@@ -236,23 +203,16 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
                     this.database.delete(rid.getIdentity());
                 }
             }
-            if (commitWhenDone)
-            {
-                this.database.commit();
-            }
+            tx.success();
 
             final Object key = meta.getId().fromEntity(element);
-            if (key instanceof Serializable)
-            {
-                this.cache.remove(meta, (Serializable) key);
-            }
+            this.cache.remove(meta, key);
 
             final long end = System.currentTimeMillis();
             this.activities.add(new OrientUpdateActivity(DatabaseActivity.Type.DELETE, rids, new Date(), end - start));
         }
         catch (final Exception e)
         {
-            this.database.rollback();
             throw new NormandraException("Unable to delete orientdb document.", e);
         }
     }
