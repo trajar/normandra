@@ -20,8 +20,7 @@ import java.util.TreeMap;
 /**
  * simple utility class to help simplify saving of orientdb documents
  * <p>
- * User: bowen
- * Date: 6/4/14
+ * User: bowen Date: 6/4/14
  */
 public class OrientDataHandler implements DataHandler
 {
@@ -29,18 +28,15 @@ public class OrientDataHandler implements DataHandler
 
     private final List<ODocument> documents = new ArrayList<>();
 
-
     public OrientDataHandler(OrientDatabaseSession session)
     {
         this.session = session;
     }
 
-
     public Collection<ODocument> getDocuments()
     {
         return Collections.unmodifiableCollection(this.documents);
     }
-
 
     @Override
     public boolean save(final EntityMeta entity, final TableMeta table, final Map<ColumnMeta, Object> data)
@@ -70,19 +66,22 @@ public class OrientDataHandler implements DataHandler
         for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
         {
             final ColumnMeta column = entry.getKey();
+            final String name = column.getName();
             final Object value = entry.getValue();
             if (value != null)
             {
-                final String name = column.getName();
                 final OType type = OrientUtils.columnType(column);
                 final Object packed = OrientUtils.packValue(column, value);
                 document.field(name, packed, type);
+            }
+            else
+            {
+                document.removeField(name);
             }
         }
         document.save();
         return this.documents.add(document);
     }
-
 
     @Override
     public boolean save(final EntityMeta entity, final TableMeta table, final Map<ColumnMeta, Object> keys, final ColumnMeta column, final Collection<?> items)
@@ -100,9 +99,8 @@ public class OrientDataHandler implements DataHandler
         }
 
         // get existing collection values
-        final Iterable<ODocument> documents = this.findDocuments(table, keys);
         final List<Object> removed = new ArrayList<>();
-        for (final ODocument document : documents)
+        for (final ODocument document : this.findDocuments(table, keys))
         {
             final Object item = OrientUtils.unpackValue(document, column);
             if (item != null)
@@ -173,7 +171,6 @@ public class OrientDataHandler implements DataHandler
         }
         return updated;
     }
-
 
     private Iterable<ODocument> findDocuments(final TableMeta table, final Map<ColumnMeta, Object> keys)
     {

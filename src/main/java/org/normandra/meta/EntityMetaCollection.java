@@ -151,7 +151,7 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
     }
 
     @Override
-    public boolean contains(EntityMeta meta)
+    public boolean contains(final EntityMeta meta)
     {
         if (null == meta)
         {

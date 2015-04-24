@@ -1,5 +1,6 @@
 package org.normandra.util;
 
+import java.util.Map;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
@@ -13,32 +14,23 @@ import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.TableMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * a set of helper entity instance utilities
  * <p>
- * User: bowen
- * Date: 5/15/14
+ * User: bowen Date: 5/15/14
  */
 public class EntityBuilder
 {
-    private static final Logger logger = LoggerFactory.getLogger(EntityBuilder.class);
-
     private final EntitySession session;
 
     private final DataHolderFactory factory;
-
 
     public EntityBuilder(final EntitySession session, final DataHolderFactory factory)
     {
         this.session = session;
         this.factory = factory;
     }
-
 
     public Object build(final EntityContext context, final Map<ColumnMeta, Object> data) throws NormandraException
     {
@@ -54,7 +46,6 @@ public class EntityBuilder
         }
         return this.build(entity, data);
     }
-
 
     public Object build(final EntityMeta meta, final Map<ColumnMeta, Object> data) throws NormandraException
     {
@@ -96,43 +87,35 @@ public class EntityBuilder
         {
             for (final ColumnMeta column : table)
             {
-                if (column.isLazyLoaded() && !data.containsKey(column))
+                final ColumnAccessor accessor = meta.getAccessor(column);
+                if (accessor != null && !accessor.isLoaded(instance))
                 {
-                    final ColumnAccessor accessor = meta.getAccessor(column);
-                    if (accessor != null && !accessor.isLoaded(instance))
+                    DataHolder lazy = null;
+                    if (column instanceof JoinColumnMeta)
                     {
-                        final DataHolder lazy;
-                        if (column instanceof JoinColumnMeta)
-                        {
-                            lazy = this.factory.createJoinColumn(meta, table, (JoinColumnMeta) column, key);
-                        }
-                        else if (column instanceof JoinCollectionMeta)
-                        {
-                            lazy = this.factory.createJoinCollection(meta, table, (JoinCollectionMeta) column, key);
-                        }
-                        else if (column instanceof MappedColumnMeta)
-                        {
-                            lazy = this.factory.createMappedColumn(meta, (MappedColumnMeta) column, key);
-                        }
-                        else
-                        {
-                            lazy = this.factory.createLazy(meta, table, column, key);
-                        }
-                        if (lazy != null)
-                        {
-                            accessor.setValue(instance, lazy, this.session);
-                        }
-                        else
-                        {
-                            logger.warn("Unable to create data holder for [" + column + "] on entity [" + meta + "].");
-                        }
+                        lazy = this.factory.createJoinColumn(meta, table, (JoinColumnMeta) column, key);
                     }
+                    else if (column instanceof JoinCollectionMeta)
+                    {
+                        lazy = this.factory.createJoinCollection(meta, table, (JoinCollectionMeta) column, key);
+                    }
+                    else if (column instanceof MappedColumnMeta)
+                    {
+                        lazy = this.factory.createMappedColumn(meta, (MappedColumnMeta) column, key);
+                    }
+                    else if (!column.isEmbedded() && !data.containsKey(column))
+                    {
+                        lazy = this.factory.createLazy(meta, table, column, key);
+                    }
+                    if (lazy != null)
+                    {
+                        accessor.setValue(instance, lazy, this.session);
+                    }                    
                 }
             }
         }
         return instance;
     }
-
 
     public boolean update(final EntityMeta meta, final Object instance, final Map<ColumnMeta, Object> data) throws NormandraException
     {

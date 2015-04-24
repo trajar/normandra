@@ -51,10 +51,7 @@ public class CassandraUtils
             if (column != null)
             {
                 final Object value = CassandraUtils.unpackValue(row, column);
-                if (value != null)
-                {
-                    data.put(column, value);
-                }
+                data.put(column, value);
             }
         }
         return Collections.unmodifiableMap(data);

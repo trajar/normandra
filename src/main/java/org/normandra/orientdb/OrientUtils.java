@@ -128,11 +128,11 @@ public class OrientUtils
         {
             for (final ColumnMeta column : table.getColumns())
             {
-                final String name = column.getName();
-                final Object raw = document.field(name);
-                final Object value = raw != null ? OrientUtils.unpackRaw(column, raw) : null;
-                if (value != null)
+                final String name = column.getName();                
+                if (document.containsField(name))
                 {
+                    final Object raw = document.field(name);
+                    final Object value = raw != null ? OrientUtils.unpackRaw(column, raw) : null;
                     data.put(column, value);
                 }
             }

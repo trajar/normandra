@@ -26,9 +26,9 @@ abstract public class BaseTest
     public BaseTest(final Collection<Class> types)
     {
         this.types = new ArrayList<>(types);
-        final List<TestHelper> list = new ArrayList<>(2);
-        list.add(new CassandraTestHelper());
+        final List<TestHelper> list = new ArrayList<>();
         list.add(new OrientTestHelper());
+        list.add(new CassandraTestHelper());
         this.helpers = Collections.unmodifiableList(list);
     }
 

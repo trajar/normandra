@@ -814,6 +814,7 @@ public class AnnotationParser
             {
                 this.readSecondPass(entity);
             }
+            
             // find the actual mapped column and table
             ColumnMeta mappedColumn = null;
             TableMeta mappedTable = null;
@@ -830,6 +831,7 @@ public class AnnotationParser
             {
                 throw new IllegalStateException("Unable to locate column [" + oneToMany.mappedBy() + "] within [" + associatedEntity + "].");
             }
+            
             // setup column meta and accessor
             final ColumnAccessor accessor = this.factory.createManyJoin(field, associatedEntity, lazy);
             final ColumnMeta column = new MappedColumnMeta(associatedEntity, mappedTable, mappedColumn, name, property, field.getType(), lazy);
