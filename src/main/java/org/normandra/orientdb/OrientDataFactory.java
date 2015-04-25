@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.data.BasicDataHolder;
 import org.normandra.data.DataHolder;
 import org.normandra.data.DataHolderFactory;
-import org.normandra.data.FindByIdDataHolder;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
@@ -16,8 +15,6 @@ import org.normandra.meta.TableMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -53,21 +50,6 @@ public class OrientDataFactory implements DataHolderFactory
             return null;
         }
         return new OrientLazyDataHolder(this.session, new SingleEntityContext(entity), column, key);
-    }
-
-
-    @Override
-    public DataHolder createEmbeddedCollection(final EntityMeta meta, final JoinCollectionMeta column, final Collection<?> values)
-    {
-        if (null == meta || null == column)
-        {
-            return null;
-        }
-        if (null == values || values.isEmpty())
-        {
-            return new BasicDataHolder(Collections.emptySet());
-        }
-        return new FindByIdDataHolder(this.session, column.getEntity(), values);
     }
 
 

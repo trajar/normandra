@@ -3,7 +3,6 @@ package org.normandra.cassandra;
 import org.normandra.data.BasicDataHolder;
 import org.normandra.data.DataHolder;
 import org.normandra.data.DataHolderFactory;
-import org.normandra.data.FindByIdDataHolder;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
@@ -13,8 +12,6 @@ import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -55,21 +52,6 @@ public class CassandraDataFactory implements DataHolderFactory
             return null;
         }
         return new CassandraLazyColumnHolder(this.session, entity, table, column, keymap);
-    }
-
-
-    @Override
-    public DataHolder createEmbeddedCollection(final EntityMeta meta, final JoinCollectionMeta column, final Collection<?> values)
-    {
-        if (null == meta || null == column)
-        {
-            return null;
-        }
-        if (null == values || values.isEmpty())
-        {
-            return new BasicDataHolder(Collections.emptySet());
-        }
-        return new FindByIdDataHolder(this.session, column.getEntity(), values);
     }
 
 
