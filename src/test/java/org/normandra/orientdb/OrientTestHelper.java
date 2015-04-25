@@ -24,7 +24,7 @@ public class OrientTestHelper implements TestHelper
 {
     public static final DatabaseConstruction construction = DatabaseConstruction.RECREATE;
 
-    public static final File dir = new File("target/embeddedOrientDB");
+    private static final File dir = new File("target/embeddedOrientDB");
 
     public static final String path = "plocal:" + dir.getPath();
 
@@ -45,14 +45,22 @@ public class OrientTestHelper implements TestHelper
 
     public static void setup() throws Exception
     {
-        // storage.keepOpen=false
         if (dir.exists())
         {
-            FileUtils.deleteDirectory(dir);
+            FileUtils.forceDelete(dir);
         }
-        final ODatabase db = new ODatabaseDocumentTx(path).create();
-        db.setProperty("storage.keepOpen", Boolean.FALSE);
-        db.close();
+        dir.mkdirs();
+        ODatabase db = new ODatabaseDocumentTx(path);
+        try
+        {
+            db = db.create();
+            db.setProperty("storage.keepOpen", Boolean.FALSE);
+        }
+        finally
+        {
+            db.close();
+        }
+        Thread.sleep(100);
     }
 
 

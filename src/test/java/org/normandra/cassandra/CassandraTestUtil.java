@@ -54,12 +54,15 @@ public class CassandraTestUtil
         final File tmpYaml = new File(embeddedDir, FilenameUtils.getName(yamlFile));
         if (tmpYaml.exists())
         {
-            tmpYaml.delete();
+            FileUtils.forceDelete(tmpYaml);
         }
-        embeddedDir.mkdirs();
+        if (embeddedDir.exists())
+        {
+            FileUtils.deleteDirectory(embeddedDir);
+        }
         FileUtils.copyURLToFile(CassandraTestUtil.class.getResource(yamlFile), tmpYaml);
 
-        System.setProperty("cassandra.config", "file:" + tmpYaml.getCanonicalPath());
+        System.setProperty("cassandra.config", tmpYaml.getCanonicalFile().toURI().toString());
         System.setProperty("cassandra-foreground", "true");
 
         clearAndReset();
@@ -76,7 +79,7 @@ public class CassandraTestUtil
                     try
                     {
                         embedded.start();
-                        started.lazySet(true);
+                        started.getAndSet(true);
                     }
                     catch (final Exception e)
                     {
@@ -95,11 +98,7 @@ public class CassandraTestUtil
                 {
                     break;
                 }
-                Thread.sleep(1000);
-            }
-            if (!started.get())
-            {
-                throw new RuntimeException("Unable to successfully start cassandra server.");
+                Thread.sleep(250);
             }
         }
     }
@@ -119,12 +118,24 @@ public class CassandraTestUtil
             .addContactPoint("localhost")
             .withPort(CassandraTestHelper.port).build();
         final CassandraDatabase db = new CassandraDatabase(CassandraTestHelper.keyspace, cluster, NullEntityCache.getFactory(), DatabaseConstruction.RECREATE, executor);
-        for (final String name : Arrays.asList("TestCluster", "Test Cluster"))
+        try
         {
-            if (db.hasKeyspace(name))
+            for (final String name : Arrays.asList("TestCluster", "Test Cluster"))
             {
-                db.dropKeyspace(name);
+                if (db.hasKeyspace(name))
+                {
+                    db.dropKeyspace(name);
+                }
             }
+        }
+        catch (final Exception e)
+        {
+            logger.warn("Unable to drop keyspace.", e);
+        }
+        finally
+        {
+            db.close();
+            executor.shutdown();
         }
     }
 

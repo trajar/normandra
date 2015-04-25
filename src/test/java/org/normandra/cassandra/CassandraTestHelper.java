@@ -93,6 +93,7 @@ public class CassandraTestHelper implements TestHelper
     {
         if (this.session != null)
         {
+            CassandraTestUtil.reset();
             this.session.close();
             this.session = null;
         }
@@ -106,6 +107,5 @@ public class CassandraTestHelper implements TestHelper
             this.manager.close();
             this.manager = null;
         }
-        CassandraTestUtil.reset();
     }
 }
