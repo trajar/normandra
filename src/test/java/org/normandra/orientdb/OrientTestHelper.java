@@ -45,6 +45,7 @@ public class OrientTestHelper implements TestHelper
 
     public static void setup() throws Exception
     {
+        System.setProperty("log.console.level", "SEVERE");
         if (dir.exists())
         {
             FileUtils.forceDelete(dir);
