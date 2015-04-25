@@ -7,6 +7,8 @@ import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
 import org.normandra.meta.TableMeta;
 
+import java.util.Collection;
+
 /**
  * a simple data holder factory
  * <p/>
@@ -16,6 +18,7 @@ import org.normandra.meta.TableMeta;
 public interface DataHolderFactory
 {
     DataHolder createStatic(Object value);
+    DataHolder createEmbeddedCollection(EntityMeta meta, JoinCollectionMeta column, Collection<?> values);
     DataHolder createLazy(EntityMeta meta, TableMeta table, ColumnMeta column, Object key);
     DataHolder createJoinCollection(EntityMeta meta, TableMeta table, JoinCollectionMeta column, Object key);
     DataHolder createJoinColumn(EntityMeta meta, TableMeta table, JoinColumnMeta column, Object key);

@@ -1,13 +1,14 @@
 package org.normandra.association;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.EntityContext;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a lazy loaded entity collection
@@ -31,6 +32,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
     private Collection<T> entities;
 
     private final AtomicBoolean loaded = new AtomicBoolean(false);
+
 
     public LazyEntityCollection(final EntitySession session, final EntityContext meta, final DataHolder data, ElementIdentity<T> ef, final CollectionFactory<T> cf)
     {
@@ -61,16 +63,19 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         this.collectionFactory = cf;
     }
 
+
     @Override
     public boolean isLoaded()
     {
         return this.loaded.get();
     }
 
+
     protected Collection<T> getCollection()
     {
         return this.ensureEntities();
     }
+
 
     private Collection<T> ensureEntities()
     {
@@ -115,6 +120,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         }
     }
 
+
     @Override
     public boolean equals(final Object obj)
     {
@@ -125,11 +131,13 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         return this.ensureEntities().equals(obj);
     }
 
+
     @Override
     public int hashCode()
     {
         return this.ensureEntities().hashCode();
     }
+
 
     @Override
     public int size()
@@ -137,11 +145,13 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         return this.ensureEntities().size();
     }
 
+
     @Override
     public boolean isEmpty()
     {
         return this.ensureEntities().isEmpty();
     }
+
 
     @Override
     public boolean contains(final Object o)
@@ -153,11 +163,13 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         return this.ensureEntities().contains(o);
     }
 
+
     @Override
     public Iterator<T> iterator()
     {
         return this.ensureEntities().iterator();
     }
+
 
     @Override
     public Object[] toArray()
@@ -165,11 +177,13 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         return this.ensureEntities().toArray();
     }
 
+
     @Override
     public <T> T[] toArray(T[] a)
     {
         return this.ensureEntities().toArray(a);
     }
+
 
     @Override
     public boolean add(T o)
@@ -177,11 +191,13 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         return this.ensureEntities().add(o);
     }
 
+
     @Override
     public boolean remove(Object o)
     {
         return this.ensureEntities().remove(o);
     }
+
 
     @Override
     public boolean containsAll(Collection<?> c)
@@ -189,11 +205,13 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         return this.ensureEntities().containsAll(c);
     }
 
+
     @Override
     public boolean addAll(Collection<? extends T> c)
     {
         return this.ensureEntities().addAll(c);
     }
+
 
     @Override
     public boolean removeAll(Collection<?> c)
@@ -201,11 +219,13 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
         return this.ensureEntities().removeAll(c);
     }
 
+
     @Override
     public boolean retainAll(Collection<?> c)
     {
         return this.ensureEntities().retainAll(c);
     }
+
 
     @Override
     public void clear()

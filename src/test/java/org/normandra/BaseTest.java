@@ -23,6 +23,7 @@ abstract public class BaseTest
 
     private final List<Class> types;
 
+
     public BaseTest(final Collection<Class> types)
     {
         this.types = new ArrayList<>(types);

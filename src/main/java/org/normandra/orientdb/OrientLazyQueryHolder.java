@@ -37,6 +37,7 @@ public class OrientLazyQueryHolder implements DataHolder
 
     private final List<ODocument> documents = new ArrayList<>();
 
+
     public OrientLazyQueryHolder(final OrientDatabaseSession session, final EntityContext meta, final TableMeta table, final boolean collection, final String query, final List<Object> params, final OrientDocumentHandler handler)
     {
         this.session = session;
@@ -47,6 +48,7 @@ public class OrientLazyQueryHolder implements DataHolder
         this.parameters = new ArrayList<>(params);
         this.handler = handler;
     }
+
 
     @Override
     public boolean isEmpty()
@@ -60,6 +62,7 @@ public class OrientLazyQueryHolder implements DataHolder
             throw new IllegalStateException("Unable to query lazy loaded results from [" + this.entity + "] table [" + this.table + "].", e);
         }
     }
+
 
     @Override
     public Object get() throws NormandraException
@@ -94,6 +97,7 @@ public class OrientLazyQueryHolder implements DataHolder
             throw new NormandraException("Unable to toEntity lazy loaded results for table [" + this.table + "] on entity [" + this.entity + "].", e);
         }
     }
+
 
     private List<ODocument> ensureResults() throws NormandraException
     {

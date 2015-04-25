@@ -28,6 +28,7 @@ public class OrientLazyDataHolder implements DataHolder
 
     private ODocument document;
 
+
     public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityContext meta, final ColumnMeta column, final Object key)
     {
         this.session = session;
@@ -35,6 +36,7 @@ public class OrientLazyDataHolder implements DataHolder
         this.column = column;
         this.key = key;
     }
+
 
     @Override
     public boolean isEmpty()
@@ -48,6 +50,7 @@ public class OrientLazyDataHolder implements DataHolder
             throw new IllegalStateException("Unable to query lazy loaded results from [" + this.entity + "] column [" + this.column + "].", e);
         }
     }
+
 
     @Override
     public Object get() throws NormandraException
@@ -66,6 +69,7 @@ public class OrientLazyDataHolder implements DataHolder
             throw new NormandraException("Unable to toEntity lazy loaded results for column [" + this.column + "] on entity [" + this.entity + "].", e);
         }
     }
+
 
     private ODocument ensureResults() throws NormandraException
     {

@@ -160,17 +160,24 @@ public class OrientQueryActivity implements DatabaseActivity, OCommandResultList
             @Override
             public void run()
             {
-                if (!parameterList.isEmpty())
+                try
                 {
-                    database.command(asynch).execute(parameterList.toArray());
+                    if (!parameterList.isEmpty())
+                    {
+                        database.command(asynch).execute(parameterList.toArray());
+                    }
+                    else if (!parameterMap.isEmpty())
+                    {
+                        database.command(asynch).execute(parameterMap);
+                    }
+                    else
+                    {
+                        database.command(asynch).execute();
+                    }
                 }
-                else if (!parameterMap.isEmpty())
+                catch(final Exception e)
                 {
-                    database.command(asynch).execute(parameterMap);
-                }
-                else
-                {
-                    database.command(asynch).execute();
+                    logger.warn("Unable to execute query.", e);
                 }
             }
         };
