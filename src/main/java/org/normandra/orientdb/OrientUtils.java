@@ -329,6 +329,10 @@ public class OrientUtils
                 throw new IllegalArgumentException("Unexpected numeric type [" + value + "].");
             }
         }
+        if (byte[].class.equals(value.getClass()))
+        {
+            return value;
+        }
         if (value instanceof Serializable)
         {
             return DataUtils.objectToBytes((Serializable) value);
