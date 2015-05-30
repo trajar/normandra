@@ -71,6 +71,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
         this.cache = cache;
         this.database = db;
+        this.database.setMVCC(true);
         this.statementsByName = new TreeMap<>(statements);
     }
 
