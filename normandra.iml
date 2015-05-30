@@ -56,10 +56,10 @@
     <orderEntry type="library" name="Maven: com.codahale.metrics:metrics-core:3.0.2" level="project" />
     <orderEntry type="library" name="Maven: javassist:javassist:3.12.1.GA" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.persistence:javax.persistence:2.1.0" level="project" />
-    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-core:2.1-rc2" level="project" />
+    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-core:2.1-rc3" level="project" />
     <orderEntry type="library" name="Maven: net.java.dev.jna:jna-platform:4.0.0" level="project" />
-    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-client:2.1-rc2" level="project" />
-    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-enterprise:2.1-rc2" level="project" />
+    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-client:2.1-rc3" level="project" />
+    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-enterprise:2.1-rc3" level="project" />
     <orderEntry type="library" name="Maven: org.osgi:org.osgi.core:5.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.osgi:org.osgi.compendium:5.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.9.13" level="project" />

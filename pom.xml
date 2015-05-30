@@ -191,7 +191,7 @@
             <Bundle-Name>normandra</Bundle-Name>
             <Bundle-Activator>org.normandra.Activator</Bundle-Activator>
             <Embed-Dependency>
-              orient-commons|orientdb-*|cassandra-all|cassandra-clientutil|cassandra-thrift|jamm|libthrift|lz4|guava|antlr|javassist
+              orient-commons|orientdb-*|cassandra-all|cassandra-clientutil|cassandra-thrift|jamm|libthrift|lz4|guava|antlr|javassist|*jna*
             </Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
             <Export-Package>
