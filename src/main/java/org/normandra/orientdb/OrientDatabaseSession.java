@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.AbstractTransactional;
 import org.normandra.DatabaseQuery;
@@ -101,7 +102,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     @Override
     public void beginWork() throws NormandraException
     {
-        this.database.begin();
+        this.database.begin(OTransaction.TXTYPE.OPTIMISTIC);
         this.userTransaction.getAndSet(true);
     }
 
