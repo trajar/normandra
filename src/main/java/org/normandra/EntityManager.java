@@ -169,7 +169,7 @@ public class EntityManager implements Transactional
 
 
     @Override
-    public void withTransaction(Runnable worker) throws NormandraException
+    public void withTransaction(TransactionRunnable worker) throws NormandraException
     {
         this.database.withTransaction(worker);
     }

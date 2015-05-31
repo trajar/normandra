@@ -48,16 +48,11 @@ public class Transaction implements AutoCloseable
     }
 
 
-    public boolean execute(final Runnable worker) throws NormandraException
+    public void execute(final TransactionRunnable worker) throws NormandraException
     {
         if (null == worker)
         {
-            return false;
-        }
-
-        if (Boolean.FALSE.equals(this.success))
-        {
-            return false;
+            return;
         }
 
         if (!this.ownsTransaction && !this.sesssion.pendingWork())
@@ -68,9 +63,7 @@ public class Transaction implements AutoCloseable
 
         try
         {
-            worker.run();
-            this.success = Boolean.TRUE;
-            return true;
+            worker.run(this);
         }
         catch (final Exception e)
         {

@@ -9,7 +9,7 @@ package org.normandra;
 abstract public class AbstractTransactional implements Transactional
 {
     @Override
-    public void withTransaction(Runnable worker) throws NormandraException
+    public void withTransaction(final TransactionRunnable worker) throws NormandraException
     {
         try (final Transaction tx = this.beginTransaction())
         {

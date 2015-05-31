@@ -15,7 +15,7 @@ public interface Transactional
     /**
      * executes a worker within a transaction context
      */
-    void withTransaction(Runnable worker) throws NormandraException;
+    void withTransaction(TransactionRunnable worker) throws NormandraException;
 
     /**
      * start transaction or unit of work

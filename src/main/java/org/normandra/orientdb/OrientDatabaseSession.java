@@ -25,6 +25,8 @@ import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityBuilder;
 import org.normandra.util.EntityPersistence;
 import org.normandra.util.LazyCollection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +51,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class OrientDatabaseSession extends AbstractTransactional implements DatabaseSession
 {
+    private static final Logger logger = LoggerFactory.getLogger(OrientDatabaseSession.class);
+
     private final EntityCache cache;
 
     private final List<DatabaseActivity> activities = new ArrayList<>();
@@ -80,6 +84,17 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     @Override
     public void close()
     {
+        try
+        {
+            if (this.pendingWork())
+            {
+                this.rollbackWork();
+            }
+        }
+        catch (final Exception e)
+        {
+            logger.warn("Unable to rollback transaction prior to closing.", e);
+        }
         this.database.close();
     }
 
