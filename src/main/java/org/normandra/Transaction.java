@@ -71,6 +71,7 @@ public class Transaction implements AutoCloseable
             try
             {
                 worker.run(this);
+                return;
             }
             catch (final ONeedRetryException e)
             {

@@ -471,15 +471,6 @@ public class OrientUtils
         return meta.getName();
     }
 
-    public static String labelName(final EntityMeta meta)
-    {
-        if (null == meta)
-        {
-            return genericEdgeLabel;
-        }
-        return meta.getName();
-    }
-
     private OrientUtils()
     {
     }
