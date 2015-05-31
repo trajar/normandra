@@ -1,6 +1,9 @@
 package org.normandra;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import org.apache.commons.lang.NullArgumentException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * a transaction worker
@@ -10,6 +13,8 @@ import org.apache.commons.lang.NullArgumentException;
  */
 public class Transaction implements AutoCloseable
 {
+    private static final Logger logger = LoggerFactory.getLogger(Transaction.class);
+
     private final Transactional sesssion;
 
     private boolean ownsTransaction;
@@ -61,14 +66,21 @@ public class Transaction implements AutoCloseable
             this.sesssion.beginWork();
         }
 
-        try
+        for (int i = 1; i <= 10; i++)
         {
-            worker.run(this);
-        }
-        catch (final Exception e)
-        {
-            this.success = Boolean.FALSE;
-            throw new NormandraException("Unable to execute unit of work.", e);
+            try
+            {
+                worker.run(this);
+            }
+            catch (final ONeedRetryException e)
+            {
+                logger.info("Error executing unit of work, recovering from retry-exception [attempt #" + i + "].", e);
+            }
+            catch (final Exception e)
+            {
+                this.success = Boolean.FALSE;
+                throw new NormandraException("Unable to execute unit of work.", e);
+            }
         }
     }
 
