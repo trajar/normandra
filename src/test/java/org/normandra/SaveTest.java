@@ -1,5 +1,7 @@
 package org.normandra;
 
+import java.util.Arrays;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.normandra.entities.CatEntity;
@@ -11,9 +13,6 @@ import org.normandra.entities.StudentEntity;
 import org.normandra.entities.StudentIndexEntity;
 import org.normandra.entities.ZooEntity;
 import org.normandra.meta.EntityMeta;
-
-import java.util.Arrays;
-import java.util.Map;
 
 /**
  * unit test to test persistence
@@ -205,6 +204,32 @@ public class SaveTest extends BaseTest
             Assert.assertEquals(composite.getName(), existing.getName());
             Assert.assertNull(session.get(compositeMeta, composite.getId()));
             Assert.assertNull(session.get(compositeMeta, composite.getName()));
+        }
+    }
+    
+    
+    @Test
+    public void testTransactionRunnable() throws Exception
+    {
+        for (final TestHelper helper : helpers)
+        {
+            final Database database = helper.getDatabase();
+            final DatabaseSession session = helper.getSession();
+            final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, DogEntity.class);
+            final EntityMeta meta = entityMap.get(DogEntity.class);
+            final DogEntity dog = new DogEntity("fido", 12);
+            session.withTransaction((tx) ->
+            {
+                session.save(meta, dog);
+                tx.success();
+            });            
+            Assert.assertEquals(Long.valueOf(1), dog.getId());
+            
+            session.clear();
+            
+            final DogEntity existing = (DogEntity) session.get(meta, dog.getId());
+            Assert.assertNotNull(existing);
+            Assert.assertEquals(dog, existing);
         }
     }
 }

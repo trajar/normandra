@@ -39,6 +39,7 @@ public class EntityManager implements Transactional
     }
 
 
+    @Override
     public void close()
     {
         this.database.close();

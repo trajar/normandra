@@ -7,7 +7,20 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.AbstractTransactional;
 import org.normandra.DatabaseQuery;
@@ -27,21 +40,6 @@ import org.normandra.util.EntityPersistence;
 import org.normandra.util.LazyCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * orient database session
@@ -76,7 +74,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
         this.cache = cache;
         this.database = db;
-        this.database.setMVCC(true);
         this.statementsByName = new TreeMap<>(statements);
     }
 
@@ -84,17 +81,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     @Override
     public void close()
     {
-        try
-        {
-            if (this.pendingWork())
-            {
-                this.rollbackWork();
-            }
-        }
-        catch (final Exception e)
-        {
-            logger.warn("Unable to rollback transaction prior to closing.", e);
-        }
         this.database.close();
     }
 
@@ -117,7 +103,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     @Override
     public void beginWork() throws NormandraException
     {
-        this.database.begin(OTransaction.TXTYPE.OPTIMISTIC);
+        this.database.begin();
         this.userTransaction.getAndSet(true);
     }
 

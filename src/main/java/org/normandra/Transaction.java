@@ -8,8 +8,7 @@ import org.slf4j.LoggerFactory;
 /**
  * a transaction worker
  * <p>
- * User: bowen
- * Date: 8/30/14
+ * User: bowen Date: 8/30/14
  */
 public class Transaction implements AutoCloseable
 {
@@ -17,10 +16,9 @@ public class Transaction implements AutoCloseable
 
     private final Transactional sesssion;
 
-    private boolean ownsTransaction;
+    private final boolean ownsTransaction;
 
     private Boolean success = null;
-
 
     public Transaction(final Transactional session) throws NormandraException
     {
@@ -40,30 +38,25 @@ public class Transaction implements AutoCloseable
         }
     }
 
-
     public void success()
     {
+        if (Boolean.FALSE.equals(this.success))
+        {
+            logger.warn("Moving transaction from 'failure' to 'success'.  Please ensure this is desired state.");
+        }
         this.success = Boolean.TRUE;
     }
-
 
     public void failure()
     {
         this.success = Boolean.FALSE;
     }
 
-
     public void execute(final TransactionRunnable worker) throws NormandraException
     {
         if (null == worker)
         {
             return;
-        }
-
-        if (!this.ownsTransaction && !this.sesssion.pendingWork())
-        {
-            this.ownsTransaction = true;
-            this.sesssion.beginWork();
         }
 
         for (int i = 1; i <= 10; i++)
@@ -84,7 +77,6 @@ public class Transaction implements AutoCloseable
             }
         }
     }
-
 
     @Override
     public void close() throws Exception
