@@ -5,8 +5,11 @@ import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
 import org.normandra.EntitySession;
 import org.normandra.meta.EntityMeta;
+import org.normandra.util.CompositeClassLoader;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -62,7 +65,26 @@ public class AssociationUtils
         Class<?> proxy = proxies.get(clazz);
         if (null == proxy)
         {
-            final ProxyFactory proxyFactory = new ProxyFactory();
+            ProxyFactory.classLoaderProvider = new ProxyFactory.ClassLoaderProvider()
+            {
+                @Override
+                public ClassLoader get(final ProxyFactory pf)
+                {
+                    final List<ClassLoader> loaders = new ArrayList<>(2);
+                    loaders.add(AssociationUtils.class.getClassLoader());
+                    if (null == pf)
+                    {
+                        return new CompositeClassLoader(ProxyFactory.class.getClassLoader(), loaders);
+                    }
+                    final Class<?> type = pf.getSuperclass();
+                    if (type != null)
+                    {
+                        loaders.add(type.getClassLoader());
+                    }
+                    return new CompositeClassLoader(ProxyFactory.class.getClassLoader(), loaders);
+                }
+            };
+            ProxyFactory proxyFactory = new ProxyFactory();
             proxyFactory.setSuperclass(clazz);
             proxyFactory.setUseCache(false);
             proxy = proxyFactory.createClass();

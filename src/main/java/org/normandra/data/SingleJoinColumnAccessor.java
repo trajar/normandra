@@ -129,7 +129,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
             }
             catch (final Exception e)
             {
-                throw new NormandraException("Unable to set join-column [" + this.getField().getName() + "] from key [" + key + "].", e);
+                throw new NormandraException("Unable to set join-column [" + this.getField().getName() + "] from data [" + data.getClass().getSimpleName() + "].", e);
             }
         }
     }

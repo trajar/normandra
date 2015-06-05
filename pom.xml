@@ -96,9 +96,9 @@
     </dependency>
     <!-- java-assist -->
     <dependency>
-      <groupId>javassist</groupId>
+      <groupId>org.javassist</groupId>
       <artifactId>javassist</artifactId>
-      <version>3.12.1.GA</version>
+      <version>3.19.0-GA</version>
     </dependency>
     <!-- jpa -->
     <dependency>
@@ -191,7 +191,7 @@
             <Bundle-Name>normandra</Bundle-Name>
             <Bundle-Activator>org.normandra.Activator</Bundle-Activator>
             <Embed-Dependency>
-              orient-commons|orientdb-*|cassandra-all|cassandra-clientutil|cassandra-thrift|jamm|libthrift|lz4|guava|antlr|javassist|*jna*
+              orient-commons|orientdb-*|cassandra-all|cassandra-clientutil|cassandra-thrift|jamm|libthrift|lz4|guava|antlr|*jna*
             </Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
             <Export-Package>
@@ -204,6 +204,7 @@
             <Import-Package>
               javax.persistence.*; version="[2.0, 3.0)",
               javax.transaction.*; version="[1.1, 2.0)",
+              javassist.*; version="[3.19, 4.0)",
               org.apache.commons.lang.*; version="[2.0, 3.0)",
               org.codehaus.jackson.*; version="[1.9, 2.0)",
               org.osgi.*,
