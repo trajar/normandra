@@ -144,7 +144,7 @@ public class CassandraTestUtil
     {
         clear();
         DatabaseDescriptor.createAllDirectories();
-        CommitLog.instance.resetUnsafe();
+        CommitLog.instance.resetUnsafe(true);
     }
 
 
