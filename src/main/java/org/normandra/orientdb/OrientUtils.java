@@ -39,14 +39,6 @@ public class OrientUtils
 {
     private static final String genericEdgeLabel = "Edge";
 
-    public static void configLogging()
-    {
-        if (System.getProperty("log.console.level") == null)
-        {
-            System.setProperty("log.console.level", "warn");
-        }
-    }
-
     public static Object unpackValue(final ODocument document, final ColumnMeta column)
     {
         if (null == document || null == column)
