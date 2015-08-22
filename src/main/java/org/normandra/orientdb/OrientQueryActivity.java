@@ -177,7 +177,7 @@ public class OrientQueryActivity implements DatabaseActivity, OCommandResultList
                 }
                 catch(final Exception e)
                 {
-                    logger.warn("Unable to execute query.", e);
+                    logger.warn("Unable to execute query [" + query + "].", e);
                 }
             }
         };
