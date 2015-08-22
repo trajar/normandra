@@ -3,14 +3,6 @@ package org.normandra.cassandra;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import org.normandra.NormandraException;
-import org.normandra.data.DataHolder;
-import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.DiscriminatorMeta;
-import org.normandra.meta.EntityContext;
-import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,6 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.normandra.NormandraException;
+import org.normandra.data.DataHolder;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.DiscriminatorMeta;
+import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.TableMeta;
 
 /**
  * a lazy-loaded cassandra data holder that pulls entity whereValues
@@ -65,8 +64,8 @@ public class CassandraLazyKeyHolder implements DataHolder
     @Override
     public Object get() throws NormandraException
     {
-        final List<Row> rows = this.ensureResults();
-        if (null == rows || rows.isEmpty())
+        final List<Row> results = this.ensureResults();
+        if (null == results || results.isEmpty())
         {
             return null;
         }
@@ -119,7 +118,9 @@ public class CassandraLazyKeyHolder implements DataHolder
         }
         final String[] namesList = names.toArray(new String[names.size()]);
 
-        final Select statement = QueryBuilder.select(namesList).from(this.session.getKeyspace(), this.table.getName());
+        final Select statement = new QueryBuilder(this.session.getCluster())
+                .select(namesList)
+                .from(this.session.getKeyspace(), this.table.getName());
         boolean hasWhere = false;
         for (final Map.Entry<String, Object> entry : this.whereValues.entrySet())
         {

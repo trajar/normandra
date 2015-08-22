@@ -6,13 +6,6 @@ import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import org.apache.commons.lang.NullArgumentException;
-import org.normandra.data.DataHandler;
-import org.normandra.log.DatabaseActivity;
-import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +13,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang.NullArgumentException;
+import org.normandra.data.DataHandler;
+import org.normandra.log.DatabaseActivity;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.TableMeta;
 
 /**
  * a cassandra data handler, used in coordination with entity helper to standardize save/delete operations
@@ -61,7 +60,7 @@ public class CassandraDataHandler implements DataHandler
 
         boolean hasInsert = false;
         final String keyspaceName = this.session.getKeyspace();
-        Insert statement = QueryBuilder.insertInto(keyspaceName, table.getName());
+        Insert statement = new QueryBuilder(this.session.getCluster()).insertInto(keyspaceName, table.getName());
         for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
         {
             final ColumnMeta column = entry.getKey();
@@ -78,7 +77,7 @@ public class CassandraDataHandler implements DataHandler
             else
             {
                 boolean hasWhere = false;
-                Delete delete = QueryBuilder.delete(column.getName()).from(keyspaceName, table.getName());
+                Delete delete = new QueryBuilder(this.session.getCluster()).delete(column.getName()).from(keyspaceName, table.getName());
                 for (final ColumnMeta key : table.getPrimaryKeys())
                 {
                     final Object keyValue = data.get(key);
@@ -120,7 +119,7 @@ public class CassandraDataHandler implements DataHandler
         {
             // clear all items with key
             boolean hasWhere = false;
-            Delete delete = QueryBuilder.delete().all().from(keyspaceName, table.getName());
+            Delete delete = new QueryBuilder(this.session.getCluster()).delete().all().from(keyspaceName, table.getName());
             for (final ColumnMeta key : table.getPrimaryKeys())
             {
                 final Object value = keys.get(key);
@@ -138,7 +137,7 @@ public class CassandraDataHandler implements DataHandler
         }
 
         // get existing collection values
-        Select query = QueryBuilder.select(column.getName()).from(keyspaceName, table.getName());
+        Select query = new QueryBuilder(this.session.getCluster()).select(column.getName()).from(keyspaceName, table.getName());
         for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
         {
             final ColumnMeta key = entry.getKey();
@@ -175,7 +174,7 @@ public class CassandraDataHandler implements DataHandler
         for (final Object item : removed)
         {
             boolean hasWhere = false;
-            Delete delete = QueryBuilder.delete().all().from(keyspaceName, table.getName());
+            Delete delete = new QueryBuilder(this.session.getCluster()).delete().all().from(keyspaceName, table.getName());
             for (final ColumnMeta key : table.getPrimaryKeys())
             {
                 final Object value = keys.get(key);
@@ -196,7 +195,7 @@ public class CassandraDataHandler implements DataHandler
         for (final Object item : items)
         {
             boolean hasInsert = false;
-            Insert statement = QueryBuilder.insertInto(keyspaceName, table.getName());
+            Insert statement = new QueryBuilder(this.session.getCluster()).insertInto(keyspaceName, table.getName());
             for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
             {
                 final ColumnMeta key = entry.getKey();

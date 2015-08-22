@@ -4,6 +4,16 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.Future;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
 import org.normandra.log.DatabaseActivity;
@@ -15,17 +25,6 @@ import org.normandra.util.ArraySet;
 import org.normandra.util.EntityBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.Future;
 
 /**
  * a class capable of querying and constructing entity instances
@@ -241,7 +240,9 @@ public class CassandraEntityQuery
         }
 
         // setup select statement
-        final Select statement = QueryBuilder.select(names).from(this.session.getKeyspace(), table.getName());
+        final Select statement = new QueryBuilder(this.session.getCluster())
+                .select(names)
+                .from(this.session.getKeyspace(), table.getName());
         boolean hasWhere = false;
         if (keys.length == 1)
         {

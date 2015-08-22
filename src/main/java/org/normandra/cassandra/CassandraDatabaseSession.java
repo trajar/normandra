@@ -1,5 +1,6 @@
 package org.normandra.cassandra;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.ResultSet;
@@ -12,6 +13,18 @@ import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.querybuilder.Update;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.AbstractTransactional;
 import org.normandra.DatabaseQuery;
@@ -31,19 +44,6 @@ import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a cassandra database session
@@ -125,8 +125,14 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
     {
         return this.session;
     }
+    
+    
+    public Cluster getCluster()
+    {
+        return this.session.getCluster();
+    }
 
-
+    
     protected ResultSet executeSync(final Statement statement, final DatabaseActivity.Type type)
     {
         final CassandraDatabaseActivity activity = new CassandraDatabaseActivity(statement, this.session, type);
@@ -260,7 +266,8 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             final List<String> namelist = new ArrayList<>(columns.keySet());
             final TableMeta table = meta.getTables().iterator().next();
             final String[] names = namelist.toArray(new String[namelist.size()]);
-            final Select statement = QueryBuilder.select(names)
+            final Select statement = new QueryBuilder(this.getCluster())
+                .select(names)
                 .from(this.keyspaceName, table.getName())
                 .limit(1);
             boolean hasWhere = false;
@@ -361,7 +368,10 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             for (final TableMeta table : meta)
             {
                 boolean hasValue = false;
-                final Delete statement = QueryBuilder.delete().all().from(this.keyspaceName, table.getName());
+                final Delete statement = new QueryBuilder(this.getCluster())
+                        .delete()
+                        .all()
+                        .from(this.keyspaceName, table.getName());
                 for (final ColumnMeta column : table.getPrimaryKeys())
                 {
                     final String name = column.getName();
@@ -390,8 +400,8 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             }
             else
             {
-                final RegularStatement[] statements = deletes.toArray(new RegularStatement[deletes.size()]);
-                batch = QueryBuilder.batch(statements);
+                final RegularStatement[] list = deletes.toArray(new RegularStatement[deletes.size()]);
+                batch = new QueryBuilder(this.getCluster()).batch(list);
             }
 
             final Object key = meta.getId().fromEntity(element);
@@ -484,8 +494,8 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             }
             else
             {
-                final RegularStatement[] statements = operations.toArray(new RegularStatement[operations.size()]);
-                batch = QueryBuilder.batch(statements);
+                final RegularStatement[] list = operations.toArray(new RegularStatement[operations.size()]);
+                batch = new QueryBuilder(this.getCluster()).batch(list);
             }
             if (this.activeUnitOfWork.get())
             {

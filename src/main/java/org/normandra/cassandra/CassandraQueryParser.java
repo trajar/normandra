@@ -1,17 +1,15 @@
 package org.normandra.cassandra;
 
 import com.datastax.driver.core.RegularStatement;
-import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
-import org.normandra.DatabaseQuery;
-import org.normandra.NormandraException;
-import org.normandra.meta.EntityContext;
-import org.normandra.util.QueryUtils;
-
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import org.normandra.DatabaseQuery;
+import org.normandra.NormandraException;
+import org.normandra.meta.EntityContext;
+import org.normandra.util.QueryUtils;
 
 /**
  * a simple jpa query parser
@@ -43,7 +41,7 @@ public class CassandraQueryParser<T>
         final String tableQuery = QueryUtils.prepare(this.entity, jpaQuery);
         if (parameters.isEmpty())
         {
-            final RegularStatement statement = new SimpleStatement(tableQuery);
+            final RegularStatement statement = this.session.getSession().newSimpleStatement(tableQuery);
             return new CassandraDatabaseQuery<>(this.entity, statement, this.session);
         }
 
@@ -77,7 +75,7 @@ public class CassandraQueryParser<T>
             {
                 buffer.append(tableQuery.substring(last + 1));
             }
-            final RegularStatement statement = new SimpleStatement(buffer.toString());
+            final RegularStatement statement = this.session.getSession().newSimpleStatement(buffer.toString());
             return new CassandraDatabaseQuery<>(this.entity, statement, this.session);
         }
         catch (final PatternSyntaxException e)

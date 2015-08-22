@@ -1,14 +1,28 @@
 package org.normandra.cassandra;
 
-
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.TableGenerator;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.Database;
@@ -27,28 +41,10 @@ import org.normandra.util.QueryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.TableGenerator;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
 /**
  * a cassandra database
  * <p>
- * User: bowen
- * Date: 8/31/13
+ * User: bowen Date: 8/31/13
  */
 public class CassandraDatabase implements Database, CassandraAccessor
 {
@@ -73,7 +69,6 @@ public class CassandraDatabase implements Database, CassandraAccessor
     private final Map<String, CassandraPreparedStatement> statementsByName = new ConcurrentHashMap<>();
 
     private Session session;
-
 
     public CassandraDatabase(final String keyspace, final Cluster cluster, final EntityCacheFactory cache, final DatabaseConstruction mode, final ExecutorService executor)
     {
@@ -104,13 +99,11 @@ public class CassandraDatabase implements Database, CassandraAccessor
         this.executor = executor;
     }
 
-
     @Override
     public CassandraDatabaseSession createSession()
     {
         return new CassandraDatabaseSession(this.keyspaceName, this.ensureSession(), this.statementsByName, this.cache.create(), this.executor);
     }
-
 
     @Override
     public boolean registerQuery(final EntityContext entity, final String name, final String query) throws NormandraException
@@ -179,7 +172,6 @@ public class CassandraDatabase implements Database, CassandraAccessor
         }
     }
 
-
     @Override
     public boolean unregisterQuery(final String name) throws NormandraException
     {
@@ -189,7 +181,6 @@ public class CassandraDatabase implements Database, CassandraAccessor
         }
         return this.statementsByName.remove(name) != null;
     }
-
 
     @Override
     public void refresh(final DatabaseMeta meta) throws NormandraException
@@ -299,7 +290,6 @@ public class CassandraDatabase implements Database, CassandraAccessor
         }
     }
 
-
     private void refreshTableGenerator(final String table, final String keyColumn, final String valueColumn)
     {
         final List<Statement> statements = new ArrayList<>();
@@ -309,7 +299,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         {
             final StringBuilder cql = new StringBuilder();
             cql.append("DROP TABLE ").append(table).append(";");
-            statements.add(new SimpleStatement(cql.toString()));
+            statements.add(this.session.newSimpleStatement(cql.toString()));
         }
 
         // create table
@@ -318,7 +308,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         cql.append("  ").append(keyColumn).append(" text PRIMARY KEY, ");
         cql.append("  ").append(valueColumn).append(" counter ");
         cql.append(IOUtils.LINE_SEPARATOR).append(");");
-        statements.add(new SimpleStatement(cql.toString()));
+        statements.add(this.session.newSimpleStatement(cql.toString()));
 
         // execute statements
         for (final Statement statement : statements)
@@ -327,7 +317,6 @@ public class CassandraDatabase implements Database, CassandraAccessor
         }
     }
 
-
     private void refreshEntityTable(final String tableName, final DatabaseMeta meta)
     {
         // drop table as required
@@ -335,7 +324,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         {
             final StringBuilder cql = new StringBuilder();
             cql.append("DROP TABLE ").append(tableName).append(";");
-            this.ensureSession().execute(new SimpleStatement(cql.toString()));
+            this.ensureSession().execute(this.session.newSimpleStatement(cql.toString()));
         }
 
         final Set<ColumnMeta> uniqueSet = new TreeSet<>();
@@ -376,7 +365,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
                         final StringBuilder cql = new StringBuilder();
                         cql.append("ALTER TABLE ").append(tableName).append(IOUtils.LINE_SEPARATOR);
                         cql.append("ADD ").append(name).append(" ").append(type).append(";");
-                        this.ensureSession().execute(new SimpleStatement(cql.toString()));
+                        this.ensureSession().execute(this.session.newSimpleStatement(cql.toString()));
                     }
                 }
             }
@@ -396,14 +385,13 @@ public class CassandraDatabase implements Database, CassandraAccessor
                         {
                             final StringBuilder cql = new StringBuilder();
                             cql.append("CREATE INDEX ON ").append(tableName).append(" (").append(column.getName()).append(");");
-                            this.ensureSession().execute(new SimpleStatement(cql.toString()));
+                            this.ensureSession().execute(this.session.newSimpleStatement(cql.toString()));
                         }
                     }
                 }
             }
         }
     }
-
 
     @Override
     synchronized public void close()
@@ -418,40 +406,26 @@ public class CassandraDatabase implements Database, CassandraAccessor
         this.executor.shutdownNow();
     }
 
-
     public boolean hasKeyspace(final String ks)
     {
         return this.hasTable(ks);
     }
 
-
     public void createKeyspace(final String ks)
     {
-        final Session session = this.cluster.connect();
-        try
+        try (final Session instance = this.cluster.connect())
         {
-            session.execute("CREATE KEYSPACE " + ks + " WITH strategy_class = SimpleStrategy AND strategy_options:replication_factor = 1;");
-        }
-        finally
-        {
-            session.close();
+            instance.execute("CREATE KEYSPACE " + ks + " WITH strategy_class = SimpleStrategy AND strategy_options:replication_factor = 1;");
         }
     }
-
 
     public void dropKeyspace(final String ks)
     {
-        final Session session = this.cluster.connect();
-        try
+        try (final Session instance = this.cluster.connect())
         {
-            session.execute("DROP KEYSPACE " + ks + ";");
-        }
-        finally
-        {
-            session.close();
+            instance.execute("DROP KEYSPACE " + ks + ";");
         }
     }
-
 
     protected boolean hasTable(final String table)
     {
@@ -463,7 +437,6 @@ public class CassandraDatabase implements Database, CassandraAccessor
         final TableMetadata tblMeta = ksMeta.getTable(table);
         return tblMeta != null;
     }
-
 
     protected boolean hasColumn(final String table, final String column)
     {
@@ -481,8 +454,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         return colMeta != null;
     }
 
-
-    private static Statement defineTable(final String table, final Iterable<ColumnMeta> columns)
+    private Statement defineTable(final String table, final Iterable<ColumnMeta> columns)
     {
         // define table
         final StringBuilder cql = new StringBuilder();
@@ -524,12 +496,12 @@ public class CassandraDatabase implements Database, CassandraAccessor
         cql.append(")").append(IOUtils.LINE_SEPARATOR);
 
         cql.append(");");
-        return new SimpleStatement(cql.toString());
+        return this.session.newSimpleStatement(cql.toString());
     }
 
-
     /**
-     * per driver documentation, session is thread-safe and recommended for use on a per-keyspace basis
+     * per driver documentation, session is thread-safe and recommended for use
+     * on a per-keyspace basis
      */
     synchronized private Session ensureSession()
     {
@@ -542,7 +514,6 @@ public class CassandraDatabase implements Database, CassandraAccessor
         return this.session;
     }
 
-
     /**
      * ensure keyspace exists prior to constructing database session
      */
@@ -554,19 +525,13 @@ public class CassandraDatabase implements Database, CassandraAccessor
             return;
         }
 
-        final Session session = this.cluster.connect();
-        try
+        try (final Session instance = this.cluster.connect())
         {
             final StringBuilder cql = new StringBuilder();
             cql.append("CREATE KEYSPACE ").append(ks).append(" WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};");
-            session.execute(cql.toString());
-        }
-        finally
-        {
-            session.close();
+            instance.execute(cql.toString());
         }
     }
-
 
     @Override
     public String getKeyspace()
@@ -574,10 +539,15 @@ public class CassandraDatabase implements Database, CassandraAccessor
         return this.keyspaceName;
     }
 
-
     @Override
     public Session getSession()
     {
         return this.ensureSession();
+    }
+
+    @Override
+    public Cluster getCluster()
+    {
+        return this.cluster;
     }
 }
