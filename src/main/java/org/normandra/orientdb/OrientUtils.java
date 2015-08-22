@@ -5,6 +5,18 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EmbeddedCollectionMeta;
@@ -18,19 +30,6 @@ import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 import org.normandra.util.DataUtils;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
-
 /**
  * collection of common orient utilities
  * <p>
@@ -39,6 +38,14 @@ import java.util.UUID;
 public class OrientUtils
 {
     private static final String genericEdgeLabel = "Edge";
+
+    public static void configLogging()
+    {
+        if (System.getProperty("log.console.level") == null)
+        {
+            System.setProperty("log.console.level", "warn");
+        }
+    }
 
     public static Object unpackValue(final ODocument document, final ColumnMeta column)
     {
@@ -128,7 +135,7 @@ public class OrientUtils
         {
             for (final ColumnMeta column : table.getColumns())
             {
-                final String name = column.getName();                
+                final String name = column.getName();
                 if (document.containsField(name))
                 {
                     final Object raw = document.field(name);

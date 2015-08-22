@@ -42,6 +42,7 @@ public class OrientDatabaseFactory implements DatabaseFactory
         this.password = pwd;
         this.cache = cache;
         this.constructionMode = mode;
+        OrientUtils.configLogging();
     }
 
 
