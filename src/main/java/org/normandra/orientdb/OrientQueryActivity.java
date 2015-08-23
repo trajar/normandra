@@ -1,14 +1,8 @@
 package org.normandra.orientdb;
 
-import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import org.apache.commons.lang.NullArgumentException;
-import org.normandra.log.DatabaseActivity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,26 +11,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.lang.NullArgumentException;
+import org.normandra.log.DatabaseActivity;
 
 /**
  * a orientdb database query activity
  * <p>
- * User: bowen
- * Date: 4/4/14
+ * User: bowen Date: 4/4/14
  */
-public class OrientQueryActivity implements DatabaseActivity, OCommandResultListener
+public class OrientQueryActivity implements DatabaseActivity
 {
-    private static final Logger logger = LoggerFactory.getLogger(OrientQueryActivity.class);
-
-    private static final Executor executor = Executors.newCachedThreadPool(new ThreadFactoryImpl());
-
     private final ODatabaseDocumentTx database;
 
     private final String query;
@@ -45,18 +30,13 @@ public class OrientQueryActivity implements DatabaseActivity, OCommandResultList
 
     private final Map<String, Object> parameterMap;
 
-    private final AtomicBoolean finished = new AtomicBoolean(false);
-
     private final AtomicInteger count = new AtomicInteger(0);
-
-    private final BlockingQueue<ODocument> queue = new ArrayBlockingQueue<>(10);
 
     private long start = -1;
 
     private long end = -1;
 
     private Date date;
-
 
     public OrientQueryActivity(final ODatabaseDocumentTx db, final String query, final Collection<?> params)
     {
@@ -81,7 +61,6 @@ public class OrientQueryActivity implements DatabaseActivity, OCommandResultList
         }
     }
 
-
     public OrientQueryActivity(final ODatabaseDocumentTx db, final String query, final Map<String, Object> params)
     {
         if (null == db)
@@ -105,13 +84,11 @@ public class OrientQueryActivity implements DatabaseActivity, OCommandResultList
         }
     }
 
-
     @Override
     public Type getType()
     {
         return Type.SELECT;
     }
-
 
     @Override
     public long getDuration()
@@ -119,13 +96,11 @@ public class OrientQueryActivity implements DatabaseActivity, OCommandResultList
         return this.end - this.start;
     }
 
-
     @Override
     public Date getDate()
     {
         return this.date;
     }
-
 
     @Override
     public CharSequence getInformation()
@@ -144,156 +119,29 @@ public class OrientQueryActivity implements DatabaseActivity, OCommandResultList
         }
     }
 
-
     public Iterator<ODocument> execute()
     {
-        this.queue.clear();
-        this.finished.getAndSet(false);
         this.count.getAndSet(0);
         this.date = new Date();
         this.start = System.currentTimeMillis();
-        this.end = -11;
+        this.end = -1;
 
-        final OSQLAsynchQuery asynch = new OSQLAsynchQuery(this.query, this);
-        final Runnable worker = new Runnable()
+        final List<ODocument> docs;
+        final OSQLSynchQuery q = new OSQLSynchQuery(this.query);
+        if (!parameterList.isEmpty())
         {
-            @Override
-            public void run()
-            {
-                try
-                {
-                    if (!parameterList.isEmpty())
-                    {
-                        database.command(asynch).execute(parameterList.toArray());
-                    }
-                    else if (!parameterMap.isEmpty())
-                    {
-                        database.command(asynch).execute(parameterMap);
-                    }
-                    else
-                    {
-                        database.command(asynch).execute();
-                    }
-                }
-                catch(final Exception e)
-                {
-                    logger.warn("Unable to execute query [" + query + "].", e);
-                }
-            }
-        };
-        executor.execute(worker);
-
-        return new Iterator<ODocument>()
-        {
-            @Override
-            public boolean hasNext()
-            {
-                // loop until we know if results are empty
-                while (!isEmpty())
-                {
-                    try
-                    {
-                        if (!queue.isEmpty())
-                        {
-                            return true;
-                        }
-                        Thread.sleep(100);
-                    }
-                    catch (final InterruptedException e)
-                    {
-                        logger.warn("Unable to poll next item from queue.", e);
-                    }
-                }
-                // we are empty
-                return false;
-            }
-
-
-            @Override
-            public ODocument next()
-            {
-                try
-                {
-                    return queue.take();
-                }
-                catch (final InterruptedException e)
-                {
-                    logger.warn("Unable to take next item from queue.", e);
-                    return null;
-                }
-            }
-
-
-            private boolean isEmpty()
-            {
-                if (!finished.get())
-                {
-                    // we don't know if results are in or not yet
-                    return false;
-                }
-                if (count.get() <= 0)
-                {
-                    // no results returned
-                    return true;
-                }
-                if (!queue.isEmpty())
-                {
-                    // we have date left in queue
-                    return false;
-                }
-
-                // nothing left to consume
-                return true;
-            }
-        };
-    }
-
-
-    @Override
-    public boolean result(final Object document)
-    {
-        if (null == document)
-        {
-            return false;
+            docs = database.command(q).execute(parameterList.toArray());
         }
-        if (!(document instanceof ODocument))
+        else if (!parameterMap.isEmpty())
         {
-            return false;
+            docs = database.command(q).execute(parameterMap);
         }
-        try
+        else
         {
-            this.count.incrementAndGet();
-            this.queue.put((ODocument) document);
-            return true;
+            docs = database.command(q).execute();
         }
-        catch (final Exception e)
-        {
-            logger.warn("Unable to add document to queue.", e);
-            return false;
-        }
-    }
-
-
-    @Override
-    public void end()
-    {
         this.end = System.currentTimeMillis();
-        this.finished.getAndSet(true);
-    }
-
-
-    private static class ThreadFactoryImpl implements ThreadFactory
-    {
-        private final AtomicInteger count = new AtomicInteger();
-
-
-        @Override
-        public Thread newThread(final Runnable worker)
-        {
-            final Thread thread = new Thread(worker);
-            thread.setDaemon(true);
-            thread.setName(OrientQueryActivity.class.getSimpleName() + "-Query-" + count.incrementAndGet());
-            return thread;
-        }
+        this.count.getAndSet(docs.size());
+        return docs.iterator();
     }
 }
