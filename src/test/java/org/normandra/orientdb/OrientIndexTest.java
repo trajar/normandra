@@ -43,7 +43,7 @@ public class OrientIndexTest
     @After
     public void destroy() throws Exception
     {
-        helper.destroy();
+        helper.cleanup();
     }
 
 

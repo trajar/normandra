@@ -46,7 +46,7 @@ public class CassandraSaveTest
     @After
     public void destroy() throws Exception
     {
-        helper.destroy();
+        helper.cleanup();
     }
 
 

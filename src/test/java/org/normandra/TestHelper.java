@@ -15,5 +15,5 @@ public interface TestHelper
     EntityManager getManager();
     EntityManagerFactory getFactory();
     void create(Collection<Class> types) throws Exception;
-    void destroy() throws Exception;
+    void cleanup();
 }

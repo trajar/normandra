@@ -12,12 +12,11 @@ import org.normandra.cache.MapFactory;
 import org.normandra.cache.MemoryCache;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 
 /**
  * orientdb test utilities
- * <p>
+ * <p/>
  * User: bowen Date: 6/8/14
  */
 public class OrientTestHelper implements TestHelper
@@ -42,7 +41,6 @@ public class OrientTestHelper implements TestHelper
 
     private EntityManager manager;
 
-
     public static void setup() throws Exception
     {
         System.setProperty("log.console.level", "SEVERE");
@@ -64,13 +62,11 @@ public class OrientTestHelper implements TestHelper
         Thread.sleep(100);
     }
 
-
     @Override
     public OrientDatabase getDatabase()
     {
         return this.database;
     }
-
 
     @Override
     public OrientDatabaseSession getSession()
@@ -78,20 +74,17 @@ public class OrientTestHelper implements TestHelper
         return this.session;
     }
 
-
     @Override
     public EntityManagerFactory getFactory()
     {
         return this.factory;
     }
 
-
     @Override
     public EntityManager getManager()
     {
         return this.manager;
     }
-
 
     @Override
     public void create(final Collection<Class> types) throws Exception
@@ -112,24 +105,30 @@ public class OrientTestHelper implements TestHelper
         this.session = this.database.createSession();
     }
 
-
     @Override
-    public void destroy() throws IOException
+    public void cleanup()
     {
-        if (this.session != null)
+        try
         {
-            this.session.close();
-            this.session = null;
+            if (this.session != null)
+            {
+                this.session.close();
+                this.session = null;
+            }
+            if (this.database != null)
+            {
+                this.database.close();
+                this.database = null;
+            }
+            if (this.manager != null)
+            {
+                this.manager.close();
+                this.manager = null;
+            }
         }
-        if (this.database != null)
+        catch (final Exception e)
         {
-            this.database.close();
-            this.database = null;
-        }
-        if (this.manager != null)
-        {
-            this.manager.close();
-            this.manager = null;
+            e.printStackTrace();
         }
     }
 }

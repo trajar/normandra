@@ -43,7 +43,7 @@ public class OrientSaveTest
     @After
     public void destroy() throws Exception
     {
-        helper.destroy();
+        helper.cleanup();
     }
 
 

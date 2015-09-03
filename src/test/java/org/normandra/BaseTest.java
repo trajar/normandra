@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * a base test case bootstrap
- * <p>
+ * <p/>
  * User: bowen
  * Date: 6/8/14
  */
@@ -22,7 +22,6 @@ abstract public class BaseTest
     public final List<TestHelper> helpers;
 
     private final List<Class> types;
-
 
     public BaseTest(final Collection<Class> types)
     {
@@ -33,14 +32,12 @@ abstract public class BaseTest
         this.helpers = Collections.unmodifiableList(list);
     }
 
-
     @BeforeClass
     public static void setup() throws Exception
     {
         CassandraTestHelper.setup();
         OrientTestHelper.setup();
     }
-
 
     @Before
     public void create() throws Exception
@@ -51,13 +48,12 @@ abstract public class BaseTest
         }
     }
 
-
     @After
-    public void destroy() throws Exception
+    public void cleanup() throws Exception
     {
         for (final TestHelper helper : helpers)
         {
-            helper.destroy();
+            helper.cleanup();
         }
     }
 }

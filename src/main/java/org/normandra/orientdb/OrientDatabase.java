@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.NullArgumentException;
+import org.apache.commons.lang3.StringUtils;
 import org.normandra.Database;
 import org.normandra.DatabaseConstruction;
 import org.normandra.NormandraException;
@@ -64,12 +65,10 @@ public class OrientDatabase implements Database
 
     private final Map<String, OrientQuery> statementsByName = new ConcurrentHashMap<>();
 
-
     public OrientDatabase(final String url, final String user, final String pwd, final EntityCacheFactory cache, final DatabaseConstruction mode)
     {
         this(url, new OPartitionedDatabasePool(url, user, pwd), cache, mode);
     }
-
 
     public OrientDatabase(final String url, final OPartitionedDatabasePool pool, final EntityCacheFactory cache, final DatabaseConstruction mode)
     {
@@ -91,19 +90,16 @@ public class OrientDatabase implements Database
         this.constructionMode = mode;
     }
 
-
     protected final ODatabaseDocumentTx createDatabase()
     {
         return this.pool.acquire();
     }
-
 
     @Override
     public OrientDatabaseSession createSession()
     {
         return new OrientDatabaseSession(this.createDatabase(), this.statementsByName, this.cache.create());
     }
-
 
     @Override
     public void refresh(final DatabaseMeta meta) throws NormandraException
@@ -157,7 +153,7 @@ public class OrientDatabase implements Database
             {
                 for (final TableMeta table : entity)
                 {
-                    this.refreshEntity(entity, table, database);
+                    this.refreshEntityWithTransaction(entity, table, database);
                 }
                 this.refreshGenerators(entity, database);
             }
@@ -171,7 +167,6 @@ public class OrientDatabase implements Database
             database.close();
         }
     }
-
 
     private void refreshGenerators(final EntityMeta entity, final ODatabaseDocumentTx database)
     {
@@ -285,10 +280,9 @@ public class OrientDatabase implements Database
         }
     }
 
-
-    private void refreshEntity(final EntityMeta entity, final TableMeta table, final ODatabaseDocumentTx database)
+    private void refreshEntityWithTransaction(final EntityMeta entity, final TableMeta table, final ODatabaseDocumentTx database)
     {
-        final String indexName = OrientUtils.keyIndex(table);
+        final String keyIndex = OrientUtils.keyIndex(table);
         final String schemaName = table.getName();
 
         if (DatabaseConstruction.RECREATE.equals(this.constructionMode))
@@ -297,12 +291,18 @@ public class OrientDatabase implements Database
             if (this.hasClass(schemaName))
             {
                 database.command(new OCommandSQL("DELETE FROM " + schemaName)).execute();
-                database.getMetadata().getSchema().dropClass(schemaName);
             }
-            if (this.hasIndex(indexName))
+            if (this.hasIndex(keyIndex))
             {
-                database.command(new OCommandSQL("DROP INDEX " + indexName)).execute();
-                database.getMetadata().getIndexManager().dropIndex(indexName);
+                database.command(new OCommandSQL("DROP INDEX " + keyIndex)).execute();
+            }
+            for (final ColumnMeta column : entity.getIndexed())
+            {
+                final String propertyIndex = schemaName + "." + column.getName();
+                if (this.hasIndex(propertyIndex))
+                {
+                    database.command(new OCommandSQL("DROP INDEX " + propertyIndex)).execute();
+                }
             }
         }
 
@@ -323,14 +323,23 @@ public class OrientDatabase implements Database
             }
         }
 
-        if (!this.hasIndex(indexName))
+        // create index as needed
+        if (!this.hasIndex(keyIndex))
         {
-            // create index
-            final String[] keys = primary.toArray(new String[primary.size()]);
-            schemaClass.createIndex(indexName, OClass.INDEX_TYPE.UNIQUE, keys);
+            database.command(new OCommandSQL("CREATE INDEX " + keyIndex + " ON " + schemaName + " (" + StringUtils.join(primary, ",") + ") UNIQUE")).execute();
+        }
+        for (final ColumnMeta column : entity.getIndexed())
+        {
+            final String propertyIndex = schemaName + "." + column.getName();
+            if (!column.isPrimaryKey())
+            {
+                if (!this.hasIndex(propertyIndex))
+                {
+                    database.command(new OCommandSQL("CREATE INDEX " + propertyIndex + " NOTUNIQUE")).execute();
+                }
+            }
         }
     }
-
 
     @Override
     public boolean registerQuery(final EntityContext entity, final String name, final String query) throws NormandraException
@@ -359,7 +368,6 @@ public class OrientDatabase implements Database
         return true;
     }
 
-
     @Override
     public boolean unregisterQuery(final String name) throws NormandraException
     {
@@ -369,7 +377,6 @@ public class OrientDatabase implements Database
         }
         return this.statementsByName.remove(name) != null;
     }
-
 
     public Collection<String> getClasses()
     {
@@ -394,7 +401,6 @@ public class OrientDatabase implements Database
         }
     }
 
-
     public Collection<String> getClusters()
     {
         final ODatabaseDocumentTx database = this.createDatabase();
@@ -413,7 +419,6 @@ public class OrientDatabase implements Database
         }
     }
 
-
     public Collection<String> getIndices()
     {
         final ODatabaseDocumentTx database = this.createDatabase();
@@ -424,6 +429,7 @@ public class OrientDatabase implements Database
             {
                 names.add(index.getName());
             }
+            Collections.sort(names);
             return Collections.unmodifiableCollection(names);
         }
         finally
@@ -431,7 +437,6 @@ public class OrientDatabase implements Database
             database.close();
         }
     }
-
 
     public boolean hasIndex(final String clusterName)
     {
@@ -449,7 +454,6 @@ public class OrientDatabase implements Database
         return false;
     }
 
-
     public boolean hasCluster(final String clusterName)
     {
         if (null == clusterName || clusterName.isEmpty())
@@ -466,7 +470,6 @@ public class OrientDatabase implements Database
         return false;
     }
 
-
     public boolean hasClass(final String className)
     {
         if (null == className || className.isEmpty())
@@ -482,7 +485,6 @@ public class OrientDatabase implements Database
         }
         return false;
     }
-
 
     public boolean hasProperty(final String className, final String fieldName)
     {
@@ -506,7 +508,6 @@ public class OrientDatabase implements Database
             database.close();
         }
     }
-
 
     @Override
     public void close()

@@ -26,13 +26,11 @@ public class OrientSchemaTest
 {
     private final OrientTestHelper helper = new OrientTestHelper();
 
-
     @BeforeClass
     public static void setup() throws Exception
     {
         OrientTestHelper.setup();
     }
-
 
     @Before
     public void create() throws Exception
@@ -40,13 +38,11 @@ public class OrientSchemaTest
         helper.create(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }
 
-
     @After
-    public void destroy() throws Exception
+    public void cleanup()
     {
-        helper.destroy();
+        helper.cleanup();
     }
-
 
     @Test
     public void testSimple() throws Exception

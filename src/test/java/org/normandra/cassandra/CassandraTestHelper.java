@@ -12,7 +12,7 @@ import java.util.Collection;
 
 /**
  * common cassandra unit test bootstrap
- * <p>
+ * <p/>
  * User: bowen Date: 1/20/14
  */
 public class CassandraTestHelper implements TestHelper
@@ -33,12 +33,10 @@ public class CassandraTestHelper implements TestHelper
 
     private EntityManager manager;
 
-
     public static void setup() throws Exception
     {
         CassandraTestUtil.start("/cassandra-2.1.0.yaml");
     }
-
 
     @Override
     public EntityManagerFactory getFactory()
@@ -46,13 +44,11 @@ public class CassandraTestHelper implements TestHelper
         return this.factory;
     }
 
-
     @Override
     public EntityManager getManager()
     {
         return this.manager;
     }
-
 
     @Override
     public CassandraDatabase getDatabase()
@@ -60,13 +56,11 @@ public class CassandraTestHelper implements TestHelper
         return this.database;
     }
 
-
     @Override
     public CassandraDatabaseSession getSession()
     {
         return this.session;
     }
-
 
     @Override
     public void create(final Collection<Class> types) throws Exception
@@ -87,25 +81,31 @@ public class CassandraTestHelper implements TestHelper
         this.session = this.database.createSession();
     }
 
-
     @Override
-    public void destroy() throws Exception
+    public void cleanup()
     {
-        if (this.session != null)
+        try
         {
-            CassandraTestUtil.reset();
-            this.session.close();
-            this.session = null;
+            if (this.session != null)
+            {
+                CassandraTestUtil.reset();
+                this.session.close();
+                this.session = null;
+            }
+            if (this.database != null)
+            {
+                this.database.close();
+                this.database = null;
+            }
+            if (this.manager != null)
+            {
+                this.manager.close();
+                this.manager = null;
+            }
         }
-        if (this.database != null)
+        catch (final Exception e)
         {
-            this.database.close();
-            this.database = null;
-        }
-        if (this.manager != null)
-        {
-            this.manager.close();
-            this.manager = null;
+            e.printStackTrace();
         }
     }
 }

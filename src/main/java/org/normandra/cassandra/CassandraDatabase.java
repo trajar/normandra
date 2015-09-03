@@ -7,22 +7,6 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.TableGenerator;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.Database;
@@ -41,9 +25,26 @@ import org.normandra.util.QueryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.TableGenerator;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 /**
  * a cassandra database
- * <p>
+ * <p/>
  * User: bowen Date: 8/31/13
  */
 public class CassandraDatabase implements Database, CassandraAccessor
@@ -384,7 +385,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
                         if (!column.isPrimaryKey())
                         {
                             final StringBuilder cql = new StringBuilder();
-                            cql.append("CREATE INDEX ON ").append(tableName).append(" (").append(column.getName()).append(");");
+                            cql.append("CREATE INDEX IF NOT EXISTS ON ").append(tableName).append(" (").append(column.getName()).append(");");
                             this.ensureSession().execute(this.session.newSimpleStatement(cql.toString()));
                         }
                     }
