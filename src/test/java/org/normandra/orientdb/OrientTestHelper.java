@@ -16,7 +16,7 @@ import java.util.Collection;
 
 /**
  * orientdb test utilities
- * <p/>
+ * <p>
  * User: bowen Date: 6/8/14
  */
 public class OrientTestHelper implements TestHelper
@@ -49,15 +49,10 @@ public class OrientTestHelper implements TestHelper
             FileUtils.forceDelete(dir);
         }
         dir.mkdirs();
-        ODatabase db = new ODatabaseDocumentTx(path);
-        try
+        try (final ODatabase db = new ODatabaseDocumentTx(path))
         {
-            db = db.create();
             db.setProperty("storage.keepOpen", Boolean.FALSE);
-        }
-        finally
-        {
-            db.close();
+            db.create();            
         }
         Thread.sleep(100);
     }
@@ -128,7 +123,7 @@ public class OrientTestHelper implements TestHelper
         }
         catch (final Exception e)
         {
-            e.printStackTrace();
+//          e.printStackTrace();
         }
     }
 }

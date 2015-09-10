@@ -47,6 +47,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OrientDatabase implements Database
 {
+    public static final int poolSize = 4;
+
     public static final String URL = "orientdb.url";
 
     public static final String USER_ID = "orientdb.userid";
@@ -57,25 +59,16 @@ public class OrientDatabase implements Database
 
     private final String url;
 
+    private final OPartitionedDatabasePool pool;
+
     private final EntityCacheFactory cache;
 
     private final DatabaseConstruction constructionMode;
-
-    private final OPartitionedDatabasePool pool;
 
     private final Map<String, OrientQuery> statementsByName = new ConcurrentHashMap<>();
 
     public OrientDatabase(final String url, final String user, final String pwd, final EntityCacheFactory cache, final DatabaseConstruction mode)
     {
-        this(url, new OPartitionedDatabasePool(url, user, pwd), cache, mode);
-    }
-
-    public OrientDatabase(final String url, final OPartitionedDatabasePool pool, final EntityCacheFactory cache, final DatabaseConstruction mode)
-    {
-        if (null == pool)
-        {
-            throw new NullArgumentException("database pool");
-        }
         if (null == cache)
         {
             throw new NullArgumentException("cache factory");
@@ -85,14 +78,42 @@ public class OrientDatabase implements Database
             throw new NullArgumentException("construction mode");
         }
         this.url = url;
+        this.pool = new OPartitionedDatabasePool(url, user, pwd, poolSize);
+        this.cache = cache;
+        this.constructionMode = mode;
+    }
+
+    public OrientDatabase(final String url, final OPartitionedDatabasePool pool, final EntityCacheFactory cache, final DatabaseConstruction mode)
+    {
+        if (null == cache)
+        {
+            throw new NullArgumentException("cache factory");
+        }
+        if (null == mode)
+        {
+            throw new NullArgumentException("construction mode");
+        }
+        if (null == pool)
+        {
+            throw new NullArgumentException("pool");
+        }
+        this.url = url;
         this.pool = pool;
         this.cache = cache;
         this.constructionMode = mode;
     }
 
-    protected final ODatabaseDocumentTx createDatabase()
+    final ODatabaseDocumentTx createDatabase()
     {
-        return this.pool.acquire();
+        final boolean keepOpen = !this.isLocal();
+        final ODatabaseDocumentTx db = this.pool.acquire();
+        db.setProperty("storage.keepOpen", keepOpen);
+        return db;
+    }
+
+    public boolean isLocal()
+    {
+        return this.url.toLowerCase().startsWith("plocal:") || this.url.toLowerCase().startsWith("local:");
     }
 
     @Override
@@ -114,7 +135,7 @@ public class OrientDatabase implements Database
             return;
         }
 
-        if (this.url.toLowerCase().startsWith("plocal:") || this.url.toLowerCase().startsWith("local:"))
+        if (this.isLocal())
         {
             // initialize directory structure as necessary
             final int index = this.url.indexOf(":");
@@ -127,15 +148,11 @@ public class OrientDatabase implements Database
                 }
                 if (path.list() == null || path.list().length <= 0)
                 {
-                    final ODatabase db = new ODatabaseDocumentTx(this.url);
-                    try
+                    final boolean keepOpen = !this.isLocal();
+                    try (final ODatabase db = new ODatabaseDocumentTx(this.url))
                     {
                         db.setProperty("storage.keepOpen", Boolean.FALSE);
                         db.create();
-                    }
-                    finally
-                    {
-                        db.close();
                     }
                 }
             }
@@ -146,8 +163,7 @@ public class OrientDatabase implements Database
         }
 
         // setup entity schema
-        final ODatabaseDocumentTx database = this.createDatabase();
-        try
+        try (final ODatabaseDocumentTx database = this.createDatabase())
         {
             for (final EntityMeta entity : meta.getEntities())
             {
@@ -161,10 +177,6 @@ public class OrientDatabase implements Database
         catch (final Exception e)
         {
             throw new NormandraException("Unable to refresh database.", e);
-        }
-        finally
-        {
-            database.close();
         }
     }
 
@@ -380,8 +392,7 @@ public class OrientDatabase implements Database
 
     public Collection<String> getClasses()
     {
-        final ODatabaseDocumentTx database = this.createDatabase();
-        try
+        try (final ODatabaseDocumentTx database = this.createDatabase())
         {
             final Collection<OClass> types = database.getMetadata().getSchema().getClasses();
             if (null == types || types.isEmpty())
@@ -395,16 +406,11 @@ public class OrientDatabase implements Database
             }
             return Collections.unmodifiableCollection(list);
         }
-        finally
-        {
-            database.close();
-        }
     }
 
     public Collection<String> getClusters()
     {
-        final ODatabaseDocumentTx database = this.createDatabase();
-        try
+        try (final ODatabaseDocumentTx database = this.createDatabase())
         {
             final Collection<String> names = database.getClusterNames();
             if (null == names || names.isEmpty())
@@ -413,28 +419,18 @@ public class OrientDatabase implements Database
             }
             return Collections.unmodifiableCollection(names);
         }
-        finally
-        {
-            database.close();
-        }
     }
 
     public Collection<String> getIndices()
     {
-        final ODatabaseDocumentTx database = this.createDatabase();
-        try
+        try (final ODatabaseDocumentTx database = this.createDatabase())
         {
             final List<String> names = new ArrayList<>();
             for (final OIndex index : database.getMetadata().getIndexManager().getIndexes())
             {
                 names.add(index.getName());
             }
-            Collections.sort(names);
             return Collections.unmodifiableCollection(names);
-        }
-        finally
-        {
-            database.close();
         }
     }
 
@@ -488,8 +484,7 @@ public class OrientDatabase implements Database
 
     public boolean hasProperty(final String className, final String fieldName)
     {
-        final ODatabaseDocumentTx database = this.createDatabase();
-        try
+        try (final ODatabaseDocumentTx database = this.createDatabase())
         {
             final OClass schemaClass = database.getMetadata().getSchema().getClass(className);
             if (null == schemaClass)
@@ -503,16 +498,11 @@ public class OrientDatabase implements Database
             }
             return property.getType() != null;
         }
-        finally
-        {
-            database.close();
-        }
     }
 
     @Override
     public void close()
     {
-        // cleanup and shutdown
         this.pool.close();
     }
 }

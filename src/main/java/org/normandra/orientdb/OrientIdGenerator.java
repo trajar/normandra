@@ -31,7 +31,6 @@ public class OrientIdGenerator implements IdGenerator
 
     private final OrientDatabase database;
 
-
     protected OrientIdGenerator(final String table, final String index, final String keyCol, final String valueCol, final String key, final OrientDatabase database)
     {
         this.tableName = table;
@@ -41,7 +40,6 @@ public class OrientIdGenerator implements IdGenerator
         this.keyValue = key;
         this.database = database;
     }
-
 
     @Override
     public Long generate(final EntityMeta entity) throws NormandraException
@@ -53,8 +51,7 @@ public class OrientIdGenerator implements IdGenerator
 
         synchronized (lock)
         {
-            final ODatabaseDocumentTx dbtx = this.database.createDatabase();
-            try
+            try (final ODatabaseDocumentTx dbtx = this.database.createDatabase())
             {
                 // try to update counter a fixed number of times
                 dbtx.begin();
@@ -71,18 +68,12 @@ public class OrientIdGenerator implements IdGenerator
             }
             catch (final Exception e)
             {
-                dbtx.rollback();
                 throw new NormandraException("Unable to increment counter id [" + this.keyValue + "] from table [" + this.tableName + "].", e);
-            }
-            finally
-            {
-                dbtx.close();
             }
         }
 
         throw new NormandraException("Unable to generate counter id.");
     }
-
 
     private Long incrementCounter(final ODatabaseDocumentTx dbtx)
     {
@@ -108,7 +99,6 @@ public class OrientIdGenerator implements IdGenerator
         document.detach();
         return next;
     }
-
 
     private ODocument findDocument(final ODatabaseDocumentTx dbtx)
     {
