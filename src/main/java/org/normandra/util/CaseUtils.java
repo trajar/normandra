@@ -13,9 +13,8 @@ public class CaseUtils
         return camelCase(rubyCase, "_");
     }
 
-
     /**
-     * converts ruby to camel case
+     * converts camel to ruby case
      */
     public static String camelToSnakeCase(final String camelCase)
     {
@@ -28,7 +27,6 @@ public class CaseUtils
         // simple regex
         return camelCase.replaceAll("\\B([A-Z])", "_$1").toLowerCase();
     }
-
 
     /**
      * converts string to ruby case, using the specified string delimeter
@@ -66,7 +64,6 @@ public class CaseUtils
 
         return result.toString();
     }
-
 
     /**
      * converts string to camel case, using the specified string delimeter
@@ -108,7 +105,6 @@ public class CaseUtils
 
         return result.toString();
     }
-
 
     private CaseUtils()
     {
