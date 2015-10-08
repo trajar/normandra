@@ -1,15 +1,14 @@
 package org.normandra;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.EntityMetaLookup;
 import org.normandra.meta.HierarchyEntityContext;
 import org.normandra.meta.SingleEntityContext;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * an entity manager backed by NoSQL database
@@ -108,7 +107,7 @@ public class EntityManager implements Transactional
     }
 
 
-    public <T> T get(final Class<T> clazz, final Object key) throws NormandraException
+    public <T> T get(final Class<? extends T> clazz, final Object key) throws NormandraException
     {
         if (null == clazz)
         {
@@ -129,7 +128,7 @@ public class EntityManager implements Transactional
         {
             return null;
         }
-        return clazz.cast(obj);
+        return (T) obj;
     }
 
 
