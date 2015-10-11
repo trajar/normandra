@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 /**
  * a cassandra database session
  * <p>
- * User: bowen
+ * 
  * Date: 2/1/14
  */
 public class CassandraDatabaseSession extends AbstractTransactional implements DatabaseSession

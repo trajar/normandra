@@ -19,7 +19,7 @@ import java.util.Set;
 /**
  * a one-to-many or many-to-many collection accessor
  * <p>
- * User: bowen
+ * 
  * Date: 3/20/14
  */
 public class ManyJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor

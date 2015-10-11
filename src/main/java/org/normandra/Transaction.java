@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 /**
  * a transaction worker
  * <p>
- * User: bowen Date: 8/30/14
+ *  Date: 8/30/14
  */
 public class Transaction implements AutoCloseable
 {

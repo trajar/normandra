@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * a generic table meta
  * <p/>
- * User: bowen Date: 3/14/14
+ *  Date: 3/14/14
  */
 public class TableMeta implements Iterable<ColumnMeta>, Comparable<TableMeta>
 {

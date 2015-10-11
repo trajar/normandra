@@ -18,7 +18,7 @@ import java.util.UUID;
 /**
  * entity meta-data
  * <p>
- * User: bowen
+ * 
  * Date: 9/1/13
  */
 public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>

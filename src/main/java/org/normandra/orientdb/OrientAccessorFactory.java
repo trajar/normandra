@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 /**
  * a factory using orientdb's graph-relation properties for single/multi-joined columns
  * <p>
- * User: bowen
+ * 
  * Date: 9/23/14
  */
 public class OrientAccessorFactory implements ColumnAccessorFactory

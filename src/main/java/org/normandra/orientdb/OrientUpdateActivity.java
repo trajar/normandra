@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * update activity record
  * <p/>
- * User: bowen
+ * 
  * Date: 5/20/14
  */
 public class OrientUpdateActivity implements DatabaseActivity

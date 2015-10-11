@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 /**
  * a factory that constructs accessors capable of using reflection and lazy-loaded collections
  * <p>
- * User: bowen
+ * 
  * Date: 9/23/14
  */
 public class BasicColumnAccessorFactory implements ColumnAccessorFactory

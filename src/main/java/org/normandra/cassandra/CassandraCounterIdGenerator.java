@@ -12,7 +12,7 @@ import org.normandra.meta.EntityMeta;
 /**
  * a sequenced id generator
  * <p/>
- * User: bowen
+ * 
  * Date: 1/26/14
  */
 public class CassandraCounterIdGenerator implements IdGenerator

@@ -16,7 +16,7 @@ import java.util.Collections;
 /**
  * class entity
  * <p/>
- * User: bowen
+ * 
  * Date: 2/14/14
  */
 @Table(name = "classroom")

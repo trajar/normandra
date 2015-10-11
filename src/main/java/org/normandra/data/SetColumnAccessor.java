@@ -13,7 +13,7 @@ import java.util.Set;
 /**
  * concrete set element accessor
  * <p>
- * User: bowen
+ * 
  * Date: 1/19/14
  */
 public class SetColumnAccessor extends CollectionColumnAccessor

@@ -4,7 +4,7 @@ package org.normandra.orientdb;
 /**
  * orientdb prepared statement context
  * <p/>
- * User: bowen
+ * 
  * Date: 06/08/2014
  */
 public class OrientQuery

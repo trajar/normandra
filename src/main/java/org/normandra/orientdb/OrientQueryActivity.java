@@ -18,7 +18,7 @@ import org.normandra.log.DatabaseActivity;
 /**
  * a orientdb database query activity
  * <p>
- * User: bowen Date: 4/4/14
+ *  Date: 4/4/14
  */
 public class OrientQueryActivity implements DatabaseActivity
 {

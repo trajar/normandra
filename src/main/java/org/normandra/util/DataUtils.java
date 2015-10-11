@@ -24,7 +24,7 @@ import java.util.UUID;
 /**
  * common data utilities
  * <p>
- * User: bowen
+ * 
  * Date: 7/14/14
  */
 public class DataUtils

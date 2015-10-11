@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * concrete list element accessor
  * <p>
- * User: bowen
+ * 
  * Date: 1/19/14
  */
 public class ListColumnAccessor extends CollectionColumnAccessor

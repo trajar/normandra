@@ -43,7 +43,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * User: bowen Date: 5/14/14
+ *  Date: 5/14/14
  */
 public class OrientDatabase implements Database
 {

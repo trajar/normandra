@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * an element factory that unpacks entity ids from object instances
  * <p>
- * User: bowen
+ * 
  * Date: 9/23/14
  */
 public class BasicElementIdentity<T> implements ElementIdentity<T>

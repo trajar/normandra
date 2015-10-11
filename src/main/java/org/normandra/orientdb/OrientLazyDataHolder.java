@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * a lazy-loaded orientdb data holder based on key/index lookup
  * <p>
- * User: bowen Date: 4/5/14
+ *  Date: 4/5/14
  */
 public class OrientLazyDataHolder implements DataHolder
 {

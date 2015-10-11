@@ -5,7 +5,7 @@ import org.apache.commons.lang.NullArgumentException;
 /**
  * a join column meta description
  * <p>
- * User: bowen
+ * 
  * Date: 2/14/14
  */
 public class JoinColumnMeta extends ColumnMeta

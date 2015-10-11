@@ -13,7 +13,7 @@ import java.util.Collection;
 /**
  * common cassandra unit test bootstrap
  * <p/>
- * User: bowen Date: 1/20/14
+ *  Date: 1/20/14
  */
 public class CassandraTestHelper implements TestHelper
 {

@@ -7,7 +7,7 @@ import org.normandra.NormandraException;
 /**
  * a single entity accessor - for one-to-one or many-to-one n relationships
  * <p>
- * User: bowen
+ * 
  * Date: 2/9/14
  */
 public class ManyToOneAccessor implements AssociationAccessor

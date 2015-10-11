@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * lazy loaded object handler
  * <p>
- * User: bowen Date: 2/2/14
+ *  Date: 2/2/14
  */
 public class LazyAssociationHandler implements MethodHandler
 {

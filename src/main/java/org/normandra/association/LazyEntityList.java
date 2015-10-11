@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 /**
- * User: bowen
+ * 
  * Date: 3/27/14
  */
 public class LazyEntityList<T> extends LazyEntityCollection<T> implements List<T>

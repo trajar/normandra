@@ -7,7 +7,7 @@ import javax.persistence.Entity;
 /**
  * cat entity class
  * <p/>
- * User: bowen
+ * 
  * Date: 9/1/13
  */
 @Entity

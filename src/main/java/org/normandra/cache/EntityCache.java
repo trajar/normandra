@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * entity cache api
  * <p/>
- * User: bowen
+ * 
  * Date: 2/3/14
  */
 public interface EntityCache

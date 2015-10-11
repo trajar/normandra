@@ -11,7 +11,7 @@ import java.util.ListIterator;
 /**
  * an element collection list
  * <p>
- * User: bowen
+ * 
  * Date: 3/30/14
  */
 public class LazyElementList<T> extends LazyElementCollection<T> implements List<T>

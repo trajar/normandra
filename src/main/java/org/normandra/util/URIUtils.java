@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 /**
  * set of common URI/URL utility methods
  * <p>
- * User: bowen
+ * 
  * Date: 9/1/14
  */
 public class URIUtils

@@ -9,7 +9,7 @@ import java.lang.reflect.Field;
 /**
  * a nested column accessor
  * <p>
- * User: bowen
+ * 
  * Date: 1/21/14
  */
 public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnAccessor

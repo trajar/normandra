@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * unit test to test persistence
  * <p/>
- * User: bowen
+ * 
  * Date: 1/20/14
  */
 public class CassandraSaveTest

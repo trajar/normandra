@@ -57,7 +57,7 @@ import java.util.TreeSet;
 /**
  * a class used to parse jpa annotations
  * <p>
- * User: bowen
+ * 
  * Date: 9/1/13
  */
 public class AnnotationParser

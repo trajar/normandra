@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * cassandra prepared statement context
  * <p>
- * User: bowen
+ * 
  * Date: 4/24/14
  */
 public class CassandraPreparedStatement

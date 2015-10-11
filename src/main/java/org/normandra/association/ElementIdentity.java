@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * a simple factory that helps lazy-loaded collections fromEntity/toEntity values
  * <p>
- * User: bowen
+ * 
  * Date: 9/23/14
  */
 public interface ElementIdentity<T>

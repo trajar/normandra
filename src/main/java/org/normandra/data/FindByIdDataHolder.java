@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * a lazy data holder that queries entities by id
  * <p>
- * User: bowen
+ * 
  * Date: 4/25/15
  */
 public class FindByIdDataHolder implements DataHolder

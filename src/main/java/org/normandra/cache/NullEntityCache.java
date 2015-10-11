@@ -11,7 +11,7 @@ import java.util.Map;
  * an empty cache api that doesn't actually cache elements
  * <p>
  * <p>
- * User: bowen
+ * 
  * Date: 7/14/14
  */
 public class NullEntityCache implements EntityCache

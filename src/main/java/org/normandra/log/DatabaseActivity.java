@@ -5,7 +5,7 @@ import java.util.Date;
 /**
  * an instance of database listActivity
  * <p>
- * User: bowen
+ * 
  * Date: 4/4/14
  */
 public interface DatabaseActivity

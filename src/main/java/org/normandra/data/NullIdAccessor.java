@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * an empty id accessor, used when we have multiple @Id annotations but outside an embeddable type
  * <p>
- * User: bowen
+ * 
  * Date: 3/2/14
  */
 public class NullIdAccessor implements IdAccessor

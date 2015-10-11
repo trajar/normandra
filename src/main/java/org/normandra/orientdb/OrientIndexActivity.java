@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * a orientdb database index lookup activity
  * <p/>
- * User: bowen
+ * 
  * Date: 4/4/14
  */
 public class OrientIndexActivity implements DatabaseActivity

@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * an element collection set
  * <p>
- * User: bowen
+ * 
  * Date: 3/30/14
  */
 public class LazyElementSet<T> extends LazyElementCollection<T> implements Set<T>

@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * a session api that is cable of retrieving entity instances
  * <p/>
- * User: bowen
+ * 
  * Date: 2/9/14
  */
 public interface EntitySession

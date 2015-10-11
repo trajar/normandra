@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * a lazy entity collection
  * <p>
- * User: bowen
+ * 
  * Date: 3/25/14
  */
 public class LazyEntitySet<T> extends LazyEntityCollection<T> implements Set<T>

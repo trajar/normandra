@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * User: bowen
+ * 
  * Date: 3/30/14
  */
 @Entity

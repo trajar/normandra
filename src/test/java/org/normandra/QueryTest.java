@@ -15,7 +15,7 @@ import java.util.TreeMap;
 /**
  * test query parser
  * <p/>
- * User: bowen
+ * 
  * Date: 4/5/14
  */
 public class QueryTest extends BaseTest

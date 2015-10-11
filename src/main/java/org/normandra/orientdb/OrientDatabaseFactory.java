@@ -8,7 +8,7 @@ import org.normandra.cache.EntityCacheFactory;
 /**
  * a database factory
  * <p>
- * User: bowen Date: 5/14/14
+ *  Date: 5/14/14
  */
 public class OrientDatabaseFactory implements DatabaseFactory
 {

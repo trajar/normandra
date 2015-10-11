@@ -6,7 +6,7 @@ import org.normandra.NormandraException;
 /**
  * a constant read-only accessor
  * <p>
- * User: bowen
+ * 
  * Date: 1/15/14
  */
 public class ReadOnlyColumnAccessor implements ColumnAccessor

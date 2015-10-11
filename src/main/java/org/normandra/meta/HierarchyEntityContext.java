@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * a complex entity hierarchy
  * <p>
- * User: bowen
+ * 
  * Date: 3/30/14
  */
 public class HierarchyEntityContext implements EntityContext

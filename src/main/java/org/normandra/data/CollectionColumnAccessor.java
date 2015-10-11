@@ -12,7 +12,7 @@ import java.util.Collections;
 /**
  * simple column accessor for non-entity types
  * <p>
- * User: bowen
+ * 
  * Date: 1/19/14
  */
 abstract public class CollectionColumnAccessor extends FieldColumnAccessor implements ColumnAccessor

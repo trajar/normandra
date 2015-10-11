@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * an abstraction of entity meta information, which can be backed by a single entity or hierarchy
  * <p>
- * User: bowen
+ * 
  * Date: 3/30/14
  */
 public interface EntityContext

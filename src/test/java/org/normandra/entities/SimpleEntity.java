@@ -16,7 +16,7 @@ import java.util.Collections;
 /**
  * simple entity exemplar
  * <p/>
- * User: bowen
+ * 
  * Date: 9/1/13
  */
 @Entity

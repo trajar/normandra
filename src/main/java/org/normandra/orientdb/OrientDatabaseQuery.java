@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * orientdb query api
  * <p>
- * User: bowen Date: 6/9/14
+ *  Date: 6/9/14
  */
 public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
 {

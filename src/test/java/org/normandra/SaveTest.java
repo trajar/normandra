@@ -17,7 +17,7 @@ import org.normandra.meta.EntityMeta;
 /**
  * unit test to test persistence
  * <p>
- * User: bowen
+ * 
  * Date: 1/20/14
  */
 public class SaveTest extends BaseTest

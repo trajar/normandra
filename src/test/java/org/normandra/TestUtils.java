@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * test utilities
  * <p>
- * User: bowen
+ * 
  * Date: 6/8/14
  */
 public class TestUtils

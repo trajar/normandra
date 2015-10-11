@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * a lazy loaded entity collection
  * <p>
- * User: bowen Date: 3/25/14
+ *  Date: 3/25/14
  */
 abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
 {

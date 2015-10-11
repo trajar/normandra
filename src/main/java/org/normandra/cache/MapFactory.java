@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * a generic factory used to create map instances
  * <p>
- * User: bowen Date: 7/14/14
+ *  Date: 7/14/14
  */
 public interface MapFactory
 {

@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * a simple id accessor based on a single primary key
  * <p>
- * User: bowen
+ * 
  * Date: 2/15/14
  */
 public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor

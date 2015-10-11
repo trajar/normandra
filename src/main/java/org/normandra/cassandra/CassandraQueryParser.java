@@ -14,7 +14,7 @@ import org.normandra.util.QueryUtils;
 /**
  * a simple jpa query parser
  * <p/>
- * User: bowen
+ * 
  * Date: 4/20/14
  */
 public class CassandraQueryParser<T>

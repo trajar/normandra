@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * a simple uuid generator
- * User: bowen
+ * 
  * Date: 3/21/14
  */
 public class UUIDGenerator implements IdGenerator

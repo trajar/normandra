@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 /**
  * a data accessor for a single join association
  * <p>
- * User: bowen
+ * 
  * Date: 2/1/14
  */
 public class SingleJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor

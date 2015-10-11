@@ -10,7 +10,7 @@ import org.normandra.data.DataHolder;
 /**
  * lazy loaded element collection
  * <p>
- * User: bowen Date: 3/29/14
+ *  Date: 3/29/14
  */
 abstract public class LazyElementCollection<T> implements LazyLoadedCollection<T>
 {

@@ -3,7 +3,7 @@ package org.normandra.meta;
 /**
  * a column that is mapped to another table, which ultimately owns the data
  * <p>
- * User: bowen
+ * 
  * Date: 5/31/14
  */
 public class MappedColumnMeta extends ColumnMeta

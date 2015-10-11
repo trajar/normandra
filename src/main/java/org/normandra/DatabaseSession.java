@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * a database session
  * <p>
- * User: bowen
+ * 
  * Date: 2/1/14
  */
 public interface DatabaseSession extends EntitySession, Transactional

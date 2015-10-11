@@ -3,7 +3,7 @@ package org.normandra;
 /**
  * a base transactional class
  * <p>
- * User: bowen
+ * 
  * Date: 8/31/14
  */
 abstract public class AbstractTransactional implements Transactional

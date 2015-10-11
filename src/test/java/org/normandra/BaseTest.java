@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * a base test case bootstrap
  * <p/>
- * User: bowen
+ * 
  * Date: 6/8/14
  */
 abstract public class BaseTest

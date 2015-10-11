@@ -3,7 +3,7 @@ package org.normandra.meta;
 /**
  * a jpa query annotation meta
  * <p>
- * User: bowen
+ * 
  * Date: 4/26/14
  */
 public class QueryMeta implements Comparable<QueryMeta>

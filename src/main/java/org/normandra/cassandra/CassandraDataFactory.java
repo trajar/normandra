@@ -18,7 +18,7 @@ import java.util.TreeMap;
 /**
  * a cassandra data holder factory
  * <p>
- * User: bowen
+ * 
  * Date: 6/1/14
  */
 public class CassandraDataFactory implements DataHolderFactory

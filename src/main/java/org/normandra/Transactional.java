@@ -3,7 +3,7 @@ package org.normandra;
 /**
  * a element capable of handling unit of work operations
  * <p>
- * User: bowen Date: 8/30/14
+ *  Date: 8/30/14
  */
 public interface Transactional
 {

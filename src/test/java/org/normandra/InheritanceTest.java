@@ -12,7 +12,7 @@ import java.util.Arrays;
 /**
  * unit tests for inheritance and abstract entity classes
  * <p>
- * User: bowen
+ * 
  * Date: 2/1/14
  */
 public class InheritanceTest extends BaseTest

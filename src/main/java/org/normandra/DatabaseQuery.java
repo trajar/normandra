@@ -5,7 +5,7 @@ import java.util.Collection;
 /**
  * a simple database query
  * <p>
- * User: bowen
+ * 
  * Date: 4/5/14
  */
 public interface DatabaseQuery<T> extends Iterable<T>

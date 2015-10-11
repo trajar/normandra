@@ -5,7 +5,7 @@ import java.util.Comparator;
 /**
  * a database listActivity comparator
  * <p>
- * User: bowen
+ * 
  * Date: 4/4/14
  */
 public class DatabaseActivityComparator implements Comparator<DatabaseActivity>

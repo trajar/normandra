@@ -3,7 +3,7 @@ package org.normandra.meta;
 /**
  * joined collection column, usually from one-to-many association
  * <p>
- * User: bowen
+ * 
  * Date: 3/22/14
  */
 public class JoinCollectionMeta extends ColumnMeta

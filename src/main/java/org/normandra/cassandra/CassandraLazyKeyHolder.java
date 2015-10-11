@@ -21,7 +21,7 @@ import org.normandra.meta.TableMeta;
 /**
  * a lazy-loaded cassandra data holder that pulls entity whereValues
  * <p/>
- * User: bowen Date: 4/5/14
+ *  Date: 4/5/14
  */
 public class CassandraLazyKeyHolder implements DataHolder
 {

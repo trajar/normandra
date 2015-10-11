@@ -8,7 +8,7 @@ import javax.persistence.NamedQuery;
 /**
  * dog entity class
  * <p/>
- * User: bowen
+ * 
  * Date: 9/1/13
  */
 @Entity

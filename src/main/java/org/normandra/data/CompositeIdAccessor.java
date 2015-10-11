@@ -11,7 +11,7 @@ import java.util.TreeMap;
 /**
  * basic id accessor
  * <p>
- * User: bowen
+ * 
  * Date: 2/15/14
  */
 public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccessor

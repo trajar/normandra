@@ -15,7 +15,7 @@ import java.util.TreeMap;
 /**
  * a simple in-memory cache
  * <p>
- * User: bowen
+ * 
  * Date: 2/3/14
  */
 public class MemoryCache implements EntityCache

@@ -7,7 +7,7 @@ import javax.persistence.Table;
 /**
  * index of students
  * <p/>
- * User: bowen
+ * 
  * Date: 3/2/14
  */
 @Table(name = "student_index")

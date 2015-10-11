@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * unit test utilities
  * <p>
- * User: bowen
+ * 
  * Date: 11/1/13
  */
 public class CassandraTestUtil

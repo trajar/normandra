@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * User: bowen
+ * 
  * Date: 9/23/14
  */
 public class OrientElementIdentity<T> extends BasicElementIdentity<T>

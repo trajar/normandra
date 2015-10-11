@@ -32,7 +32,7 @@ import java.util.UUID;
 /**
  * cassandra utility methods
  * <p>
- * User: bowen
+ * 
  * Date: 9/7/13
  */
 public class CassandraUtils

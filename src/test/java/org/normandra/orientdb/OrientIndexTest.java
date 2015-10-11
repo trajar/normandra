@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * unit tests for orient index
  * <p/>
- * User: bowen
+ * 
  * Date: 5/24/14
  */
 public class OrientIndexTest

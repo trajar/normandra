@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * a set of helper entity instance utilities
  * <p>
- * User: bowen Date: 5/15/14
+ *  Date: 5/15/14
  */
 public class EntityBuilder
 {

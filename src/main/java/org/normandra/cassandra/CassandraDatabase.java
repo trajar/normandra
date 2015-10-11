@@ -45,7 +45,7 @@ import java.util.regex.PatternSyntaxException;
 /**
  * a cassandra database
  * <p/>
- * User: bowen Date: 8/31/13
+ *  Date: 8/31/13
  */
 public class CassandraDatabase implements Database, CassandraAccessor
 {

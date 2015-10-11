@@ -30,7 +30,7 @@ import java.util.TreeMap;
 /**
  * entity manager factory
  * <p>
- * User: bowen Date: 2/1/14
+ *  Date: 2/1/14
  */
 public class EntityManagerFactory
 {

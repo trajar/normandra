@@ -6,7 +6,7 @@ import org.normandra.meta.EntityMeta;
 import java.io.Serializable;
 
 /**
- * User: bowen
+ * 
  * Date: 1/21/14
  */
 public interface IdGenerator

@@ -24,7 +24,7 @@ import org.normandra.meta.TableMeta;
  * a cassandra data handler, used in coordination with entity helper to standardize save/delete operations
  * <p>
  * <p>
- * User: bowen
+ * 
  * Date: 5/27/14
  */
 public class CassandraDataHandler implements DataHandler

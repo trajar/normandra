@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * cassandra database query
  * <p>
- * User: bowen Date: 4/5/14
+ *  Date: 4/5/14
  */
 public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
 {

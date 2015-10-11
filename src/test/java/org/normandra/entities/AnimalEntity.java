@@ -16,7 +16,7 @@ import javax.persistence.Table;
 /**
  * base entity for inheritance
  * <p/>
- * User: bowen
+ * 
  * Date: 9/1/13
  */
 @Entity

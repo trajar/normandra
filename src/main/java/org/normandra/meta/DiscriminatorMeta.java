@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * a discriminator column for abstract/inherited entities
  * <p>
- * User: bowen
+ * 
  * Date: 2/1/14
  */
 public class DiscriminatorMeta

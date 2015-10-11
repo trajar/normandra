@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * a single-entity meta context
  * <p>
- * User: bowen
+ * 
  * Date: 3/30/14
  */
 public class SingleEntityContext implements EntityContext

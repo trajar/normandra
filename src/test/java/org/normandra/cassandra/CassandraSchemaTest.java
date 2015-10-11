@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * cassandra unit tests
  * <p/>
- * User: bowen
+ * 
  * Date: 9/7/13
  */
 public class CassandraSchemaTest

@@ -9,7 +9,7 @@ import java.lang.reflect.Field;
 /**
  * a generic column data accessor
  * <p>
- * User: bowen
+ * 
  * Date: 1/15/14
  */
 public class BasicColumnAccessor extends FieldColumnAccessor implements ColumnAccessor

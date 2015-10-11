@@ -20,7 +20,7 @@ import java.util.TreeMap;
 /**
  * simple utility class to help simplify saving of orientdb documents
  * <p>
- * User: bowen Date: 6/4/14
+ *  Date: 6/4/14
  */
 public class OrientDataHandler implements DataHandler
 {

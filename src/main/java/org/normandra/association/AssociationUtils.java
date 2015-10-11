@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * methods for working with jpa associations
  * <p>
- * User: bowen
+ * 
  * Date: 2/2/14
  */
 public class AssociationUtils

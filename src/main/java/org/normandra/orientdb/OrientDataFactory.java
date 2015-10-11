@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * orientdb data holder factory
  * <p>
- * User: bowen
+ * 
  * Date: 6/1/14
  */
 public class OrientDataFactory implements DataHolderFactory

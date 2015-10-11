@@ -19,7 +19,7 @@ import java.util.Arrays;
 /**
  * cassandra unit tests
  * <p/>
- * User: bowen
+ * 
  * Date: 9/7/13
  */
 public class OrientSchemaTest

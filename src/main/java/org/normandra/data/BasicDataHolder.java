@@ -2,7 +2,7 @@ package org.normandra.data;
 
 /**
  * a data holder wrapped a fixed / concrete value
- * User: bowen
+ * 
  * Date: 3/24/14
  */
 public class BasicDataHolder implements DataHolder

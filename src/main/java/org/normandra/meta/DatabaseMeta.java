@@ -9,7 +9,7 @@ import java.util.TreeSet;
 /**
  * database meta-data
  * <p>
- * User: bowen
+ * 
  * Date: 9/4/13
  */
 public class DatabaseMeta implements Iterable<EntityMeta>

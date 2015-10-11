@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 /**
  * a class capable of querying and constructing entity instances
  * <p>
- * User: bowen
+ * 
  * Date: 3/23/14
  */
 public class CassandraEntityQuery

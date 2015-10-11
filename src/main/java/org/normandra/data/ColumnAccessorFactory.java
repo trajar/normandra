@@ -7,7 +7,7 @@ import java.lang.reflect.Field;
 /**
  * a factory to construct column accessor instances
  * <p>
- * User: bowen
+ * 
  * Date: 9/23/14
  */
 public interface ColumnAccessorFactory

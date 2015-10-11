@@ -13,7 +13,7 @@ import org.normandra.meta.SingleEntityContext;
 /**
  * an entity manager backed by NoSQL database
  * <p>
- * User: bowen
+ * 
  * Date: 8/31/13
  */
 public class EntityManager implements Transactional

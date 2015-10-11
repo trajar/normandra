@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 /**
  * query utility methods
  * <p/>
- * User: bowen
+ * 
  * Date: 6/9/14
  */
 public class QueryUtils

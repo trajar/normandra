@@ -17,7 +17,7 @@ import java.util.Collection;
 /**
  * orientdb test utilities
  * <p>
- * User: bowen Date: 6/8/14
+ *  Date: 6/8/14
  */
 public class OrientTestHelper implements TestHelper
 {

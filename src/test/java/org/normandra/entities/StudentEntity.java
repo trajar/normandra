@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * generic student entity
  * <p/>
- * User: bowen
+ * 
  * Date: 2/14/14
  */
 @Table(name = "student")

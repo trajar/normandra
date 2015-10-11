@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * a simple class for handling document instances
  * <p/>
- * User: bowen
+ * 
  * Date: 6/6/14
  */
 public interface OrientDocumentHandler

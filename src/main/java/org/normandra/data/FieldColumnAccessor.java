@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * a generic column data accessor
  * <p/>
- * User: bowen
+ * 
  * Date: 1/15/14
  */
 abstract public class FieldColumnAccessor

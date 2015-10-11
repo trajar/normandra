@@ -6,7 +6,7 @@ import org.normandra.meta.EntityContext;
 /**
  * a NoSQL database abstraction
  * <p/>
- * User: bowen
+ * 
  * Date: 8/31/13
  */
 public interface Database

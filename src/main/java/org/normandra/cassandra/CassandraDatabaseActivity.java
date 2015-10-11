@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * a cassandra database listActivity, backed by a cql3 statement
  * <p>
- * User: bowen Date: 4/4/14
+ *  Date: 4/4/14
  */
 public class CassandraDatabaseActivity implements DatabaseActivity
 {

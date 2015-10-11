@@ -24,7 +24,7 @@ import java.util.TreeMap;
 /**
  * basic entity handler api
  * <p>
- * User: bowen
+ * 
  * Date: 5/25/14
  */
 public class EntityPersistence

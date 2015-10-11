@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * cassandra database factory
- * User: bowen
+ * 
  * Date: 8/31/13
  */
 public class CassandraDatabaseFactory implements DatabaseFactory

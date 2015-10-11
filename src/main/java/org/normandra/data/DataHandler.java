@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * a simple interface capable of saving entities to database
  * <p/>
- * User: bowen
+ * 
  * Date: 5/25/14
  */
 public interface DataHandler

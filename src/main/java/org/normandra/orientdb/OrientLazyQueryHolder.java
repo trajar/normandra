@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * a lazy-loaded orientdb data holder based on query string
  * <p>
- * User: bowen Date: 4/5/14
+ *  Date: 4/5/14
  */
 public class OrientLazyQueryHolder implements DataHolder
 {

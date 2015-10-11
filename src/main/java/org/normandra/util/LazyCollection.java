@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * a lazy-loaded collection backed by an iterator
  * <p>
- * User: bowen
+ * 
  * Date: 6/29/14
  */
 public class LazyCollection<T> implements Collection<T>

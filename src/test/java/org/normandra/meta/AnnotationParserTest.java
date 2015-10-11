@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * annotation parser unit tests
  * <p/>
- * User: bowen
+ * 
  * Date: 9/1/13
  */
 public class AnnotationParserTest

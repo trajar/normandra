@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 /**
  * orient database session
  * <p>
- * User: bowen
+ * 
  * Date: 5/14/14
  */
 public class OrientDatabaseSession extends AbstractTransactional implements DatabaseSession

@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * index of students
  * <p/>
- * User: bowen
+ * 
  * Date: 3/2/14
  */
 @Table(name = "composite_index")

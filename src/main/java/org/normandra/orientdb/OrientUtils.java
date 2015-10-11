@@ -33,7 +33,7 @@ import org.normandra.util.DataUtils;
 /**
  * collection of common orient utilities
  * <p>
- * User: bowen Date: 5/15/14
+ *  Date: 5/15/14
  */
 public class OrientUtils
 {

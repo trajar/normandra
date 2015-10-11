@@ -21,7 +21,7 @@ import org.normandra.util.ArraySet;
  * a lazy-loaded cassandra data holder that pulls the value of a regularly
  * column
  * <p/>
- * User: bowen Date: 4/5/14
+ *  Date: 4/5/14
  */
 public class CassandraLazyColumnHolder implements DataHolder
 {
