@@ -222,21 +222,29 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
 
     @Override
-    public DatabaseQuery executeNamedQuery(final EntityContext meta, final String name, final Map<String, Object> params) throws NormandraException
+    public DatabaseQuery executeQuery(final EntityContext meta, final String queryOrName, final Map<String, Object> params) throws NormandraException
     {
-        final OrientQuery query = this.statementsByName.get(name);
-        if (null == query)
+        final OrientQuery query = this.statementsByName.get(queryOrName);
+        if (query != null)
         {
-            return null;
+            return this.executeNamedQuery(meta, query, params);
         }
+        else
+        {
+            return this.executeDynamciQuery(meta, queryOrName, params);
+        }
+    }
+    
+    
+    private DatabaseQuery executeNamedQuery(final EntityContext meta, final OrientQuery query, final Map<String, Object> params) throws NormandraException
+    {
         final OrientQueryActivity activity = new OrientQueryActivity(this.database, query.getQuery(), params);
         this.activities.add(activity);
         return new OrientDatabaseQuery(this, meta, activity);
     }
 
-
-    @Override
-    public DatabaseQuery executeDynamciQuery(final EntityContext meta, final String query, final Map<String, Object> params) throws NormandraException
+    
+    private DatabaseQuery executeDynamciQuery(final EntityContext meta, final String query, final Map<String, Object> params) throws NormandraException
     {
         final OrientQueryActivity activity = new OrientQueryActivity(this.database, query, params);
         this.activities.add(activity);

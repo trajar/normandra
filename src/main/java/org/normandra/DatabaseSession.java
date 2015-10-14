@@ -38,12 +38,7 @@ public interface DatabaseSession extends EntitySession, Transactional
     /**
      * query database using string with mapped parameters
      */
-    DatabaseQuery executeNamedQuery(EntityContext meta, String name, Map<String, Object> parameters) throws NormandraException;
-
-    /**
-     * query database using string with mapped parameters
-     */
-    DatabaseQuery executeDynamciQuery(EntityContext meta, String query, Map<String, Object> parameters) throws NormandraException;
+    DatabaseQuery executeQuery(EntityContext meta, String query, Map<String, Object> parameters) throws NormandraException;
 
     /**
      * provides a set of listActivity from this session
