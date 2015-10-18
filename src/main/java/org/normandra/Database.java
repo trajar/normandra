@@ -16,4 +16,5 @@ public interface Database
     boolean registerQuery(EntityContext meta, String name, String query) throws NormandraException;
     boolean unregisterQuery(String name) throws NormandraException;
     void close();
+    void shutdown();
 }

@@ -110,16 +110,17 @@ public class OrientTestHelper implements TestHelper
                 this.session.close();
                 this.session = null;
             }
-            if (this.database != null)
-            {
-                this.database.close();
-                this.database = null;
-            }
             if (this.manager != null)
             {
                 this.manager.close();
                 this.manager = null;
             }
+            if (this.database != null)
+            {
+                this.database.close();
+                this.database.shutdown();
+                this.database = null;
+            }            
         }
         catch (final Exception e)
         {

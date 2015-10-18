@@ -1,5 +1,6 @@
 package org.normandra.orientdb;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -504,5 +505,11 @@ public class OrientDatabase implements Database
     public void close()
     {
         this.pool.close();
+    }
+    
+    @Override
+    public void shutdown()
+    {
+        Orient.instance().closeAllStorages();
     }
 }
