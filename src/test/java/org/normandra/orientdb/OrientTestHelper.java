@@ -13,11 +13,13 @@ import org.normandra.cache.MemoryCache;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * orientdb test utilities
  * <p>
- *  Date: 6/8/14
+ * Date: 6/8/14
  */
 public class OrientTestHelper implements TestHelper
 {
@@ -30,6 +32,8 @@ public class OrientTestHelper implements TestHelper
     public static final String user = "admin";
 
     public static final String password = "admin";
+
+    private final Set<Class> types = new HashSet<>();
 
     private EntityCacheFactory cache = new MemoryCache.Factory(MapFactory.withConcurrency());
 
@@ -52,7 +56,7 @@ public class OrientTestHelper implements TestHelper
         try (final ODatabase db = new ODatabaseDocumentTx(path))
         {
             db.setProperty("storage.keepOpen", Boolean.FALSE);
-            db.create();            
+            db.create();
         }
         Thread.sleep(100);
     }
@@ -60,44 +64,77 @@ public class OrientTestHelper implements TestHelper
     @Override
     public OrientDatabase getDatabase()
     {
+        if (null == this.database)
+        {
+            this.createDatabase();
+        }
         return this.database;
     }
 
     @Override
     public OrientDatabaseSession getSession()
     {
+        if (null == this.session)
+        {
+            this.createDatabase();
+        }
         return this.session;
+    }
+
+    private void createDatabase()
+    {
+        this.database = new OrientDatabaseFactory(path, user, password, cache, construction).create();
+        this.session = this.database.createSession();
     }
 
     @Override
     public EntityManagerFactory getFactory()
     {
+        if (null == this.factory)
+        {
+            this.createManager();
+        }
         return this.factory;
     }
 
     @Override
     public EntityManager getManager()
     {
+        if (null == this.manager)
+        {
+            this.createManager();
+        }
         return this.manager;
     }
 
-    @Override
-    public void create(final Collection<Class> types) throws Exception
+    private void createManager()
     {
-        final EntityManagerFactory.Builder builder = new EntityManagerFactory.Builder()
-            .withType(EntityManagerFactory.Type.ORIENTDB)
-            .withParameter(OrientDatabase.URL, path)
-            .withParameter(OrientDatabase.USER_ID, user)
-            .withParameter(OrientDatabase.PASSWORD, password)
-            .withDatabaseConstruction(construction);
-        for (final Class<?> clazz : types)
+        try
         {
-            builder.withClass(clazz);
+            final EntityManagerFactory.Builder builder = new EntityManagerFactory.Builder()
+                .withType(EntityManagerFactory.Type.ORIENTDB)
+                .withParameter(OrientDatabase.URL, path)
+                .withParameter(OrientDatabase.USER_ID, user)
+                .withParameter(OrientDatabase.PASSWORD, password)
+                .withDatabaseConstruction(construction);
+            for (final Class<?> clazz : types)
+            {
+                builder.withClass(clazz);
+            }
+            this.factory = builder.create();
+            this.manager = this.factory.create();
         }
-        this.factory = builder.create();
-        this.manager = this.factory.create();
-        this.database = new OrientDatabaseFactory(path, user, password, cache, construction).create();
-        this.session = this.database.createSession();
+        catch (final Exception e)
+        {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
+    public void create(final Collection<Class> c) throws Exception
+    {
+        this.types.clear();
+        this.types.addAll(c);
     }
 
     @Override
@@ -120,7 +157,7 @@ public class OrientTestHelper implements TestHelper
                 this.database.close();
                 this.database.shutdown();
                 this.database = null;
-            }            
+            }
         }
         catch (final Exception e)
         {

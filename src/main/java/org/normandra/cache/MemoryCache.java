@@ -6,6 +6,7 @@ import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,23 +14,21 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * a simple in-memory cache
+ * a simple in-memory cache, where the cached entities are held with a weak reference
  * <p>
- * 
  * Date: 2/3/14
  */
 public class MemoryCache implements EntityCache
 {
     private static final Logger logger = LoggerFactory.getLogger(MemoryCache.class);
 
-    private final Map<EntityMeta, Map<Object, Object>> cache = new TreeMap<>();
+    private final Map<EntityMeta, Map<Object, WeakReference>> cache = new TreeMap<>();
 
     private final MapFactory maps;
 
     public static class Factory implements EntityCacheFactory
     {
         private final MapFactory maps;
-
 
         public Factory(final MapFactory f)
         {
@@ -40,14 +39,12 @@ public class MemoryCache implements EntityCache
             this.maps = f;
         }
 
-
         @Override
         public EntityCache create()
         {
             return new MemoryCache(this.maps);
         }
     }
-
 
     public MemoryCache(final MapFactory f)
     {
@@ -58,13 +55,11 @@ public class MemoryCache implements EntityCache
         this.maps = f;
     }
 
-
     @Override
     public void clear()
     {
         this.cache.clear();
     }
-
 
     @Override
     public <T> T get(final EntityMeta meta, final Object key, final Class<T> clazz)
@@ -74,33 +69,38 @@ public class MemoryCache implements EntityCache
             return null;
         }
 
-        final Map entities = this.cache.get(meta);
+        final Map<Object, WeakReference> entities = this.cache.get(meta);
         if (null == entities)
         {
             return null;
         }
 
-        final Object existing = entities.get(key);
-        if (null == existing)
+        final WeakReference reference = entities.get(key);
+        if (null == reference)
         {
+            return null;
+        }
+        final Object instance = reference.get();
+        if (null == instance)
+        {
+            entities.remove(key);
             return null;
         }
 
         if (null == clazz || Object.class.equals(clazz))
         {
-            return (T) existing;
+            return (T) instance;
         }
 
         try
         {
-            return clazz.cast(existing);
+            return clazz.cast(instance);
         }
         catch (final ClassCastException e)
         {
             return null;
         }
     }
-
 
     @Override
     public <T> T get(final EntityContext context, final Object key, final Class<T> clazz)
@@ -119,7 +119,6 @@ public class MemoryCache implements EntityCache
         }
         return null;
     }
-
 
     @Override
     public <T> Map<Object, T> find(final EntityMeta meta, final Collection<?> keys, final Class<T> clazz)
@@ -141,7 +140,6 @@ public class MemoryCache implements EntityCache
         return Collections.unmodifiableMap(map);
     }
 
-
     @Override
     public <T> Map<Object, T> find(final EntityContext context, final Collection<?> keys, final Class<T> clazz)
     {
@@ -162,7 +160,6 @@ public class MemoryCache implements EntityCache
         return Collections.unmodifiableMap(map);
     }
 
-
     @Override
     public boolean remove(final EntityMeta meta, final Object key)
     {
@@ -171,7 +168,7 @@ public class MemoryCache implements EntityCache
             return false;
         }
 
-        final Map<Object, Object> entities = this.cache.get(meta);
+        final Map<Object, WeakReference> entities = this.cache.get(meta);
         if (null == entities)
         {
             return false;
@@ -187,7 +184,6 @@ public class MemoryCache implements EntityCache
         }
     }
 
-
     @Override
     public boolean put(final EntityMeta meta, final Object key, final Object instance)
     {
@@ -196,7 +192,7 @@ public class MemoryCache implements EntityCache
             return false;
         }
 
-        Map<Object, Object> entities = this.cache.get(meta);
+        Map<Object, WeakReference> entities = this.cache.get(meta);
         if (null == entities)
         {
             entities = this.maps.create();
@@ -205,7 +201,8 @@ public class MemoryCache implements EntityCache
 
         try
         {
-            entities.put(key, instance);
+            final WeakReference reference = new WeakReference<>(instance);
+            entities.put(key, reference);
             return true;
         }
         catch (final Exception e)
@@ -214,7 +211,6 @@ public class MemoryCache implements EntityCache
             return false;
         }
     }
-
 
     @Override
     public boolean put(final EntityContext context, final Object key, final Object instance)

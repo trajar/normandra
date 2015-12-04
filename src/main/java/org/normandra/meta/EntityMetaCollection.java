@@ -100,7 +100,7 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         {
             final Class<?> entityClass = entry.getKey();
             final EntityMeta entityMeta = entry.getValue();
-            if (entityClass.isAssignableFrom(clazz))
+            if (clazz.isAssignableFrom(entityClass))
             {
                 list.add(entityMeta);
             }
