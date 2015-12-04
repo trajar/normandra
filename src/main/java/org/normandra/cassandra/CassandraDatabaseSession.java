@@ -7,24 +7,9 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Delete;
-import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import com.datastax.driver.core.querybuilder.Update;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.AbstractTransactional;
 import org.normandra.DatabaseQuery;
@@ -35,7 +20,6 @@ import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHolder;
 import org.normandra.generator.IdGenerator;
-import org.normandra.log.DatabaseActivity;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
@@ -45,10 +29,22 @@ import org.normandra.util.EntityPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * a cassandra database session
  * <p>
- * 
+ * <p>
  * Date: 2/1/14
  */
 public class CassandraDatabaseSession extends AbstractTransactional implements DatabaseSession
@@ -63,8 +59,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
 
     private final List<RegularStatement> statements = new CopyOnWriteArrayList<>();
 
-    private final List<DatabaseActivity> activities = new CopyOnWriteArrayList<>();
-
     private final Map<String, CassandraPreparedStatement> preparedStatements;
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -72,7 +66,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
     private final AtomicBoolean activeUnitOfWork = new AtomicBoolean(false);
 
     private final Executor executor;
-
 
     public CassandraDatabaseSession(final String keyspace, final Session session, final Map<String, CassandraPreparedStatement> map, final EntityCache cache, final Executor executor)
     {
@@ -99,7 +92,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         this.preparedStatements = new TreeMap<>(map);
     }
 
-
     @Override
     public void close()
     {
@@ -108,71 +100,52 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         this.cache.clear();
     }
 
-
     public boolean isClosed()
     {
         return this.closed.get();
     }
-
 
     public String getKeyspace()
     {
         return this.keyspaceName;
     }
 
-
     public Session getSession()
     {
         return this.session;
     }
-    
-    
+
     public Cluster getCluster()
     {
         return this.session.getCluster();
     }
 
-    
-    protected ResultSet executeSync(final Statement statement, final DatabaseActivity.Type type)
+    protected ResultSet executeSync(final Statement statement)
     {
-        final CassandraDatabaseActivity activity = new CassandraDatabaseActivity(statement, this.session, type);
-        this.activities.add(activity);
+        final CassandraDatabaseActivity activity = new CassandraDatabaseActivity(statement, this.session);
         return activity.execute();
     }
 
-
-    protected Future<ResultSet> executeAsync(final Statement statement, final DatabaseActivity.Type type)
+    protected Future<ResultSet> executeAsync(final Statement statement)
     {
-        final CassandraDatabaseActivity activity = new CassandraDatabaseActivity(statement, this.session, type);
-        this.activities.add(activity);
-        final Callable<ResultSet> callable = new Callable<ResultSet>()
-        {
-            @Override
-            public ResultSet call() throws Exception
-            {
-                return activity.execute();
-            }
-        };
+        final CassandraDatabaseActivity activity = new CassandraDatabaseActivity(statement, this.session);
+        final Callable<ResultSet> callable = () -> activity.execute();
         final FutureTask<ResultSet> task = new FutureTask<>(callable);
         this.executor.execute(task);
         return task;
     }
 
-
     @Override
     public void clear()
     {
-        this.activities.clear();
         this.cache.clear();
     }
-
 
     @Override
     public boolean pendingWork()
     {
         return this.activeUnitOfWork.get();
     }
-
 
     @Override
     public void beginWork() throws NormandraException
@@ -183,7 +156,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         }
         this.activeUnitOfWork.getAndSet(true);
     }
-
 
     @Override
     public void commitWork() throws NormandraException
@@ -200,24 +172,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         {
             for (final RegularStatement statement : this.statements)
             {
-                DatabaseActivity.Type type = DatabaseActivity.Type.ADMIN;
-                if (statement instanceof Batch)
-                {
-                    type = DatabaseActivity.Type.BATCH;
-                }
-                else if (statement instanceof Delete)
-                {
-                    type = DatabaseActivity.Type.DELETE;
-                }
-                else if (statement instanceof Select)
-                {
-                    type = DatabaseActivity.Type.SELECT;
-                }
-                else if (statement instanceof Insert || statement instanceof Update)
-                {
-                    type = DatabaseActivity.Type.UPDATE;
-                }
-                this.executeSync(statement, type);
+                this.executeSync(statement);
             }
             this.statements.clear();
             this.activeUnitOfWork.getAndSet(false);
@@ -227,7 +182,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             throw new NormandraException("Unable to commit batch unit of work.", e);
         }
     }
-
 
     @Override
     public void rollbackWork() throws NormandraException
@@ -239,14 +193,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         this.statements.clear();
         this.activeUnitOfWork.getAndSet(false);
     }
-
-
-    @Override
-    public List<DatabaseActivity> listActivity()
-    {
-        return Collections.unmodifiableList(this.activities);
-    }
-
 
     @Override
     public boolean exists(final EntityContext meta, final Object key) throws NormandraException
@@ -284,7 +230,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
                 return false;
             }
 
-            final ResultSet results = this.executeSync(statement, DatabaseActivity.Type.SELECT);
+            final ResultSet results = this.executeSync(statement);
             if (null == results)
             {
                 return false;
@@ -304,13 +250,11 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         }
     }
 
-
     @Override
     public boolean exists(EntityMeta meta, Object key) throws NormandraException
     {
         return this.exists(new SingleEntityContext(meta), key);
     }
-
 
     @Override
     public Object get(final EntityContext meta, final Object key) throws NormandraException
@@ -323,13 +267,11 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         return query.query(meta, key);
     }
 
-
     @Override
     public Object get(EntityMeta meta, Object key) throws NormandraException
     {
         return this.get(new SingleEntityContext(meta), key);
     }
-
 
     @Override
     public List<Object> get(final EntityContext meta, final Object... keys) throws NormandraException
@@ -342,13 +284,11 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         return query.query(meta, keys);
     }
 
-
     @Override
     public List<Object> get(EntityMeta meta, Object... keys) throws NormandraException
     {
         return this.get(new SingleEntityContext(meta), keys);
     }
-
 
     @Override
     public void delete(final EntityMeta meta, final Object element) throws NormandraException
@@ -369,9 +309,9 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             {
                 boolean hasValue = false;
                 final Delete statement = new QueryBuilder(this.getCluster())
-                        .delete()
-                        .all()
-                        .from(this.keyspaceName, table.getName());
+                    .delete()
+                    .all()
+                    .from(this.keyspaceName, table.getName());
                 for (final ColumnMeta column : table.getPrimaryKeys())
                 {
                     final String name = column.getName();
@@ -416,7 +356,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             }
             else
             {
-                this.executeSync(batch, DatabaseActivity.Type.DELETE);
+                this.executeSync(batch);
             }
         }
         catch (final Exception e)
@@ -424,7 +364,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             throw new NormandraException("Unable to delete entity [" + element + "] of type [" + meta + "].", e);
         }
     }
-
 
     @Override
     public DatabaseQuery executeQuery(final EntityContext meta, final String query, final Map<String, Object> parameters) throws NormandraException
@@ -439,7 +378,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             return new CassandraDatabaseQuery<>(meta, prepared.bind(parameters), this);
         }
     }
-
 
     @Override
     public void save(final EntityMeta meta, final Object element) throws NormandraException
@@ -499,7 +437,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             }
             else
             {
-                this.executeSync(batch, DatabaseActivity.Type.UPDATE);
+                this.executeSync(batch);
             }
 
             final Object key = meta.getId().fromEntity(element);

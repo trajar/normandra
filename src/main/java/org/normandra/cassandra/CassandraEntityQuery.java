@@ -4,6 +4,17 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import org.normandra.NormandraException;
+import org.normandra.cache.EntityCache;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.TableMeta;
+import org.normandra.util.ArraySet;
+import org.normandra.util.EntityBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,22 +25,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Future;
-import org.normandra.NormandraException;
-import org.normandra.cache.EntityCache;
-import org.normandra.log.DatabaseActivity;
-import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
-import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
-import org.normandra.util.ArraySet;
-import org.normandra.util.EntityBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * a class capable of querying and constructing entity instances
  * <p>
- * 
+ * <p>
  * Date: 3/23/14
  */
 public class CassandraEntityQuery
@@ -40,13 +40,11 @@ public class CassandraEntityQuery
 
     private final EntityCache cache;
 
-
     public CassandraEntityQuery(final CassandraDatabaseSession session, final EntityCache cache)
     {
         this.session = session;
         this.cache = cache;
     }
-
 
     public Object query(final EntityContext meta, final Object key) throws NormandraException
     {
@@ -111,7 +109,6 @@ public class CassandraEntityQuery
             throw new NormandraException("Unable to get entity [" + meta + "] by key [" + key + "].", e);
         }
     }
-
 
     public List<Object> query(final EntityContext context, final Object... keys) throws NormandraException
     {
@@ -216,7 +213,6 @@ public class CassandraEntityQuery
         }
     }
 
-
     private Future<ResultSet> buildEagerQuery(final EntityContext meta, final TableMeta table, final Object... keys) throws NormandraException
     {
         // get columns to query
@@ -241,8 +237,8 @@ public class CassandraEntityQuery
 
         // setup select statement
         final Select statement = new QueryBuilder(this.session.getCluster())
-                .select(names)
-                .from(this.session.getKeyspace(), table.getName());
+            .select(names)
+            .from(this.session.getKeyspace(), table.getName());
         boolean hasWhere = false;
         if (keys.length == 1)
         {
@@ -293,16 +289,14 @@ public class CassandraEntityQuery
         }
 
         // query results
-        return this.session.executeAsync(statement, DatabaseActivity.Type.SELECT);
+        return this.session.executeAsync(statement);
     }
-
 
     private static class KeyContext
     {
         private final EntityMeta entity;
 
         private final List<Row> rows = new ArrayList<>();
-
 
         private KeyContext(final EntityMeta meta)
         {

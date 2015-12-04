@@ -6,7 +6,6 @@ import com.datastax.driver.core.Statement;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
-import org.normandra.log.DatabaseActivity;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
@@ -23,7 +22,7 @@ import java.util.Map;
 /**
  * cassandra database query
  * <p>
- *  Date: 4/5/14
+ * Date: 4/5/14
  */
 public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
 {
@@ -209,7 +208,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         {
             return this.results;
         }
-        this.results = this.session.executeSync(this.statement, DatabaseActivity.Type.SELECT);
+        this.results = this.session.executeSync(this.statement);
         return this.results;
     }
 }

@@ -30,14 +30,13 @@ import java.util.TreeMap;
 /**
  * entity manager factory
  * <p>
- *  Date: 2/1/14
+ * Date: 2/1/14
  */
 public class EntityManagerFactory
 {
     public enum Type
     {
         CASSANDRA, ORIENTDB;
-
 
         public static Type parse(final String value)
         {
@@ -72,7 +71,6 @@ public class EntityManagerFactory
         private final Set<Class> classes = new HashSet<>();
 
         private final SortedMap<String, Object> parameters = new TreeMap<>();
-
 
         public EntityManagerFactory create() throws NormandraException
         {
@@ -132,7 +130,6 @@ public class EntityManagerFactory
             return managerFactory;
         }
 
-
         public Builder withType(final Type type)
         {
             if (null == type)
@@ -142,7 +139,6 @@ public class EntityManagerFactory
             this.type = type;
             return this;
         }
-
 
         public Builder withDatabaseConstruction(final DatabaseConstruction mode)
         {
@@ -154,7 +150,6 @@ public class EntityManagerFactory
             return this;
         }
 
-
         public Builder withClass(final Class<?> clazz)
         {
             if (null == clazz)
@@ -164,7 +159,6 @@ public class EntityManagerFactory
             this.classes.add(clazz);
             return this;
         }
-
 
         public Builder withClasses(final Class<?>... clazzes)
         {
@@ -179,7 +173,6 @@ public class EntityManagerFactory
             return this;
         }
 
-
         public Builder withClasses(final Iterable<Class<?>> c)
         {
             if (null == c)
@@ -193,7 +186,6 @@ public class EntityManagerFactory
             return this;
         }
 
-
         public Builder withParameter(final String key, final Object value)
         {
             if (null == key || null == value)
@@ -203,7 +195,6 @@ public class EntityManagerFactory
             this.parameters.put(key, value);
             return this;
         }
-
 
         private <T> T getParameter(final String key, final Class<T> clazz, final T defaultValue)
         {
@@ -226,7 +217,6 @@ public class EntityManagerFactory
 
     private final EntityMetaLookup lookup;
 
-
     private EntityManagerFactory(final Database db, final DatabaseMeta meta)
     {
         if (null == db)
@@ -238,13 +228,11 @@ public class EntityManagerFactory
         this.lookup = new EntityMetaCollection(meta.getEntities());
     }
 
-
     public EntityManager create()
     {
         final DatabaseSession session = this.database.createSession();
         return new EntityManager(session, this.lookup);
     }
-
 
     public <T> boolean registerQuery(final Class<T> clazz, final String name, final String query) throws NormandraException
     {
@@ -269,19 +257,16 @@ public class EntityManagerFactory
         }
     }
 
-
     public boolean unregisterQuery(final String name) throws NormandraException
     {
         return this.database.unregisterQuery(name);
     }
 
-
     public void close()
     {
         this.database.close();
     }
-    
-    
+
     public void shutdown()
     {
         this.database.shutdown();

@@ -6,6 +6,12 @@ import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import org.apache.commons.lang.NullArgumentException;
+import org.normandra.data.DataHandler;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.TableMeta;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,18 +19,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang.NullArgumentException;
-import org.normandra.data.DataHandler;
-import org.normandra.log.DatabaseActivity;
-import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
 
 /**
  * a cassandra data handler, used in coordination with entity helper to standardize save/delete operations
  * <p>
  * <p>
- * 
+ * <p>
  * Date: 5/27/14
  */
 public class CassandraDataHandler implements DataHandler
@@ -32,7 +32,6 @@ public class CassandraDataHandler implements DataHandler
     private final CassandraDatabaseSession session;
 
     private final List<RegularStatement> operations = new ArrayList<>();
-
 
     public CassandraDataHandler(final CassandraDatabaseSession session)
     {
@@ -43,12 +42,10 @@ public class CassandraDataHandler implements DataHandler
         this.session = session;
     }
 
-
     public List<RegularStatement> getOperations()
     {
         return Collections.unmodifiableList(this.operations);
     }
-
 
     @Override
     public boolean save(final EntityMeta entity, final TableMeta table, final Map<ColumnMeta, Object> data)
@@ -104,7 +101,6 @@ public class CassandraDataHandler implements DataHandler
         }
     }
 
-
     @Override
     public boolean save(final EntityMeta entity, final TableMeta table, final Map<ColumnMeta, Object> keys, final ColumnMeta column, final Collection<?> items)
     {
@@ -147,7 +143,7 @@ public class CassandraDataHandler implements DataHandler
                 query.where(QueryBuilder.eq(key.getName(), value));
             }
         }
-        final List<Row> rows = this.session.executeSync(query, DatabaseActivity.Type.SELECT).all();
+        final List<Row> rows = this.session.executeSync(query).all();
         final List<Object> removed = new ArrayList<>(rows.size());
         if (!rows.isEmpty())
         {

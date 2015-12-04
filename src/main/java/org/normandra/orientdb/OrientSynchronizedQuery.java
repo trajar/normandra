@@ -3,6 +3,8 @@ package org.normandra.orientdb;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.apache.commons.lang.NullArgumentException;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,15 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.commons.lang.NullArgumentException;
-import org.normandra.log.DatabaseActivity;
 
 /**
  * a orientdb database query activity
  * <p>
- *  Date: 4/4/14
+ * Date: 4/4/14
  */
-public class OrientQueryActivity implements DatabaseActivity
+public class OrientSynchronizedQuery
 {
     private final ODatabaseDocumentTx database;
 
@@ -38,7 +38,7 @@ public class OrientQueryActivity implements DatabaseActivity
 
     private Date date;
 
-    public OrientQueryActivity(final ODatabaseDocumentTx db, final String query, final Collection<?> params)
+    public OrientSynchronizedQuery(final ODatabaseDocumentTx db, final String query, final Collection<?> params)
     {
         if (null == db)
         {
@@ -61,7 +61,7 @@ public class OrientQueryActivity implements DatabaseActivity
         }
     }
 
-    public OrientQueryActivity(final ODatabaseDocumentTx db, final String query, final Map<String, Object> params)
+    public OrientSynchronizedQuery(final ODatabaseDocumentTx db, final String query, final Map<String, Object> params)
     {
         if (null == db)
         {
@@ -84,39 +84,14 @@ public class OrientQueryActivity implements DatabaseActivity
         }
     }
 
-    @Override
-    public Type getType()
-    {
-        return Type.SELECT;
-    }
-
-    @Override
     public long getDuration()
     {
         return this.end - this.start;
     }
 
-    @Override
     public Date getDate()
     {
         return this.date;
-    }
-
-    @Override
-    public CharSequence getInformation()
-    {
-        if (!this.parameterList.isEmpty())
-        {
-            return this.getType() + " query [" + this.query + "] with values " + this.parameterList + ".";
-        }
-        else if (!this.parameterMap.isEmpty())
-        {
-            return this.getType() + " query [" + this.query + "] with values " + this.parameterMap + ".";
-        }
-        else
-        {
-            return this.getType() + " query [" + this.query + "].";
-        }
     }
 
     public Iterator<ODocument> execute()

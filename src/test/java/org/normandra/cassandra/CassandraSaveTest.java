@@ -20,14 +20,13 @@ import java.util.Map;
 
 /**
  * unit test to test persistence
- * <p/>
- * 
+ * <p>
+ * <p>
  * Date: 1/20/14
  */
 public class CassandraSaveTest
 {
     private final TestHelper helper = new CassandraTestHelper();
-
 
     @BeforeClass
     public static void setup() throws Exception
@@ -35,20 +34,17 @@ public class CassandraSaveTest
         CassandraTestHelper.setup();
     }
 
-
     @Before
     public void create() throws Exception
     {
         helper.create(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }
 
-
     @After
     public void destroy() throws Exception
     {
         helper.cleanup();
     }
-
 
     @Test
     public void testSimple() throws Exception
@@ -61,26 +57,19 @@ public class CassandraSaveTest
         final SimpleEntity entity = new SimpleEntity("test", Arrays.asList("foo", "bar"));
         session.save(meta, entity);
         Assert.assertEquals(1, entity.getId());
-        Assert.assertEquals(1, session.listActivity().size());
 
         Assert.assertFalse(session.exists(meta, 0L));
         Assert.assertTrue(session.exists(meta, 1L));
         Assert.assertTrue(session.exists(meta, 1));
-        Assert.assertEquals(4, session.listActivity().size());
 
         final SimpleEntity notfound = (SimpleEntity) session.get(meta, 0);
         Assert.assertNull(notfound);
-        Assert.assertEquals(5, session.listActivity().size());
         final SimpleEntity existing = (SimpleEntity) session.get(meta, 1);
         Assert.assertNotNull(existing);
         Assert.assertEquals(1, existing.getId());
-        Assert.assertEquals(6, session.listActivity().size());
 
         session.delete(meta, existing);
-        Assert.assertEquals(7, session.listActivity().size());
         Assert.assertFalse(session.exists(meta, 1L));
-        Assert.assertEquals(8, session.listActivity().size());
         Assert.assertNull(session.get(meta, 1L));
-        Assert.assertEquals(9, session.listActivity().size());
     }
 }

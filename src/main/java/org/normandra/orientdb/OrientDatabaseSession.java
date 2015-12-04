@@ -7,20 +7,6 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.AbstractTransactional;
 import org.normandra.DatabaseQuery;
@@ -29,7 +15,6 @@ import org.normandra.NormandraException;
 import org.normandra.Transaction;
 import org.normandra.cache.EntityCache;
 import org.normandra.data.ColumnAccessor;
-import org.normandra.log.DatabaseActivity;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
@@ -41,10 +26,23 @@ import org.normandra.util.LazyCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * orient database session
  * <p>
- * 
+ * <p>
  * Date: 5/14/14
  */
 public class OrientDatabaseSession extends AbstractTransactional implements DatabaseSession
@@ -53,14 +51,11 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
     private final EntityCache cache;
 
-    private final List<DatabaseActivity> activities = new ArrayList<>();
-
     private final ODatabaseDocumentTx database;
 
     private final Map<String, OrientQuery> statementsByName;
 
     private final AtomicBoolean userTransaction = new AtomicBoolean(false);
-
 
     public OrientDatabaseSession(final ODatabaseDocumentTx db, final Map<String, OrientQuery> statements, final EntityCache cache)
     {
@@ -77,28 +72,23 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         this.statementsByName = new TreeMap<>(statements);
     }
 
-
     @Override
     public void close()
     {
         this.database.close();
     }
 
-
     @Override
     public void clear()
     {
         this.cache.clear();
-        this.activities.clear();
     }
-
 
     @Override
     public boolean pendingWork()
     {
         return this.userTransaction.get();
     }
-
 
     @Override
     public void beginWork() throws NormandraException
@@ -107,7 +97,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         this.userTransaction.getAndSet(true);
     }
 
-
     @Override
     public void commitWork() throws NormandraException
     {
@@ -115,21 +104,12 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         this.userTransaction.getAndSet(false);
     }
 
-
     @Override
     public void rollbackWork() throws NormandraException
     {
         this.database.rollback();
         this.userTransaction.getAndSet(false);
     }
-
-
-    @Override
-    public List<DatabaseActivity> listActivity()
-    {
-        return Collections.unmodifiableList(this.activities);
-    }
-
 
     @Override
     public void save(final EntityMeta meta, final Object element) throws NormandraException
@@ -145,12 +125,9 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
         try (final Transaction tx = this.beginTransaction())
         {
-            final long start = System.currentTimeMillis();
-            final DatabaseActivity.Type operation = DatabaseActivity.Type.UPDATE;
             final OrientDataHandler handler = new OrientDataHandler(this);
             new EntityPersistence(this).save(meta, element, handler);
             tx.success();
-            final long end = System.currentTimeMillis();
 
             final Collection<ODocument> documents = handler.getDocuments();
             final List<ORID> rids = new ArrayList<>(documents.size());
@@ -158,7 +135,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             {
                 rids.add(document.getIdentity());
             }
-            this.activities.add(new OrientUpdateActivity(operation, rids, new Date(), end - start));
 
             final Object key = meta.getId().fromEntity(element);
             this.cache.put(meta, key, element);
@@ -168,7 +144,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             throw new NormandraException("Unable to create/save new orientdb document.", e);
         }
     }
-
 
     @Override
     public void delete(final EntityMeta meta, final Object element) throws NormandraException
@@ -185,8 +160,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         try (final Transaction tx = this.beginTransaction())
         {
             final EntityContext context = new SingleEntityContext(meta);
-            final long start = System.currentTimeMillis();
-            final List<OIdentifiable> rids = new LinkedList<>();
+            final List<OIdentifiable> rids = new ArrayList<>();
             for (final TableMeta table : meta)
             {
                 final Map<String, Object> datamap = new TreeMap<>();
@@ -206,20 +180,17 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
                     this.database.delete(rid.getIdentity());
                 }
             }
+
             tx.success();
 
             final Object key = meta.getId().fromEntity(element);
             this.cache.remove(meta, key);
-
-            final long end = System.currentTimeMillis();
-            this.activities.add(new OrientUpdateActivity(DatabaseActivity.Type.DELETE, rids, new Date(), end - start));
         }
         catch (final Exception e)
         {
             throw new NormandraException("Unable to delete orientdb document.", e);
         }
     }
-
 
     @Override
     public DatabaseQuery executeQuery(final EntityContext meta, final String queryOrName, final Map<String, Object> params) throws NormandraException
@@ -231,42 +202,33 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
         else
         {
-            return this.executeDynamciQuery(meta, queryOrName, params);
+            return this.executeDynamicQuery(meta, queryOrName, params);
         }
     }
-    
-    
+
     private DatabaseQuery executeNamedQuery(final EntityContext meta, final OrientQuery query, final Map<String, Object> params) throws NormandraException
     {
-        final OrientQueryActivity activity = new OrientQueryActivity(this.database, query.getQuery(), params);
-        this.activities.add(activity);
+        final OrientSynchronizedQuery activity = new OrientSynchronizedQuery(this.database, query.getQuery(), params);
         return new OrientDatabaseQuery(this, meta, activity);
     }
 
-    
-    private DatabaseQuery executeDynamciQuery(final EntityContext meta, final String query, final Map<String, Object> params) throws NormandraException
+    private DatabaseQuery executeDynamicQuery(final EntityContext meta, final String query, final Map<String, Object> params) throws NormandraException
     {
-        final OrientQueryActivity activity = new OrientQueryActivity(this.database, query, params);
-        this.activities.add(activity);
+        final OrientSynchronizedQuery activity = new OrientSynchronizedQuery(this.database, query, params);
         return new OrientDatabaseQuery(this, meta, activity);
     }
-
 
     protected Collection<ODocument> query(final String query, final Collection<?> args)
     {
-        final OrientQueryActivity activity = new OrientQueryActivity(this.database, query, args);
-        this.activities.add(activity);
+        final OrientSynchronizedQuery activity = new OrientSynchronizedQuery(this.database, query, args);
         return new LazyCollection<>(activity.execute());
     }
-
 
     protected Collection<ODocument> query(final String query, final Map<String, Object> args)
     {
-        final OrientQueryActivity activity = new OrientQueryActivity(this.database, query, args);
-        this.activities.add(activity);
+        final OrientSynchronizedQuery activity = new OrientSynchronizedQuery(this.database, query, args);
         return new LazyCollection<>(activity.execute());
     }
-
 
     @Override
     public boolean exists(final EntityContext context, final Object key) throws NormandraException
@@ -303,7 +265,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
     }
 
-
     @Override
     public boolean exists(final EntityMeta meta, final Object key) throws NormandraException
     {
@@ -326,7 +287,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             throw new NormandraException("Unable to find orientdb document by key [" + key + "].", e);
         }
     }
-
 
     @Override
     public Object get(final EntityContext context, final Object key) throws NormandraException
@@ -374,7 +334,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
     }
 
-
     @Override
     public Object get(final EntityMeta meta, final Object key) throws NormandraException
     {
@@ -384,7 +343,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
         return this.get(new SingleEntityContext(meta), key);
     }
-
 
     @Override
     public List<Object> get(final EntityContext context, final Object... keys) throws NormandraException
@@ -460,19 +418,16 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         return Collections.unmodifiableList(result);
     }
 
-
     @Override
     public List<Object> get(final EntityMeta meta, final Object... keys) throws NormandraException
     {
         return this.get(new SingleEntityContext(meta), keys);
     }
 
-
     protected final ODatabaseDocumentTx getDatabase()
     {
         return this.database;
     }
-
 
     public final ODocument findDocument(final OIdentifiable item)
     {
@@ -497,7 +452,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         return document;
     }
 
-
     public final ODocument findDocument(final EntityMeta meta, final TableMeta table, final Object key)
     {
         final OIdentifiable rid = this.findIdByKey(new SingleEntityContext(meta), table, key);
@@ -507,7 +461,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
         return this.findDocument(rid);
     }
-
 
     public final ODocument findDocument(final EntityContext context, final TableMeta table, final Object key)
     {
@@ -531,7 +484,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             return null;
         }
     }
-
 
     public final Collection<OIdentifiable> findIdByKeys(final EntityContext meta, final TableMeta table, final Collection<Object> keys)
     {
@@ -558,7 +510,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             return Collections.unmodifiableList(result);
         }
 
-        final long start = System.currentTimeMillis();
         final String indexName = OrientUtils.keyIndex(table);
         final String schemaName = table.getName();
         final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
@@ -617,11 +568,9 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
                 result.add(record);
             }
         }
-        final long end = System.currentTimeMillis();
-        this.activities.add(new OrientIndexActivity(DatabaseActivity.Type.SELECT, indexName, query, new Date(), end - start));
+
         return Collections.unmodifiableList(result);
     }
-
 
     protected final OIdentifiable findIdByMap(final EntityContext meta, final TableMeta table, final Map<String, Object> map)
     {
@@ -630,7 +579,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             return null;
         }
 
-        final long start = System.currentTimeMillis();
         final String indexName = OrientUtils.keyIndex(table);
         final String schemaName = table.getName();
         final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
@@ -639,7 +587,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             throw new IllegalStateException("Unable to locate orientdb index [" + indexName + "].");
         }
 
-        final OIdentifiable guid;
         final List<Object> packed = new ArrayList<>(map.size());
         for (final ColumnMeta column : table.getPrimaryKeys())
         {
@@ -663,18 +610,13 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
         else if (table.getPrimaryKeys().size() == 1)
         {
-            guid = (OIdentifiable) keyIdx.get(packed.get(0));
+            return (OIdentifiable) keyIdx.get(packed.get(0));
         }
         else
         {
-            guid = (OIdentifiable) keyIdx.get(new OCompositeKey(packed));
+            return (OIdentifiable) keyIdx.get(new OCompositeKey(packed));
         }
-
-        final long end = System.currentTimeMillis();
-        this.activities.add(new OrientIndexActivity(DatabaseActivity.Type.SELECT, indexName, Arrays.asList(guid), new Date(), end - start));
-        return guid;
     }
-
 
     public final OIdentifiable findIdByKey(final EntityContext meta, final TableMeta table, final Object key)
     {
@@ -696,7 +638,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
         return this.findIdByMap(meta, table, keymap);
     }
-
 
     public final OIdentifiable findIdByKey(final EntityContext meta, final Object key)
     {
@@ -726,7 +667,6 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
         return null;
     }
-
 
     final <T> T build(final EntityContext context, final ODocument document) throws NormandraException
     {

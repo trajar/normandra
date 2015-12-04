@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * orientdb query api
  * <p>
- *  Date: 6/9/14
+ * Date: 6/9/14
  */
 public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
 {
@@ -23,18 +23,16 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
 
     private final EntityContext context;
 
-    private final OrientQueryActivity query;
+    private final OrientSynchronizedQuery query;
 
     private LazyCollection<ODocument> lazy = null;
 
-
-    public OrientDatabaseQuery(final OrientDatabaseSession session, final EntityContext context, final OrientQueryActivity query)
+    public OrientDatabaseQuery(final OrientDatabaseSession session, final EntityContext context, final OrientSynchronizedQuery query)
     {
         this.session = session;
         this.context = context;
         this.query = query;
     }
-
 
     @Override
     public T first() throws NormandraException
@@ -50,7 +48,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         }
         return null;
     }
-
 
     @Override
     public T last() throws NormandraException
@@ -72,7 +69,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         return this.session.build(this.context, last);
     }
 
-
     @Override
     public List<T> list() throws NormandraException
     {
@@ -89,13 +85,11 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         return Collections.unmodifiableList(list);
     }
 
-
     @Override
     public int size() throws NormandraException
     {
         return this.list().size();
     }
-
 
     @Override
     public Collection<T> subset(int offset, int count) throws NormandraException
@@ -117,7 +111,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
         return Collections.unmodifiableList(items);
     }
 
-
     @Override
     public Iterator<T> iterator()
     {
@@ -129,7 +122,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
             {
                 return itr.hasNext();
             }
-
 
             @Override
             public T next()
@@ -150,7 +142,6 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
             }
         };
     }
-
 
     private LazyCollection<ODocument> ensureResults()
     {

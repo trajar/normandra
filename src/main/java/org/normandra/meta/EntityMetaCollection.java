@@ -18,8 +18,6 @@ import java.util.Map;
 
 /**
  * a set of entity meta instances
- *
- * 
  */
 public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMeta>
 {
