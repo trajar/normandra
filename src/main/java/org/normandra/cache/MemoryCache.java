@@ -58,6 +58,7 @@ public class MemoryCache implements EntityCache
     @Override
     public void clear()
     {
+        this.cache.values().forEach(Map::clear);
         this.cache.clear();
     }
 
