@@ -1,7 +1,5 @@
 package org.normandra;
 
-import java.util.Arrays;
-import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.normandra.entities.CatEntity;
@@ -14,10 +12,13 @@ import org.normandra.entities.StudentIndexEntity;
 import org.normandra.entities.ZooEntity;
 import org.normandra.meta.EntityMeta;
 
+import java.util.Arrays;
+import java.util.Map;
+
 /**
  * unit test to test persistence
  * <p>
- * 
+ * <p>
  * Date: 1/20/14
  */
 public class SaveTest extends BaseTest
@@ -27,15 +28,15 @@ public class SaveTest extends BaseTest
         super(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }
 
-
     @Test
     public void testInherited() throws Exception
     {
         for (final TestHelper helper : helpers)
         {
             final Database database = helper.getDatabase();
-            final DatabaseSession session = helper.getSession();
             final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, DogEntity.class, CatEntity.class);
+
+            final DatabaseSession session = helper.getSession();
             final DogEntity dog = new DogEntity("fido", 12);
             session.save(entityMap.get(DogEntity.class), dog);
             Assert.assertEquals(Long.valueOf(1), dog.getId());
@@ -45,15 +46,15 @@ public class SaveTest extends BaseTest
         }
     }
 
-
     @Test
     public void testJoinColumn() throws Exception
     {
         for (final TestHelper helper : helpers)
         {
             final Database database = helper.getDatabase();
-            final DatabaseSession session = helper.getSession();
             final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, StudentEntity.class, ClassEntity.class);
+
+            final DatabaseSession session = helper.getSession();
             final ClassEntity classroom = new ClassEntity("geopolitics", 234);
             session.save(entityMap.get(ClassEntity.class), classroom);
             Assert.assertTrue(classroom == session.get(entityMap.get(ClassEntity.class), 1L));
@@ -93,15 +94,15 @@ public class SaveTest extends BaseTest
         }
     }
 
-
     @Test
     public void testMultiJoin() throws Exception
     {
         for (final TestHelper helper : helpers)
         {
             final Database database = helper.getDatabase();
-            final DatabaseSession session = helper.getSession();
             final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, DogEntity.class, CatEntity.class, ZooEntity.class);
+
+            final DatabaseSession session = helper.getSession();
 
             DogEntity dog = new DogEntity("fido", 12);
             session.save(entityMap.get(DogEntity.class), dog);
@@ -122,16 +123,15 @@ public class SaveTest extends BaseTest
         }
     }
 
-
     @Test
     public void testJoinTable() throws Exception
     {
         for (final TestHelper helper : helpers)
         {
             final Database database = helper.getDatabase();
-            final DatabaseSession session = helper.getSession();
             final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, StudentEntity.class, ClassEntity.class, StudentDirectoryEntity.class);
 
+            final DatabaseSession session = helper.getSession();
             final StudentDirectoryEntity calcStudents = new StudentDirectoryEntity("calc students");
             session.save(entityMap.get(StudentDirectoryEntity.class), calcStudents);
             Assert.assertTrue(calcStudents == session.get(entityMap.get(StudentDirectoryEntity.class), 1L));
@@ -176,17 +176,17 @@ public class SaveTest extends BaseTest
         }
     }
 
-
     @Test
     public void testComposite() throws Exception
     {
         for (final TestHelper helper : helpers)
         {
             final Database database = helper.getDatabase();
-            final DatabaseSession session = helper.getSession();
             final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, StudentIndexEntity.class, CompositeIndexEntity.class);
             final EntityMeta studentMeta = entityMap.get(StudentIndexEntity.class);
             final EntityMeta compositeMeta = entityMap.get(CompositeIndexEntity.class);
+
+            final DatabaseSession session = helper.getSession();
 
             final StudentIndexEntity student = new StudentIndexEntity("fred", 101);
             session.save(studentMeta, student);
@@ -206,27 +206,28 @@ public class SaveTest extends BaseTest
             Assert.assertNull(session.get(compositeMeta, composite.getName()));
         }
     }
-    
-    
+
     @Test
     public void testTransactionRunnable() throws Exception
     {
         for (final TestHelper helper : helpers)
         {
             final Database database = helper.getDatabase();
-            final DatabaseSession session = helper.getSession();
             final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, DogEntity.class);
             final EntityMeta meta = entityMap.get(DogEntity.class);
+
+            final DatabaseSession session = helper.getSession();
+
             final DogEntity dog = new DogEntity("fido", 12);
             session.withTransaction((tx) ->
             {
                 session.save(meta, dog);
                 tx.success();
-            });            
+            });
             Assert.assertEquals(Long.valueOf(1), dog.getId());
-            
+
             session.clear();
-            
+
             final DogEntity existing = (DogEntity) session.get(meta, dog.getId());
             Assert.assertNotNull(existing);
             Assert.assertEquals(dog, existing);

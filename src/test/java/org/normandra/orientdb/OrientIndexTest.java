@@ -51,11 +51,11 @@ public class OrientIndexTest
     public void testSimple() throws Exception
     {
         final OrientDatabase database = helper.getDatabase();
-        final OrientDatabaseSession session = helper.getSession();
         final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, SimpleEntity.class);
 
         final EntityMeta entity = entityMap.get(SimpleEntity.class);
 
+        final OrientDatabaseSession session = helper.getSession();
         final SimpleEntity instance = new SimpleEntity("test", Arrays.asList("foo", "bar"));
         session.save(entity, instance);
 

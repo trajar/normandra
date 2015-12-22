@@ -12,8 +12,8 @@ import java.util.Collection;
 
 /**
  * common cassandra unit test bootstrap
- * <p/>
- *  Date: 1/20/14
+ * <p>
+ * Date: 1/20/14
  */
 public class CassandraTestHelper implements TestHelper
 {
@@ -100,9 +100,8 @@ public class CassandraTestHelper implements TestHelper
             if (this.database != null)
             {
                 this.database.close();
-                this.database.shutdown();
                 this.database = null;
-            }            
+            }
         }
         catch (final Exception e)
         {

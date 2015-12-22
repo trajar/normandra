@@ -406,7 +406,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
                     final IdGenerator generator = meta.getGenerator(column);
                     if (generator != null && accessor != null && accessor.isEmpty(element))
                     {
-                        final Object generated = generator.generate(meta);
+                        final Object generated = generator.generate(this, meta);
                         final DataHolder data = new BasicDataHolder(generated);
                         accessor.setValue(element, data, this);
                     }

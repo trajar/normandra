@@ -1,8 +1,7 @@
 package org.normandra.orientdb;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -44,12 +43,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- *  Date: 5/14/14
+ * Date: 5/14/14
  */
 public class OrientDatabase implements Database
 {
-    public static final int poolSize = 4;
-
     public static final String URL = "orientdb.url";
 
     public static final String USER_ID = "orientdb.userid";
@@ -60,7 +57,7 @@ public class OrientDatabase implements Database
 
     private final String url;
 
-    private final OPartitionedDatabasePool pool;
+    private final OrientPool pool;
 
     private final EntityCacheFactory cache;
 
@@ -68,23 +65,7 @@ public class OrientDatabase implements Database
 
     private final Map<String, OrientQuery> statementsByName = new ConcurrentHashMap<>();
 
-    public OrientDatabase(final String url, final String user, final String pwd, final EntityCacheFactory cache, final DatabaseConstruction mode)
-    {
-        if (null == cache)
-        {
-            throw new NullArgumentException("cache factory");
-        }
-        if (null == mode)
-        {
-            throw new NullArgumentException("construction mode");
-        }
-        this.url = url;
-        this.pool = new OPartitionedDatabasePool(url, user, pwd, poolSize);
-        this.cache = cache;
-        this.constructionMode = mode;
-    }
-
-    public OrientDatabase(final String url, final OPartitionedDatabasePool pool, final EntityCacheFactory cache, final DatabaseConstruction mode)
+    public OrientDatabase(final String url, final OrientPool pool, final EntityCacheFactory cache, final DatabaseConstruction mode)
     {
         if (null == cache)
         {
@@ -106,10 +87,7 @@ public class OrientDatabase implements Database
 
     final ODatabaseDocumentTx createDatabase()
     {
-        final boolean keepOpen = !this.isLocal();
-        final ODatabaseDocumentTx db = this.pool.acquire();
-        db.setProperty("storage.keepOpen", keepOpen);
-        return db;
+        return this.pool.acquire();
     }
 
     public boolean isLocal()
@@ -149,10 +127,8 @@ public class OrientDatabase implements Database
                 }
                 if (path.list() == null || path.list().length <= 0)
                 {
-                    final boolean keepOpen = !this.isLocal();
-                    try (final ODatabase db = new ODatabaseDocumentTx(this.url))
+                    try (final ODatabase db = new ODatabaseDocumentTx(this.url, false))
                     {
-                        db.setProperty("storage.keepOpen", Boolean.FALSE);
                         db.create();
                     }
                 }
@@ -259,12 +235,12 @@ public class OrientDatabase implements Database
             // drop table as required
             if (DatabaseConstruction.RECREATE.equals(this.constructionMode))
             {
-                if (this.hasCluster(tableName))
+                if (hasCluster(database, tableName))
                 {
                     database.command(new OCommandSQL("DELETE FROM " + tableName)).execute();
                     database.getMetadata().getSchema().dropClass(tableName);
                 }
-                if (this.hasIndex(indexName))
+                if (hasIndex(database, indexName))
                 {
                     database.command(new OCommandSQL("DROP INDEX " + indexName)).execute();
                     database.getMetadata().getIndexManager().dropIndex(indexName);
@@ -301,18 +277,18 @@ public class OrientDatabase implements Database
         if (DatabaseConstruction.RECREATE.equals(this.constructionMode))
         {
             // drop schema
-            if (this.hasClass(schemaName))
+            if (hasClass(database, schemaName))
             {
                 database.command(new OCommandSQL("DELETE FROM " + schemaName)).execute();
             }
-            if (this.hasIndex(keyIndex))
+            if (hasIndex(database, keyIndex))
             {
                 database.command(new OCommandSQL("DROP INDEX " + keyIndex)).execute();
             }
             for (final ColumnMeta column : entity.getIndexed())
             {
                 final String propertyIndex = schemaName + "." + column.getName();
-                if (this.hasIndex(propertyIndex))
+                if (hasIndex(database, propertyIndex))
                 {
                     database.command(new OCommandSQL("DROP INDEX " + propertyIndex)).execute();
                 }
@@ -337,7 +313,7 @@ public class OrientDatabase implements Database
         }
 
         // create index as needed
-        if (!this.hasIndex(keyIndex))
+        if (!hasIndex(database, keyIndex))
         {
             database.command(new OCommandSQL("CREATE INDEX " + keyIndex + " ON " + schemaName + " (" + StringUtils.join(primary, ",") + ") UNIQUE")).execute();
         }
@@ -346,7 +322,7 @@ public class OrientDatabase implements Database
             final String propertyIndex = schemaName + "." + column.getName();
             if (!column.isPrimaryKey())
             {
-                if (!this.hasIndex(propertyIndex))
+                if (!hasIndex(database, propertyIndex))
                 {
                     database.command(new OCommandSQL("CREATE INDEX " + propertyIndex + " NOTUNIQUE")).execute();
                 }
@@ -391,57 +367,48 @@ public class OrientDatabase implements Database
         return this.statementsByName.remove(name) != null;
     }
 
-    public Collection<String> getClasses()
+    private static Collection<String> getClasses(final ODatabaseDocument database)
     {
-        try (final ODatabaseDocumentTx database = this.createDatabase())
+        final Collection<OClass> types = database.getMetadata().getSchema().getClasses();
+        if (null == types || types.isEmpty())
         {
-            final Collection<OClass> types = database.getMetadata().getSchema().getClasses();
-            if (null == types || types.isEmpty())
-            {
-                return Collections.emptyList();
-            }
-            final List<String> list = new ArrayList<>(types.size());
-            for (final OClass type : types)
-            {
-                list.add(type.getName());
-            }
-            return Collections.unmodifiableCollection(list);
+            return Collections.emptyList();
         }
+        final List<String> list = new ArrayList<>(types.size());
+        for (final OClass type : types)
+        {
+            list.add(type.getName());
+        }
+        return Collections.unmodifiableCollection(list);
     }
 
-    public Collection<String> getClusters()
+    private static Collection<String> getClusters(final ODatabaseDocument database)
     {
-        try (final ODatabaseDocumentTx database = this.createDatabase())
+        final Collection<String> names = database.getClusterNames();
+        if (null == names || names.isEmpty())
         {
-            final Collection<String> names = database.getClusterNames();
-            if (null == names || names.isEmpty())
-            {
-                return Collections.emptyList();
-            }
-            return Collections.unmodifiableCollection(names);
+            return Collections.emptyList();
         }
+        return Collections.unmodifiableCollection(names);
     }
 
-    public Collection<String> getIndices()
+    private static Collection<String> getIndices(final ODatabaseDocument database)
     {
-        try (final ODatabaseDocumentTx database = this.createDatabase())
+        final List<String> names = new ArrayList<>();
+        for (final OIndex index : database.getMetadata().getIndexManager().getIndexes())
         {
-            final List<String> names = new ArrayList<>();
-            for (final OIndex index : database.getMetadata().getIndexManager().getIndexes())
-            {
-                names.add(index.getName());
-            }
-            return Collections.unmodifiableCollection(names);
+            names.add(index.getName());
         }
+        return Collections.unmodifiableCollection(names);
     }
 
-    public boolean hasIndex(final String clusterName)
+    private static boolean hasIndex(final ODatabaseDocument database, final String clusterName)
     {
         if (null == clusterName || clusterName.isEmpty())
         {
             return false;
         }
-        for (final String existing : this.getIndices())
+        for (final String existing : getIndices(database))
         {
             if (clusterName.equalsIgnoreCase(existing))
             {
@@ -451,13 +418,13 @@ public class OrientDatabase implements Database
         return false;
     }
 
-    public boolean hasCluster(final String clusterName)
+    private static boolean hasCluster(final ODatabaseDocument database, final String clusterName)
     {
         if (null == clusterName || clusterName.isEmpty())
         {
             return false;
         }
-        for (final String existing : this.getClusters())
+        for (final String existing : getClusters(database))
         {
             if (clusterName.equalsIgnoreCase(existing))
             {
@@ -467,13 +434,13 @@ public class OrientDatabase implements Database
         return false;
     }
 
-    public boolean hasClass(final String className)
+    private static boolean hasClass(final ODatabaseDocument database, final String className)
     {
         if (null == className || className.isEmpty())
         {
             return false;
         }
-        for (final String existing : this.getClasses())
+        for (final String existing : getClasses(database))
         {
             if (className.equalsIgnoreCase(existing))
             {
@@ -483,33 +450,24 @@ public class OrientDatabase implements Database
         return false;
     }
 
-    public boolean hasProperty(final String className, final String fieldName)
+    private static boolean hasProperty(final ODatabaseDocument database, final String className, final String fieldName)
     {
-        try (final ODatabaseDocumentTx database = this.createDatabase())
+        final OClass schemaClass = database.getMetadata().getSchema().getClass(className);
+        if (null == schemaClass)
         {
-            final OClass schemaClass = database.getMetadata().getSchema().getClass(className);
-            if (null == schemaClass)
-            {
-                return false;
-            }
-            final OProperty property = schemaClass.getProperty(fieldName);
-            if (null == property)
-            {
-                return false;
-            }
-            return property.getType() != null;
+            return false;
         }
+        final OProperty property = schemaClass.getProperty(fieldName);
+        if (null == property)
+        {
+            return false;
+        }
+        return property.getType() != null;
     }
 
     @Override
     public void close()
     {
         this.pool.close();
-    }
-    
-    @Override
-    public void shutdown()
-    {
-        Orient.instance().closeAllStorages();
     }
 }

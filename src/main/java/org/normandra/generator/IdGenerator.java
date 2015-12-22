@@ -1,15 +1,15 @@
 package org.normandra.generator;
 
+import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.meta.EntityMeta;
 
 import java.io.Serializable;
 
 /**
- * 
- * Date: 1/21/14
+ * id generator sequence api
  */
 public interface IdGenerator
 {
-    Serializable generate(EntityMeta entity) throws NormandraException;
+    Serializable generate(EntitySession session, EntityMeta entity) throws NormandraException;
 }

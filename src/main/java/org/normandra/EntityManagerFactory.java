@@ -266,9 +266,4 @@ public class EntityManagerFactory
     {
         this.database.close();
     }
-
-    public void shutdown()
-    {
-        this.database.shutdown();
-    }
 }

@@ -5,14 +5,15 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.generator.IdGenerator;
 import org.normandra.meta.EntityMeta;
 
 /**
  * a sequenced id generator
- * <p/>
- * 
+ * <p>
+ * <p>
  * Date: 1/26/14
  */
 public class CassandraCounterIdGenerator implements IdGenerator
@@ -29,7 +30,6 @@ public class CassandraCounterIdGenerator implements IdGenerator
 
     private final CassandraAccessor sessionAccessor;
 
-
     protected CassandraCounterIdGenerator(final String table, final String keyCol, final String valueCol, final String key, final CassandraAccessor accessor)
     {
         this.tableName = table;
@@ -39,10 +39,13 @@ public class CassandraCounterIdGenerator implements IdGenerator
         this.sessionAccessor = accessor;
     }
 
-
     @Override
-    public Long generate(final EntityMeta entity) throws NormandraException
+    public Long generate(final EntitySession session, final EntityMeta entity) throws NormandraException
     {
+        if (null == session)
+        {
+            return null;
+        }
         if (null == entity)
         {
             return null;
@@ -71,21 +74,20 @@ public class CassandraCounterIdGenerator implements IdGenerator
         throw new NormandraException("Unable to generate counter id.");
     }
 
-
     private Long incrementCounter()
     {
         final String keyspace = this.sessionAccessor.getKeyspace();
         final Session session = this.sessionAccessor.getSession();
 
         final RegularStatement increment = new QueryBuilder(this.sessionAccessor.getCluster())
-                .update(keyspace, this.tableName)
-                .with(QueryBuilder.incr(this.valueColumn))
-                .where(QueryBuilder.eq(this.keyColumn, this.keyValue));
+            .update(keyspace, this.tableName)
+            .with(QueryBuilder.incr(this.valueColumn))
+            .where(QueryBuilder.eq(this.keyColumn, this.keyValue));
 
         final RegularStatement select = new QueryBuilder(this.sessionAccessor.getCluster())
-                .select(this.valueColumn)
-                .from(keyspace, this.tableName)
-                .where(QueryBuilder.eq(this.keyColumn, this.keyValue));
+            .select(this.valueColumn)
+            .from(keyspace, this.tableName)
+            .where(QueryBuilder.eq(this.keyColumn, this.keyValue));
 
         ResultSet results = session.execute(select);
         Row row = results != null ? results.one() : null;

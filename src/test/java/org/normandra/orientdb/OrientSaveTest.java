@@ -47,9 +47,9 @@ public class OrientSaveTest
     public void testSimple() throws Exception
     {
         final OrientDatabase database = helper.getDatabase();
-        final OrientDatabaseSession session = helper.getSession();
         final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, SimpleEntity.class);
 
+        final OrientDatabaseSession session = helper.getSession();
         final EntityMeta meta = entityMap.values().iterator().next();
         final SimpleEntity entity = new SimpleEntity("test", Arrays.asList("foo", "bar"));
         session.save(meta, entity);

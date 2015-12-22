@@ -53,7 +53,7 @@ public class EntityPersistence
                 final IdGenerator generator = entity.getGenerator(column);
                 if (generator != null && accessor != null && accessor.isEmpty(instance))
                 {
-                    final Object generated = generator.generate(entity);
+                    final Object generated = generator.generate(this.session, entity);
                     final DataHolder data = new BasicDataHolder(generated);
                     accessor.setValue(instance, data, this.session);
                 }

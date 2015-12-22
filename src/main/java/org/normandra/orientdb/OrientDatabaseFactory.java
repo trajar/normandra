@@ -8,7 +8,7 @@ import org.normandra.cache.EntityCacheFactory;
 /**
  * a database factory
  * <p>
- *  Date: 5/14/14
+ * Date: 5/14/14
  */
 public class OrientDatabaseFactory implements DatabaseFactory
 {
@@ -21,7 +21,6 @@ public class OrientDatabaseFactory implements DatabaseFactory
     private final EntityCacheFactory cache;
 
     private final DatabaseConstruction constructionMode;
-
 
     public OrientDatabaseFactory(final String url, final String user, final String pwd, final EntityCacheFactory cache, final DatabaseConstruction mode)
     {
@@ -41,13 +40,26 @@ public class OrientDatabaseFactory implements DatabaseFactory
         this.userId = user;
         this.password = pwd;
         this.cache = cache;
-        this.constructionMode = mode;        
+        this.constructionMode = mode;
     }
 
+    public boolean isLocal()
+    {
+        return this.url.toLowerCase().startsWith("plocal:") || this.url.toLowerCase().startsWith("local:");
+    }
 
     @Override
     public OrientDatabase create()
     {
-        return new OrientDatabase(this.url, this.userId, this.password, this.cache, this.constructionMode);
+        final OrientPool pool;
+        if (this.isLocal())
+        {
+            pool = new LocalOrientPool(this.url, this.userId, this.password);
+        }
+        else
+        {
+            pool = new FixedOrientPool(this.url, this.userId, this.password);
+        }
+        return new OrientDatabase(this.url, pool, this.cache, this.constructionMode);
     }
 }

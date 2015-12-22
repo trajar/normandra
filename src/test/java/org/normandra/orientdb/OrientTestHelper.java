@@ -66,7 +66,7 @@ public class OrientTestHelper implements TestHelper
     {
         if (null == this.database)
         {
-            this.createDatabase();
+            this.database = new OrientDatabaseFactory(path, user, password, cache, construction).create();
         }
         return this.database;
     }
@@ -76,15 +76,9 @@ public class OrientTestHelper implements TestHelper
     {
         if (null == this.session)
         {
-            this.createDatabase();
+            this.session = this.getDatabase().createSession();
         }
         return this.session;
-    }
-
-    private void createDatabase()
-    {
-        this.database = new OrientDatabaseFactory(path, user, password, cache, construction).create();
-        this.session = this.database.createSession();
     }
 
     @Override
@@ -155,7 +149,6 @@ public class OrientTestHelper implements TestHelper
             if (this.database != null)
             {
                 this.database.close();
-                this.database.shutdown();
                 this.database = null;
             }
         }

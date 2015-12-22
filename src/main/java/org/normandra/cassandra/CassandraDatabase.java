@@ -44,8 +44,8 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * a cassandra database
- * <p/>
- *  Date: 8/31/13
+ * <p>
+ * Date: 8/31/13
  */
 public class CassandraDatabase implements Database, CassandraAccessor
 {
@@ -406,14 +406,6 @@ public class CassandraDatabase implements Database, CassandraAccessor
         this.statementsByName.clear();
         this.executor.shutdownNow();
     }
-    
-    
-    @Override
-    public void shutdown()
-    {
-        
-    }
-    
 
     public boolean hasKeyspace(final String ks)
     {
