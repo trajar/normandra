@@ -5,25 +5,24 @@
  */
 package org.normandra;
 
+import com.orientechnologies.orient.core.Orient;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 /**
  * main bundle activator
- *
- * 
  */
 public class Activator implements BundleActivator
 {
     @Override
     public void start(final BundleContext context) throws Exception
     {
-        
+
     }
 
     @Override
     public void stop(final BundleContext context) throws Exception
     {
-
+        Orient.instance().shutdown();
     }
 }
