@@ -12,8 +12,8 @@ import java.util.regex.Pattern;
 
 /**
  * query utility methods
- * <p/>
- * 
+ * <p>
+ * <p>
  * Date: 6/9/14
  */
 public class QueryUtils
@@ -30,9 +30,13 @@ public class QueryUtils
         return result;
     }
 
-
     private static String replaceEntityNames(final EntityContext entity, final String query) throws NormandraException
     {
+        if (null == entity)
+        {
+            return query;
+        }
+
         String result = query;
         for (final EntityMeta meta : entity.getEntities())
         {
@@ -60,7 +64,6 @@ public class QueryUtils
         return result;
     }
 
-
     private static String ensureColumnNames(final String query) throws NormandraException
     {
         final String upperCase = query.toUpperCase();
@@ -85,7 +88,6 @@ public class QueryUtils
         final String result = query.substring(0, selectMatcher.end() + 1) + " * " + query.substring(fromMatcher.start());
         return result;
     }
-
 
     private QueryUtils()
     {

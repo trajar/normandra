@@ -8,7 +8,6 @@ package org.normandra.meta;
 import org.apache.commons.lang.NullArgumentException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -93,7 +92,7 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         final EntityMeta existing = this.classMap.get(clazz);
         if (existing != null)
         {
-            return Arrays.asList(existing);
+            return Collections.singletonList(existing);
         }
         final List<EntityMeta> list = new ArrayList<>(4);
         for (final Map.Entry<Class, EntityMeta> entry : this.classMap.entrySet())

@@ -24,13 +24,12 @@ import java.util.TreeMap;
 /**
  * basic entity handler api
  * <p>
- * 
+ * <p>
  * Date: 5/25/14
  */
 public class EntityPersistence
 {
     private final EntitySession session;
-
 
     public EntityPersistence(final EntitySession session)
     {
@@ -40,7 +39,6 @@ public class EntityPersistence
         }
         this.session = session;
     }
-
 
     public void save(final EntityMeta entity, final Object instance, final DataHandler handler) throws NormandraException
     {
@@ -115,7 +113,6 @@ public class EntityPersistence
             }
         }
     }
-
 
     private Map<ColumnMeta, Object> mapData(final EntityMeta entity, final TableMeta table, final Object instance) throws NormandraException
     {

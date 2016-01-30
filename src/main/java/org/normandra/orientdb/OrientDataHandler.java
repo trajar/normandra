@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.data.DataHandler;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 
 import java.util.ArrayList;
@@ -20,7 +19,7 @@ import java.util.TreeMap;
 /**
  * simple utility class to help simplify saving of orientdb documents
  * <p>
- *  Date: 6/4/14
+ * Date: 6/4/14
  */
 public class OrientDataHandler implements DataHandler
 {
@@ -31,11 +30,6 @@ public class OrientDataHandler implements DataHandler
     public OrientDataHandler(OrientDatabaseSession session)
     {
         this.session = session;
-    }
-
-    public Collection<ODocument> getDocuments()
-    {
-        return Collections.unmodifiableCollection(this.documents);
     }
 
     @Override
@@ -53,7 +47,7 @@ public class OrientDataHandler implements DataHandler
         }
 
         final ODocument document;
-        final OIdentifiable existing = this.session.findIdByMap(new SingleEntityContext(entity), table, keymap);
+        final OIdentifiable existing = this.session.findIdByMap(table, keymap);
         if (existing != null)
         {
             document = this.session.findDocument(existing);
@@ -90,7 +84,7 @@ public class OrientDataHandler implements DataHandler
         {
             // clear all items with key
             boolean updated = false;
-            for (final ODocument document : this.findDocuments(table, keys))
+            for (final ODocument document : this.findMatching(table, keys))
             {
                 document.delete();
                 updated = true;
@@ -100,15 +94,12 @@ public class OrientDataHandler implements DataHandler
 
         // get existing collection values
         final List<Object> removed = new ArrayList<>();
-        for (final ODocument document : this.findDocuments(table, keys))
+        for (final ODocument document : this.findMatching(table, keys))
         {
             final Object item = OrientUtils.unpackValue(document, column);
-            if (item != null)
+            if (item != null && !items.contains(item))
             {
-                if (!items.contains(item))
-                {
-                    removed.add(item);
-                }
+                removed.add(item);
             }
         }
 
@@ -117,9 +108,8 @@ public class OrientDataHandler implements DataHandler
         final Map<ColumnMeta, Object> datamap = new TreeMap<>(keys);
         for (final Object item : removed)
         {
-            // clear all items with key
-            datamap.put(column, item);
-            for (final ODocument document : this.findDocuments(table, datamap))
+            datamap.put(column, OrientUtils.packValue(column, item));
+            for (final ODocument document : this.findMatching(table, datamap))
             {
                 document.delete();
                 updated = true;
@@ -141,7 +131,7 @@ public class OrientDataHandler implements DataHandler
             // setup document
             keymap.put(column.getName(), item);
             final ODocument document;
-            final OIdentifiable rid = this.session.findIdByMap(new SingleEntityContext(entity), table, keymap);
+            final OIdentifiable rid = this.session.findIdByMap(table, keymap);
             if (rid != null)
             {
                 document = this.session.findDocument(rid);
@@ -151,6 +141,7 @@ public class OrientDataHandler implements DataHandler
                 final String schemaName = table.getName();
                 document = this.session.getDatabase().newInstance(schemaName);
             }
+
             // save primary keys
             for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
             {
@@ -161,6 +152,7 @@ public class OrientDataHandler implements DataHandler
                 final Object packed = OrientUtils.packValue(key, value);
                 document.field(name, packed, type);
             }
+
             // save column value
             final String name = column.getName();
             final OType type = OrientUtils.columnType(column);
@@ -172,25 +164,28 @@ public class OrientDataHandler implements DataHandler
         return updated;
     }
 
-    private Iterable<ODocument> findDocuments(final TableMeta table, final Map<ColumnMeta, Object> keys)
+    private Collection<ODocument> findMatching(final TableMeta table, final Map<ColumnMeta, Object> keys)
     {
         final List<Object> parameters = new ArrayList<>(keys.size());
-        final StringBuilder query = new StringBuilder();
-        query.append("select from ").append(table.getName());
-        query.append(" where ");
-        boolean first = true;
+        final StringBuilder query = new StringBuilder()
+            .append("SELECT FROM ").append(table.getName()).append(" ")
+            .append("WHERE ");
         for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
         {
-            final String columnName = entry.getKey().getName();
-            final Object value = OrientUtils.packValue(entry.getKey(), entry.getValue());
-            if (!first)
+            final ColumnMeta column = entry.getKey();
+            if (!parameters.isEmpty())
             {
-                query.append(" and ");
+                query.append(" AND ");
             }
-            query.append(columnName).append(" = ?");
-            parameters.add(value);
-            first = false;
+            query.append(column.getProperty()).append(" = ?");
+            parameters.add(entry.getValue());
         }
+
+        if (parameters.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
         return this.session.query(query.toString(), parameters);
     }
 }

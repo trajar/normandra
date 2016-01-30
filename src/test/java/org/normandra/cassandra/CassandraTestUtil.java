@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * unit test utilities
  * <p>
- * 
+ * <p>
  * Date: 11/1/13
  */
 public class CassandraTestUtil
@@ -33,13 +33,6 @@ public class CassandraTestUtil
     private static EmbeddedCassandraService embedded = null;
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraTestUtil.class);
-
-
-    public static void start() throws Exception
-    {
-        start("/cassandra.yaml");
-    }
-
 
     public static void start(final String yamlFile) throws Exception
     {
@@ -103,13 +96,11 @@ public class CassandraTestUtil
         }
     }
 
-
     public static void reset() throws IOException
     {
         dropKeyspaces();
 //      clearAndReset();
     }
-
 
     private static void dropKeyspaces()
     {
@@ -139,14 +130,12 @@ public class CassandraTestUtil
         }
     }
 
-
     private static void clearAndReset() throws IOException
     {
         clear();
         DatabaseDescriptor.createAllDirectories();
         CommitLog.instance.resetUnsafe(true);
     }
-
 
     private static void clear() throws IOException
     {
@@ -172,7 +161,6 @@ public class CassandraTestUtil
         }
     }
 
-
     private static void log4j(final boolean resetAppenders)
     {
         /*
@@ -193,7 +181,6 @@ public class CassandraTestUtil
         java.util.logging.Logger.getLogger("org.apache.cassandra.db.Memtable").setLevel(java.util.logging.Level.OFF);
         */
     }
-
 
     private CassandraTestUtil()
     {

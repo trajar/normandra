@@ -1,20 +1,21 @@
 package org.normandra.cassandra;
 
 import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
 import org.normandra.meta.EntityContext;
 import org.normandra.util.QueryUtils;
 
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 /**
  * a simple jpa query parser
- * <p/>
- * 
+ * <p>
+ * <p>
  * Date: 4/20/14
  */
 public class CassandraQueryParser<T>
@@ -23,15 +24,13 @@ public class CassandraQueryParser<T>
 
     private final EntityContext entity;
 
-
     public CassandraQueryParser(final EntityContext entity, final CassandraDatabaseSession session)
     {
         this.entity = entity;
         this.session = session;
     }
 
-
-    public DatabaseQuery<T> parse(final String jpaQuery, final Map<String, Object> parameters) throws NormandraException
+    public CassandraDatabaseQuery<T> parse(final String jpaQuery, final Map<String, Object> parameters) throws NormandraException
     {
         if (null == jpaQuery || jpaQuery.isEmpty())
         {
@@ -41,7 +40,7 @@ public class CassandraQueryParser<T>
         final String tableQuery = QueryUtils.prepare(this.entity, jpaQuery);
         if (parameters.isEmpty())
         {
-            final RegularStatement statement = this.session.getSession().newSimpleStatement(tableQuery);
+            final RegularStatement statement = new SimpleStatement(tableQuery);
             return new CassandraDatabaseQuery<>(this.entity, statement, this.session);
         }
 
@@ -75,7 +74,7 @@ public class CassandraQueryParser<T>
             {
                 buffer.append(tableQuery.substring(last + 1));
             }
-            final RegularStatement statement = this.session.getSession().newSimpleStatement(buffer.toString());
+            final RegularStatement statement = new SimpleStatement(buffer.toString());
             return new CassandraDatabaseQuery<>(this.entity, statement, this.session);
         }
         catch (final PatternSyntaxException e)

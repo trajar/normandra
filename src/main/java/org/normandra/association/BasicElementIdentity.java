@@ -11,14 +11,10 @@ import java.util.List;
 
 /**
  * an element factory that unpacks entity ids from object instances
- * <p>
- * 
- * Date: 9/23/14
  */
 public class BasicElementIdentity<T> implements ElementIdentity<T>
 {
     private final EntityContext entity;
-
 
     public BasicElementIdentity(final EntityContext entity)
     {
@@ -29,12 +25,10 @@ public class BasicElementIdentity<T> implements ElementIdentity<T>
         this.entity = entity;
     }
 
-
     public EntityContext getEntity()
     {
         return entity;
     }
-
 
     @Override
     public Object fromKey(EntitySession session, Object key) throws NormandraException
@@ -42,13 +36,11 @@ public class BasicElementIdentity<T> implements ElementIdentity<T>
         return key;
     }
 
-
     @Override
     public Object fromEntity(EntitySession session, final T value) throws NormandraException
     {
         return this.entity.getId().fromEntity(value);
     }
-
 
     @Override
     public List<?> fromEntities(EntitySession session, final T... values) throws NormandraException
@@ -69,13 +61,11 @@ public class BasicElementIdentity<T> implements ElementIdentity<T>
         return Collections.unmodifiableList(list);
     }
 
-
     @Override
     public T toEntity(final EntitySession session, final Object value) throws NormandraException
     {
         return (T) session.get(this.entity, value);
     }
-
 
     @Override
     public List toEntities(final EntitySession session, final Object... values) throws NormandraException

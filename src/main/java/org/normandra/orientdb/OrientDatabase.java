@@ -40,7 +40,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Date: 5/14/14
@@ -297,7 +299,7 @@ public class OrientDatabase implements Database
 
         // create new class
         final OClass schemaClass = database.getMetadata().getSchema().getOrCreateClass(schemaName);
-        final Set<String> primary = new ArraySet<>();
+        final Set<ColumnMeta> primary = new ArraySet<>();
         for (final ColumnMeta column : table)
         {
             final String property = column.getName();
@@ -308,14 +310,16 @@ public class OrientDatabase implements Database
             }
             if (column.isPrimaryKey())
             {
-                primary.add(property);
+                primary.add(column);
             }
         }
 
         // create index as needed
         if (!hasIndex(database, keyIndex))
         {
-            database.command(new OCommandSQL("CREATE INDEX " + keyIndex + " ON " + schemaName + " (" + StringUtils.join(primary, ",") + ") UNIQUE")).execute();
+            final Set<ColumnMeta> sortedKeys = new TreeSet<>(primary);
+            final Collection<String> sortedNames = sortedKeys.stream().map(ColumnMeta::getName).collect(Collectors.toList());
+            database.command(new OCommandSQL("CREATE INDEX " + keyIndex + " ON " + schemaName + " (" + StringUtils.join(sortedNames, ",") + ") UNIQUE")).execute();
         }
         for (final ColumnMeta column : entity.getIndexed())
         {

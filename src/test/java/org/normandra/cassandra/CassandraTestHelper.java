@@ -35,7 +35,7 @@ public class CassandraTestHelper implements TestHelper
 
     public static void setup() throws Exception
     {
-        CassandraTestUtil.start("/cassandra-2.1.0.yaml");
+        CassandraTestUtil.start("/cassandra-3.2.1.yaml");
     }
 
     @Override

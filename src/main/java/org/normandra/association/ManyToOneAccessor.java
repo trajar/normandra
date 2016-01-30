@@ -6,9 +6,6 @@ import org.normandra.NormandraException;
 
 /**
  * a single entity accessor - for one-to-one or many-to-one n relationships
- * <p>
- * 
- * Date: 2/9/14
  */
 public class ManyToOneAccessor implements AssociationAccessor
 {
@@ -17,7 +14,6 @@ public class ManyToOneAccessor implements AssociationAccessor
     private final Object key;
 
     private final EntitySession session;
-
 
     public ManyToOneAccessor(final Object key, final EntitySession session, final ElementIdentity factory)
     {
@@ -37,7 +33,6 @@ public class ManyToOneAccessor implements AssociationAccessor
         this.session = session;
         this.factory = factory;
     }
-
 
     @Override
     public Object get() throws NormandraException

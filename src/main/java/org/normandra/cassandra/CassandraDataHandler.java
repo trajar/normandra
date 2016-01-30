@@ -57,7 +57,7 @@ public class CassandraDataHandler implements DataHandler
 
         boolean hasInsert = false;
         final String keyspaceName = this.session.getKeyspace();
-        Insert statement = new QueryBuilder(this.session.getCluster()).insertInto(keyspaceName, table.getName());
+        Insert statement = QueryBuilder.insertInto(keyspaceName, table.getName());
         for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
         {
             final ColumnMeta column = entry.getKey();
@@ -74,7 +74,7 @@ public class CassandraDataHandler implements DataHandler
             else
             {
                 boolean hasWhere = false;
-                Delete delete = new QueryBuilder(this.session.getCluster()).delete(column.getName()).from(keyspaceName, table.getName());
+                Delete delete = QueryBuilder.delete(column.getName()).from(keyspaceName, table.getName());
                 for (final ColumnMeta key : table.getPrimaryKeys())
                 {
                     final Object keyValue = data.get(key);
@@ -115,7 +115,7 @@ public class CassandraDataHandler implements DataHandler
         {
             // clear all items with key
             boolean hasWhere = false;
-            Delete delete = new QueryBuilder(this.session.getCluster()).delete().all().from(keyspaceName, table.getName());
+            Delete delete = QueryBuilder.delete().all().from(keyspaceName, table.getName());
             for (final ColumnMeta key : table.getPrimaryKeys())
             {
                 final Object value = keys.get(key);
@@ -133,7 +133,7 @@ public class CassandraDataHandler implements DataHandler
         }
 
         // get existing collection values
-        Select query = new QueryBuilder(this.session.getCluster()).select(column.getName()).from(keyspaceName, table.getName());
+        Select query = QueryBuilder.select(column.getName()).from(keyspaceName, table.getName());
         for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
         {
             final ColumnMeta key = entry.getKey();
@@ -170,7 +170,7 @@ public class CassandraDataHandler implements DataHandler
         for (final Object item : removed)
         {
             boolean hasWhere = false;
-            Delete delete = new QueryBuilder(this.session.getCluster()).delete().all().from(keyspaceName, table.getName());
+            Delete delete = QueryBuilder.delete().all().from(keyspaceName, table.getName());
             for (final ColumnMeta key : table.getPrimaryKeys())
             {
                 final Object value = keys.get(key);
@@ -191,7 +191,7 @@ public class CassandraDataHandler implements DataHandler
         for (final Object item : items)
         {
             boolean hasInsert = false;
-            Insert statement = new QueryBuilder(this.session.getCluster()).insertInto(keyspaceName, table.getName());
+            Insert statement = QueryBuilder.insertInto(keyspaceName, table.getName());
             for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
             {
                 final ColumnMeta key = entry.getKey();

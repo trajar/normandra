@@ -1,18 +1,19 @@
 package org.normandra;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.EntityMetaLookup;
 import org.normandra.meta.SingleEntityContext;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 /**
  * an entity manager backed by NoSQL database
  * <p>
- *
+ * <p>
  * Date: 8/31/13
  */
 public class EntityManager implements Transactional
@@ -46,9 +47,9 @@ public class EntityManager implements Transactional
         this.database.clear();
     }
 
-    public <T> DatabaseQuery<T> query(final Class<T> clazz, final String name) throws NormandraException
+    public <T> DatabaseQuery<T> query(final Class<T> clazz, final String nameOrQuery) throws NormandraException
     {
-        return this.query(clazz, name, Collections.emptyMap());
+        return this.query(clazz, nameOrQuery, Collections.emptyMap());
     }
 
     public <T> DatabaseQuery<T> query(final Class<T> clazz, final String name, final Map<String, Object> parameters) throws NormandraException
@@ -63,8 +64,13 @@ public class EntityManager implements Transactional
         {
             return null;
         }
-        
+
         return this.database.executeQuery(ctx, name, parameters);
+    }
+
+    public Object scalarQuery(final String nameOrQuery) throws NormandraException
+    {
+        return this.database.scalarQuery(nameOrQuery);
     }
 
     public <T> boolean exists(final Class<T> clazz, final Object key) throws NormandraException

@@ -79,12 +79,12 @@ public class CassandraCounterIdGenerator implements IdGenerator
         final String keyspace = this.sessionAccessor.getKeyspace();
         final Session session = this.sessionAccessor.getSession();
 
-        final RegularStatement increment = new QueryBuilder(this.sessionAccessor.getCluster())
+        final RegularStatement increment = QueryBuilder
             .update(keyspace, this.tableName)
             .with(QueryBuilder.incr(this.valueColumn))
             .where(QueryBuilder.eq(this.keyColumn, this.keyValue));
 
-        final RegularStatement select = new QueryBuilder(this.sessionAccessor.getCluster())
+        final RegularStatement select = QueryBuilder
             .select(this.valueColumn)
             .from(keyspace, this.tableName)
             .where(QueryBuilder.eq(this.keyColumn, this.keyValue));

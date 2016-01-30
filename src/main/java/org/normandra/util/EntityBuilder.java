@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * a set of helper entity instance utilities
  * <p>
- *  Date: 5/15/14
+ * Date: 5/15/14
  */
 public class EntityBuilder
 {
@@ -27,13 +27,11 @@ public class EntityBuilder
 
     private final DataHolderFactory factory;
 
-
     public EntityBuilder(final EntitySession session, final DataHolderFactory factory)
     {
         this.session = session;
         this.factory = factory;
     }
-
 
     public Object build(final EntityContext context, final Map<ColumnMeta, Object> data) throws NormandraException
     {
@@ -49,7 +47,6 @@ public class EntityBuilder
         }
         return this.build(entity, data);
     }
-
 
     public Object build(final EntityMeta meta, final Map<ColumnMeta, Object> data) throws NormandraException
     {
@@ -123,7 +120,6 @@ public class EntityBuilder
         }
         return instance;
     }
-
 
     public boolean update(final EntityMeta meta, final Object instance, final Map<ColumnMeta, Object> data) throws NormandraException
     {

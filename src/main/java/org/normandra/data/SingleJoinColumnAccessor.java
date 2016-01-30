@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 /**
  * a data accessor for a single join association
  * <p>
- * 
+ * <p>
  * Date: 2/1/14
  */
 public class SingleJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
@@ -23,7 +23,6 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
 
     private final boolean lazy;
 
-
     public SingleJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final ElementIdentity factory)
     {
         super(field);
@@ -31,7 +30,6 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
         this.lazy = lazy;
         this.factory = factory;
     }
-
 
     @Override
     public boolean isEmpty(final Object entity) throws NormandraException
@@ -45,7 +43,6 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
             throw new NormandraException("Unable to get join-column.", e);
         }
     }
-
 
     @Override
     public boolean isLoaded(final Object entity) throws NormandraException
@@ -69,7 +66,6 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
         }
     }
 
-
     @Override
     public Object getValue(final Object entity, EntitySession session) throws NormandraException
     {
@@ -88,7 +84,6 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
         }
         return this.factory.fromEntity(session, associatedEntity);
     }
-
 
     @Override
     public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException

@@ -115,8 +115,10 @@ public class OrientSynchronizedQuery
         {
             docs = database.command(q).execute();
         }
+
         this.end = System.currentTimeMillis();
         this.count.getAndSet(docs.size());
+
         return docs.iterator();
     }
 }

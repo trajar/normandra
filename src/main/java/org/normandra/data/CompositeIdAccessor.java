@@ -11,13 +11,12 @@ import java.util.TreeMap;
 /**
  * basic id accessor
  * <p>
- * 
+ * <p>
  * Date: 2/15/14
  */
 public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccessor
 {
     private final Map<ColumnMeta, ColumnAccessor> accessors;
-
 
     public CompositeIdAccessor(final Field field, final Map<ColumnMeta, ColumnAccessor> m)
     {
@@ -28,7 +27,6 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
         }
         this.accessors = new TreeMap<>(m);
     }
-
 
     @Override
     public Object fromEntity(final Object entity)
@@ -46,7 +44,6 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
             throw new IllegalStateException("Unable to get field [" + this.getField().getName() + "] from entity [" + entity + "].", e);
         }
     }
-
 
     @Override
     public Map<String, Object> fromKey(final Object key)
@@ -81,7 +78,6 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
         return Collections.unmodifiableMap(map);
     }
 
-
     @Override
     public Object fromData(final Map<ColumnMeta, Object> data)
     {
@@ -107,7 +103,6 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
             throw new IllegalStateException("Unable to instantiate composite key from field [" + this.getField() + "].", e);
         }
     }
-
 
     @Override
     public Object toKey(final Map<String, Object> map)

@@ -38,10 +38,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
 
     public CassandraDatabaseQuery(final EntityContext context, final Statement statement, final CassandraDatabaseSession session)
     {
-        if (null == context)
-        {
-            throw new NullArgumentException("context");
-        }
         if (null == statement)
         {
             throw new NullArgumentException("statement");
@@ -55,8 +51,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         this.statement = statement;
     }
 
-    @Override
-    public T first() throws NormandraException
+    public Row firstRow()
     {
         if (this.ensurResults().isExhausted())
         {
@@ -64,19 +59,23 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
             {
                 return null;
             }
-            final Row row = this.rows.get(0);
-            return this.build(row);
+            return this.rows.get(0);
         }
         else
         {
-            final Row first = this.ensurResults().one();
-            if (null == first)
-            {
-                return null;
-            }
-            this.rows.add(first);
-            return this.build(first);
+            return this.ensurResults().one();
         }
+    }
+
+    @Override
+    public T first() throws NormandraException
+    {
+        final Row firstRow = this.firstRow();
+        if (null == firstRow)
+        {
+            return null;
+        }
+        return this.build(firstRow);
     }
 
     @Override
@@ -172,6 +171,11 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
         if (null == row)
         {
             return null;
+        }
+
+        if (null == this.context)
+        {
+            throw new NormandraException("No entity context specified.");
         }
 
         final TableMeta table = this.context.findTable(row.getColumnDefinitions().getTable(0));

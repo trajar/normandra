@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * a lazy-loaded collection backed by an iterator
  * <p>
- * 
+ * <p>
  * Date: 6/29/14
  */
 public class LazyCollection<T> implements Collection<T>
@@ -19,7 +19,6 @@ public class LazyCollection<T> implements Collection<T>
     private final Iterator<T> iterator;
 
     private final List<T> list = new ArrayList<>();
-
 
     public LazyCollection(final Iterator<T> itr)
     {
@@ -29,7 +28,6 @@ public class LazyCollection<T> implements Collection<T>
         }
         this.iterator = itr;
     }
-
 
     public List<T> subset(final int index, final int count)
     {
@@ -47,14 +45,12 @@ public class LazyCollection<T> implements Collection<T>
         return this.list.subList(index, toIndex);
     }
 
-
     @Override
     public Iterator<T> iterator()
     {
         return new Iterator<T>()
         {
             int index = 0;
-
 
             @Override
             public boolean hasNext()
@@ -67,7 +63,6 @@ public class LazyCollection<T> implements Collection<T>
                 return index < list.size();
             }
 
-
             @Override
             public T next()
             {
@@ -78,14 +73,12 @@ public class LazyCollection<T> implements Collection<T>
         };
     }
 
-
     @Override
     public int size()
     {
         this.readAll();
         return this.list.size();
     }
-
 
     @Override
     public boolean isEmpty()
@@ -94,14 +87,12 @@ public class LazyCollection<T> implements Collection<T>
         return this.list.isEmpty();
     }
 
-
     @Override
     public boolean contains(final Object o)
     {
         this.readAll();
         return this.list.contains(o);
     }
-
 
     @Override
     public boolean containsAll(Collection<?> c)
@@ -110,14 +101,12 @@ public class LazyCollection<T> implements Collection<T>
         return this.list.containsAll(c);
     }
 
-
     @Override
     public Object[] toArray()
     {
         this.readAll();
         return this.list.toArray();
     }
-
 
     @Override
     public <T1> T1[] toArray(T1[] a)
@@ -126,13 +115,11 @@ public class LazyCollection<T> implements Collection<T>
         return this.list.toArray(a);
     }
 
-
     @Override
     public boolean add(T t)
     {
         throw new UnsupportedOperationException();
     }
-
 
     @Override
     public boolean remove(Object o)
@@ -140,13 +127,11 @@ public class LazyCollection<T> implements Collection<T>
         throw new UnsupportedOperationException();
     }
 
-
     @Override
     public boolean addAll(Collection<? extends T> c)
     {
         throw new UnsupportedOperationException();
     }
-
 
     @Override
     public boolean removeAll(Collection<?> c)
@@ -154,20 +139,17 @@ public class LazyCollection<T> implements Collection<T>
         throw new UnsupportedOperationException();
     }
 
-
     @Override
     public boolean retainAll(Collection<?> c)
     {
         throw new UnsupportedOperationException();
     }
 
-
     @Override
     public void clear()
     {
         throw new UnsupportedOperationException();
     }
-
 
     private int readAll()
     {
@@ -183,7 +165,6 @@ public class LazyCollection<T> implements Collection<T>
         }
         return read;
     }
-
 
     private boolean readNext()
     {
@@ -201,7 +182,6 @@ public class LazyCollection<T> implements Collection<T>
             return false;
         }
     }
-
 
     private int readTo(final int index)
     {

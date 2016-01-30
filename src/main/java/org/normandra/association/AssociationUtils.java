@@ -16,13 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * methods for working with jpa associations
  * <p>
- * 
+ * <p>
  * Date: 2/2/14
  */
 public class AssociationUtils
 {
     private final static Map<Class<?>, Class<?>> proxies = new ConcurrentHashMap<>();
-
 
     public static boolean isLoaded(final Object element)
     {
@@ -34,7 +33,6 @@ public class AssociationUtils
         final LazyAssociationHandler handler = (LazyAssociationHandler) proxy.getHandler();
         return handler.isLoaded();
     }
-
 
     public static boolean isProxy(final Object element)
     {
@@ -53,7 +51,6 @@ public class AssociationUtils
         return false;
     }
 
-
     public static Object createProxy(final EntityMeta meta, final Object key, final EntitySession session, final ElementIdentity factory) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
     {
         if (null == meta)
@@ -65,24 +62,19 @@ public class AssociationUtils
         Class<?> proxy = proxies.get(clazz);
         if (null == proxy)
         {
-            ProxyFactory.classLoaderProvider = new ProxyFactory.ClassLoaderProvider()
-            {
-                @Override
-                public ClassLoader get(final ProxyFactory pf)
+            ProxyFactory.classLoaderProvider = pf -> {
+                final List<ClassLoader> loaders = new ArrayList<>(2);
+                loaders.add(AssociationUtils.class.getClassLoader());
+                if (null == pf)
                 {
-                    final List<ClassLoader> loaders = new ArrayList<>(2);
-                    loaders.add(AssociationUtils.class.getClassLoader());
-                    if (null == pf)
-                    {
-                        return new CompositeClassLoader(ProxyFactory.class.getClassLoader(), loaders);
-                    }
-                    final Class<?> type = pf.getSuperclass();
-                    if (type != null)
-                    {
-                        loaders.add(type.getClassLoader());
-                    }
                     return new CompositeClassLoader(ProxyFactory.class.getClassLoader(), loaders);
                 }
+                final Class<?> type = pf.getSuperclass();
+                if (type != null)
+                {
+                    loaders.add(type.getClassLoader());
+                }
+                return new CompositeClassLoader(ProxyFactory.class.getClassLoader(), loaders);
             };
             ProxyFactory proxyFactory = new ProxyFactory();
             proxyFactory.setSuperclass(clazz);
@@ -102,7 +94,6 @@ public class AssociationUtils
         ((ProxyObject) instance).setHandler(handler);
         return clazz.cast(instance);
     }
-
 
     private AssociationUtils()
     {

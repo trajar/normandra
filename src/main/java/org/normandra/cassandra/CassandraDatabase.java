@@ -5,6 +5,7 @@ import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
 import org.apache.commons.io.IOUtils;
@@ -300,7 +301,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         {
             final StringBuilder cql = new StringBuilder();
             cql.append("DROP TABLE ").append(table).append(";");
-            statements.add(this.session.newSimpleStatement(cql.toString()));
+            statements.add(new SimpleStatement(cql.toString()));
         }
 
         // create table
@@ -309,7 +310,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         cql.append("  ").append(keyColumn).append(" text PRIMARY KEY, ");
         cql.append("  ").append(valueColumn).append(" counter ");
         cql.append(IOUtils.LINE_SEPARATOR).append(");");
-        statements.add(this.session.newSimpleStatement(cql.toString()));
+        statements.add(new SimpleStatement(cql.toString()));
 
         // execute statements
         for (final Statement statement : statements)
@@ -325,7 +326,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         {
             final StringBuilder cql = new StringBuilder();
             cql.append("DROP TABLE ").append(tableName).append(";");
-            this.ensureSession().execute(this.session.newSimpleStatement(cql.toString()));
+            this.ensureSession().execute(new SimpleStatement(cql.toString()));
         }
 
         final Set<ColumnMeta> uniqueSet = new TreeSet<>();
@@ -366,7 +367,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
                         final StringBuilder cql = new StringBuilder();
                         cql.append("ALTER TABLE ").append(tableName).append(IOUtils.LINE_SEPARATOR);
                         cql.append("ADD ").append(name).append(" ").append(type).append(";");
-                        this.ensureSession().execute(this.session.newSimpleStatement(cql.toString()));
+                        this.ensureSession().execute(new SimpleStatement(cql.toString()));
                     }
                 }
             }
@@ -386,7 +387,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
                         {
                             final StringBuilder cql = new StringBuilder();
                             cql.append("CREATE INDEX IF NOT EXISTS ON ").append(tableName).append(" (").append(column.getName()).append(");");
-                            this.ensureSession().execute(this.session.newSimpleStatement(cql.toString()));
+                            this.ensureSession().execute(new SimpleStatement(cql.toString()));
                         }
                     }
                 }
@@ -497,7 +498,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         cql.append(")").append(IOUtils.LINE_SEPARATOR);
 
         cql.append(");");
-        return this.session.newSimpleStatement(cql.toString());
+        return new SimpleStatement(cql.toString());
     }
 
     /**

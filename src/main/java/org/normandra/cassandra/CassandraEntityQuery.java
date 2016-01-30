@@ -236,7 +236,7 @@ public class CassandraEntityQuery
         }
 
         // setup select statement
-        final Select statement = new QueryBuilder(this.session.getCluster())
+        final Select statement = QueryBuilder
             .select(names)
             .from(this.session.getKeyspace(), table.getName());
         boolean hasWhere = false;

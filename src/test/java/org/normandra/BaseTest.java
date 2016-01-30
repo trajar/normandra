@@ -3,7 +3,6 @@ package org.normandra;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.normandra.cassandra.CassandraTestHelper;
 import org.normandra.orientdb.OrientTestHelper;
 
 import java.util.ArrayList;
@@ -28,14 +27,14 @@ abstract public class BaseTest
         this.types = new ArrayList<>(types);
         final List<TestHelper> list = new ArrayList<>();
         list.add(new OrientTestHelper());
-        list.add(new CassandraTestHelper());
+//      list.add(new CassandraTestHelper());
         this.helpers = Collections.unmodifiableList(list);
     }
 
     @BeforeClass
     public static void setup() throws Exception
     {
-        CassandraTestHelper.setup();
+//      CassandraTestHelper.setup();
         OrientTestHelper.setup();
     }
 

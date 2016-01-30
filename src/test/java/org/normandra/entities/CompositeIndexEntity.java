@@ -10,8 +10,8 @@ import java.util.UUID;
 
 /**
  * index of students
- * <p/>
- * 
+ * <p>
+ * <p>
  * Date: 3/2/14
  */
 @Table(name = "composite_index")
@@ -27,19 +27,16 @@ public class CompositeIndexEntity
         @Id
         private String name;
 
-
         public Key()
         {
 
         }
-
 
         public Key(final String name)
         {
             this.id = UUID.randomUUID();
             this.name = name;
         }
-
 
         public Key(final UUID id, final String name)
         {
@@ -51,44 +48,47 @@ public class CompositeIndexEntity
     @EmbeddedId
     private Key key;
 
-
     public CompositeIndexEntity()
     {
 
     }
-
 
     public CompositeIndexEntity(final String name)
     {
         this.key = new Key(name);
     }
 
-
     public UUID getId()
     {
         return this.key.id;
     }
-
 
     public String getName()
     {
         return this.key.name;
     }
 
-
     @Override
     public boolean equals(Object o)
     {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
 
         CompositeIndexEntity that = (CompositeIndexEntity) o;
 
-        if (key != null ? !key.equals(that.key) : that.key != null) return false;
+        if (key != null ? !key.equals(that.key) : that.key != null)
+        {
+            return false;
+        }
 
         return true;
     }
-
 
     @Override
     public int hashCode()

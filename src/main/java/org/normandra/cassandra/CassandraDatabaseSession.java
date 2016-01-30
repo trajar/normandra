@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -212,7 +213,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             final List<String> namelist = new ArrayList<>(columns.keySet());
             final TableMeta table = meta.getTables().iterator().next();
             final String[] names = namelist.toArray(new String[namelist.size()]);
-            final Select statement = new QueryBuilder(this.getCluster())
+            final Select statement = QueryBuilder
                 .select(names)
                 .from(this.keyspaceName, table.getName())
                 .limit(1);
@@ -308,7 +309,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             for (final TableMeta table : meta)
             {
                 boolean hasValue = false;
-                final Delete statement = new QueryBuilder(this.getCluster())
+                final Delete statement = QueryBuilder
                     .delete()
                     .all()
                     .from(this.keyspaceName, table.getName());
@@ -341,13 +342,13 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             else
             {
                 final RegularStatement[] list = deletes.toArray(new RegularStatement[deletes.size()]);
-                batch = new QueryBuilder(this.getCluster()).batch(list);
+                batch = QueryBuilder.batch(list);
             }
 
             final Object key = meta.getId().fromEntity(element);
             if (key instanceof Serializable)
             {
-                this.cache.remove(meta, (Serializable) key);
+                this.cache.remove(meta, key);
             }
 
             if (this.activeUnitOfWork.get())
@@ -377,6 +378,29 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         {
             return new CassandraDatabaseQuery<>(meta, prepared.bind(parameters), this);
         }
+    }
+
+    @Override
+    public Object scalarQuery(final String queryOrName) throws NormandraException
+    {
+        final CassandraDatabaseQuery query;
+        final CassandraPreparedStatement prepared = this.preparedStatements.get(queryOrName);
+        if (null == prepared)
+        {
+            query = new CassandraQueryParser(null, this).parse(queryOrName, Collections.EMPTY_MAP);
+        }
+        else
+        {
+            query = new CassandraDatabaseQuery<>(null, null, this);
+        }
+
+        final Row row = query.firstRow();
+        if (null == row)
+        {
+            return null;
+        }
+
+        return row.getObject(0);
     }
 
     @Override
@@ -429,7 +453,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
             else
             {
                 final RegularStatement[] list = operations.toArray(new RegularStatement[operations.size()]);
-                batch = new QueryBuilder(this.getCluster()).batch(list);
+                batch = QueryBuilder.batch(list);
             }
             if (this.activeUnitOfWork.get())
             {

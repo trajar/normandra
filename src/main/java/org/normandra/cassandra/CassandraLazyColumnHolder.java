@@ -3,13 +3,6 @@ package org.normandra.cassandra;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
@@ -17,11 +10,19 @@ import org.normandra.meta.EntityMeta;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * a lazy-loaded cassandra data holder that pulls the value of a regularly
  * column
- * <p/>
- *  Date: 4/5/14
+ * <p>
+ * Date: 4/5/14
  */
 public class CassandraLazyColumnHolder implements DataHolder
 {
@@ -109,9 +110,9 @@ public class CassandraLazyColumnHolder implements DataHolder
             return this.rows;
         }
 
-        final Select statement = new QueryBuilder(this.session.getCluster())
-                .select(this.column.getName())
-                .from(this.session.getKeyspace(), this.table.getName());
+        final Select statement = QueryBuilder
+            .select(this.column.getName())
+            .from(this.session.getKeyspace(), this.table.getName());
         boolean hasWhere = false;
         for (final Map.Entry<String, Object> entry : this.keys.entrySet())
         {
