@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 /**
  * orient database session
  * <p>
- * <p>
  * Date: 5/14/14
  */
 public class OrientDatabaseSession extends AbstractTransactional implements DatabaseSession
@@ -87,6 +86,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         final OTransaction tx = this.database.getTransaction();
         if (null == tx)
         {
+            logger.debug("Unable to locate database transaction.");
             return false;
         }
         else
@@ -98,18 +98,39 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     @Override
     public void beginWork() throws NormandraException
     {
+        if (logger.isDebugEnabled())
+        {
+            if (this.pendingWork())
+            {
+                logger.debug("Beginning transaction, but already in pending-work state.");
+            }
+        }
         this.database.begin();
     }
 
     @Override
     public void commitWork() throws NormandraException
     {
+        if (logger.isDebugEnabled())
+        {
+            if (!this.pendingWork())
+            {
+                logger.debug("Committing transaction, but not in pending-work state.");
+            }
+        }
         this.database.commit();
     }
 
     @Override
     public void rollbackWork() throws NormandraException
     {
+        if (logger.isDebugEnabled())
+        {
+            if (!this.pendingWork())
+            {
+                logger.debug("Rolling back transaction, but not in pending-work state.");
+            }
+        }
         this.database.rollback();
     }
 
