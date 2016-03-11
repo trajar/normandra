@@ -164,7 +164,7 @@ public class OrientDataHandler implements DataHandler
         return updated;
     }
 
-    private Collection<ODocument> findMatching(final TableMeta table, final Map<ColumnMeta, Object> keys)
+    private Iterable<ODocument> findMatching(final TableMeta table, final Map<ColumnMeta, Object> keys)
     {
         final List<Object> parameters = new ArrayList<>(keys.size());
         final StringBuilder query = new StringBuilder()

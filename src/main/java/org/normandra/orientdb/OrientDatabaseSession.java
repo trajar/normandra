@@ -3,6 +3,7 @@ package org.normandra.orientdb;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import org.apache.commons.lang.NullArgumentException;
@@ -20,7 +21,6 @@ import org.normandra.meta.SingleEntityContext;
 import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityBuilder;
 import org.normandra.util.EntityPersistence;
-import org.normandra.util.LazyCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -226,14 +226,14 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         try
         {
             final OrientQuery query = this.statementsByName.get(queryOrName);
-            final OrientSynchronizedQuery synchronizedQuery;
+            final OrientNonBlockingDocumentQuery synchronizedQuery;
             if (query != null)
             {
-                synchronizedQuery = new OrientSynchronizedQuery(this.database, query.getQuery(), Collections.emptyList());
+                synchronizedQuery = new OrientNonBlockingDocumentQuery(this.database, query.getQuery(), Collections.emptyList());
             }
             else
             {
-                synchronizedQuery = new OrientSynchronizedQuery(this.database, queryOrName, Collections.emptyList());
+                synchronizedQuery = new OrientNonBlockingDocumentQuery(this.database, queryOrName, Collections.emptyList());
             }
             final Iterator<ODocument> itr = synchronizedQuery.execute();
             while (itr.hasNext())
@@ -258,26 +258,29 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
     private DatabaseQuery executeNamedQuery(final EntityContext meta, final OrientQuery query, final Map<String, Object> params) throws NormandraException
     {
-        final OrientSynchronizedQuery activity = new OrientSynchronizedQuery(this.database, query.getQuery(), params);
+        final OrientNonBlockingDocumentQuery activity = new OrientNonBlockingDocumentQuery(this.database, query.getQuery(), params);
         return new OrientDatabaseQuery(this, meta, activity);
     }
 
     private DatabaseQuery executeDynamicQuery(final EntityContext meta, final String query, final Map<String, Object> params) throws NormandraException
     {
-        final OrientSynchronizedQuery activity = new OrientSynchronizedQuery(this.database, query, params);
+        final OrientNonBlockingDocumentQuery activity = new OrientNonBlockingDocumentQuery(this.database, query, params);
         return new OrientDatabaseQuery(this, meta, activity);
     }
 
-    protected Collection<ODocument> query(final String query, final Collection<?> args)
+    protected final OrientNonBlockingDocumentQuery query(final String query)
     {
-        final OrientSynchronizedQuery activity = new OrientSynchronizedQuery(this.database, query, args);
-        return new LazyCollection<>(activity.execute());
+        return new OrientNonBlockingDocumentQuery(this.database, query, Collections.emptyList());
     }
 
-    protected Collection<ODocument> query(final String query, final Map<String, Object> args)
+    protected final OrientNonBlockingDocumentQuery query(final String query, final Collection<?> args)
     {
-        final OrientSynchronizedQuery activity = new OrientSynchronizedQuery(this.database, query, args);
-        return new LazyCollection<>(activity.execute());
+        return new OrientNonBlockingDocumentQuery(this.database, query, args);
+    }
+
+    protected final OrientNonBlockingDocumentQuery query(final String query, final Map<String, Object> args)
+    {
+        return new OrientNonBlockingDocumentQuery(this.database, query, args);
     }
 
     @Override
@@ -488,11 +491,23 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             return null;
         }
 
+        if (parameters.size() == 1)
+        {
+            final String indexName = OrientUtils.keyIndex(table);
+            final String schemaName = table.getName();
+            final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
+            if (keyIdx != null)
+            {
+                final Object packedKey = parameters.iterator().next();
+                return (OIdentifiable) keyIdx.get(packedKey);
+            }
+        }
+
         final StringBuilder query = new StringBuilder()
             .append("SELECT rid FROM INDEX:").append(OrientUtils.keyIndex(table)).append(" ")
             .append("WHERE key");
 
-        final Collection<ODocument> items;
+        final Iterable<ODocument> items;
         if (parameters.size() == 1)
         {
             items = this.query(query.append(" = ?").toString(), parameters);
@@ -512,12 +527,16 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             items = this.query(query.toString(), parameters);
         }
 
-        if (items.isEmpty())
+        for (final ODocument item : items)
         {
-            return null;
+            final OIdentifiable doc = fixIdentifiable(item);
+            if (doc != null)
+            {
+                return doc;
+            }
         }
 
-        return fixIdentifiable(items.iterator().next());
+        return null;
     }
 
     public final Collection<OIdentifiable> findIdByKeys(final EntityContext context, final Set<Object> keys)

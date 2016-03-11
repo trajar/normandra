@@ -17,14 +17,13 @@ import java.util.Map;
 
 /**
  * unit tests for orient index
- * <p/>
- * 
+ * <p>
+ * <p>
  * Date: 5/24/14
  */
 public class OrientIndexTest
 {
     private final OrientTestHelper helper = new OrientTestHelper();
-
 
     @BeforeClass
     public static void setup() throws Exception
@@ -32,20 +31,17 @@ public class OrientIndexTest
         OrientTestHelper.setup();
     }
 
-
     @Before
     public void create() throws Exception
     {
         helper.create(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }
 
-
     @After
     public void destroy() throws Exception
     {
         helper.cleanup();
     }
-
 
     @Test
     public void testSimple() throws Exception

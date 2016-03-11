@@ -13,7 +13,6 @@ import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityBuilder;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -79,17 +78,6 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
     }
 
     @Override
-    public T last() throws NormandraException
-    {
-        final List<T> list = this.list();
-        if (null == list || list.isEmpty())
-        {
-            return null;
-        }
-        return list.get(list.size() - 1);
-    }
-
-    @Override
     public List<T> list() throws NormandraException
     {
         final int read = this.readAll();
@@ -106,21 +94,9 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
     }
 
     @Override
-    public int size() throws NormandraException
+    public boolean empty() throws NormandraException
     {
-        this.readAll();
-        return this.rows.size();
-    }
-
-    @Override
-    public Collection<T> subset(final int offset, final int count) throws NormandraException
-    {
-        final List<T> elements = this.list();
-        if (elements.isEmpty())
-        {
-            return Collections.emptyList();
-        }
-        return elements.subList(offset, offset + count);
+        return this.firstRow() != null;
     }
 
     @Override

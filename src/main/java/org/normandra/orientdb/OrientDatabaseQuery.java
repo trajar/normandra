@@ -4,10 +4,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
 import org.normandra.meta.EntityContext;
-import org.normandra.util.LazyCollection;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -23,11 +21,11 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
 
     private final EntityContext context;
 
-    private final OrientSynchronizedQuery query;
+    private final OrientNonBlockingDocumentQuery query;
 
-    private LazyCollection<ODocument> lazy = null;
+    private T firstItem = null;
 
-    public OrientDatabaseQuery(final OrientDatabaseSession session, final EntityContext context, final OrientSynchronizedQuery query)
+    public OrientDatabaseQuery(final OrientDatabaseSession session, final EntityContext context, final OrientNonBlockingDocumentQuery query)
     {
         this.session = session;
         this.context = context;
@@ -37,46 +35,29 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
     @Override
     public T first() throws NormandraException
     {
-        final Iterator<T> itr = this.iterator();
-        while (itr.hasNext())
+        if (this.firstItem != null)
         {
-            final T item = itr.next();
+            return this.firstItem;
+        }
+
+        for (final T item : this)
+        {
             if (item != null)
             {
+                this.firstItem = item;
                 return item;
             }
         }
-        return null;
-    }
 
-    @Override
-    public T last() throws NormandraException
-    {
-        ODocument last = null;
-        final Iterator<ODocument> itr = this.ensureResults().iterator();
-        while (itr.hasNext())
-        {
-            final ODocument item = itr.next();
-            if (item != null)
-            {
-                last = item;
-            }
-        }
-        if (null == last)
-        {
-            return null;
-        }
-        return this.session.build(this.context, last);
+        return null;
     }
 
     @Override
     public List<T> list() throws NormandraException
     {
         final List<T> list = new ArrayList<>();
-        final Iterator<T> itr = this.iterator();
-        while (itr.hasNext())
+        for (final T item : this)
         {
-            final T item = itr.next();
             if (item != null)
             {
                 list.add(item);
@@ -86,35 +67,15 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
     }
 
     @Override
-    public int size() throws NormandraException
+    public boolean empty() throws NormandraException
     {
-        return this.list().size();
-    }
-
-    @Override
-    public Collection<T> subset(int offset, int count) throws NormandraException
-    {
-        final Collection<ODocument> subset = this.ensureResults().subset(offset, count);
-        if (null == subset || subset.isEmpty())
-        {
-            return Collections.emptyList();
-        }
-        final List<T> items = new ArrayList<>(subset.size());
-        for (final ODocument doc : subset)
-        {
-            final T item = this.session.build(this.context, doc);
-            if (item != null)
-            {
-                items.add(item);
-            }
-        }
-        return Collections.unmodifiableList(items);
+        return this.first() != null;
     }
 
     @Override
     public Iterator<T> iterator()
     {
-        final Iterator<ODocument> itr = this.ensureResults().iterator();
+        final Iterator<ODocument> itr = this.query.iterator();
         return new Iterator<T>()
         {
             @Override
@@ -141,15 +102,5 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
                 }
             }
         };
-    }
-
-    private LazyCollection<ODocument> ensureResults()
-    {
-        if (this.lazy != null)
-        {
-            return this.lazy;
-        }
-        this.lazy = new LazyCollection<>(this.query.execute());
-        return this.lazy;
     }
 }
