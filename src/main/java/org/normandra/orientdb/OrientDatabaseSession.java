@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.AbstractTransactional;
@@ -499,18 +500,27 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             if (keyIdx != null)
             {
                 final Object packedKey = parameters.iterator().next();
-                return (OIdentifiable) keyIdx.get(packedKey);
+                final Object value = keyIdx.get(packedKey);
+                if (value instanceof OIdentifiable)
+                {
+                    return this.fixIdentifiable((OIdentifiable) value);
+                }
+                else
+                {
+                    return null;
+                }
             }
         }
 
         final StringBuilder query = new StringBuilder()
-            .append("SELECT rid FROM INDEX:").append(OrientUtils.keyIndex(table)).append(" ")
+            .append("SELECT FROM INDEX:").append(OrientUtils.keyIndex(table)).append(" ")
             .append("WHERE key");
 
         final Iterable<ODocument> items;
         if (parameters.size() == 1)
         {
-            items = this.query(query.append(" = ?").toString(), parameters);
+            final OSQLSynchQuery cmd = new OSQLSynchQuery(query.append(" = ?").toString());
+            items = this.database.command(cmd).execute(parameters.toArray());
         }
         else
         {
@@ -567,7 +577,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
         if (key instanceof OIdentifiable)
         {
-            return this.findDocument((OIdentifiable) key);
+            return fixIdentifiable((OIdentifiable) key);
         }
 
         for (final TableMeta table : context.getPrimaryTables())
@@ -599,10 +609,15 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
                     return findDocument((OIdentifiable) value);
                 }
             }
-            return doc;
+
+            final Object field = doc.field("rid");
+            if (field instanceof OIdentifiable)
+            {
+                return findDocument((OIdentifiable) field);
+            }
         }
 
-        return record;
+            return record;
     }
 
     final <T> T build(final EntityContext context, final ODocument document) throws NormandraException

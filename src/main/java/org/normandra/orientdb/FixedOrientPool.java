@@ -8,13 +8,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  */
 public class FixedOrientPool implements OrientPool
 {
-    private static final int poolSize = 4;
-
     private final OPartitionedDatabasePool pool;
 
     public FixedOrientPool(final String url, final String user, final String pwd)
     {
-        this.pool = new OPartitionedDatabasePool(url, user, pwd, poolSize);
+        this.pool = new OPartitionedDatabasePool(url, user, pwd, 64, 4);
     }
 
     @Override

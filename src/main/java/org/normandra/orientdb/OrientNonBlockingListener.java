@@ -16,10 +16,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-/**
- * User: bowen
- * Date: 3/9/16
- */
 public class OrientNonBlockingListener implements OCommandResultListener, Iterator<ODocument>, Closeable, AutoCloseable
 {
     private static final Logger logger = LoggerFactory.getLogger(OrientNonBlockingDocumentQuery.class);
@@ -94,7 +90,6 @@ public class OrientNonBlockingListener implements OCommandResultListener, Iterat
         synchronized (this)
         {
             this.done = true;
-            this.needsFetch = false;
         }
 
         logger.debug("Adding end-of-service item to queue.");
@@ -123,7 +118,6 @@ public class OrientNonBlockingListener implements OCommandResultListener, Iterat
         synchronized (this)
         {
             this.closed = true;
-            this.needsFetch = false;
         }
 
         this.queue.clear();
@@ -205,13 +199,13 @@ public class OrientNonBlockingListener implements OCommandResultListener, Iterat
                     }
                 }
             }
-            catch (final OException e)
-            {
-                logger.debug("Unable to build document from queue item.", e);
-            }
             catch (final InterruptedException e)
             {
                 logger.debug("Unable to poll non-blocking queue.", e);
+            }
+            catch (final Exception e)
+            {
+                logger.warn("Unable to build document from queue item.", e);
             }
         }
         return false;
