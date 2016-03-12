@@ -76,7 +76,7 @@ public class OrientNonBlockingDocumentQuery implements Iterable<ODocument>
 
     public Iterator<ODocument> execute()
     {
-        final OrientNonBlockingListener<ODocument> listener = new OrientNonBlockingListener<>(ODocument.class);
+        final OrientNonBlockingListener listener = new OrientNonBlockingListener(this.database);
         final OSQLNonBlockingQuery q = new OSQLNonBlockingQuery(this.query, listener);
         if (!parameterList.isEmpty())
         {
