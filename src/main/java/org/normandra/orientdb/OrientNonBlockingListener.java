@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.util.Iterator;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -19,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  * User: bowen
  * Date: 3/9/16
  */
-public class OrientNonBlockingListener implements OCommandResultListener, Iterator<ODocument>
+public class OrientNonBlockingListener implements OCommandResultListener, Iterator<ODocument>, Closeable, AutoCloseable
 {
     private static final Logger logger = LoggerFactory.getLogger(OrientNonBlockingDocumentQuery.class);
 
@@ -34,6 +35,8 @@ public class OrientNonBlockingListener implements OCommandResultListener, Iterat
     private ODocument next = null;
 
     private boolean done = false;
+
+    private boolean closed = false;
 
     private boolean needsFetch = true;
 
@@ -52,6 +55,11 @@ public class OrientNonBlockingListener implements OCommandResultListener, Iterat
     public boolean result(final Object record)
     {
         if (null == record)
+        {
+            return false;
+        }
+
+        if (this.isClosed())
         {
             return false;
         }
@@ -83,18 +91,13 @@ public class OrientNonBlockingListener implements OCommandResultListener, Iterat
 
     private boolean endService()
     {
-        if (this.isDone())
-        {
-            return false;
-        }
-
         synchronized (this)
         {
             this.done = true;
             this.needsFetch = false;
         }
 
-        logger.info("Adding end-of-service item to queue.");
+        logger.debug("Adding end-of-service item to queue.");
         for (int i = 0; i < 10; i++)
         {
             try
@@ -110,15 +113,16 @@ public class OrientNonBlockingListener implements OCommandResultListener, Iterat
             }
         }
 
-        logger.info("Unable to add end-of-service item to queue.");
+        logger.debug("Unable to add end-of-service item to queue.");
         return false;
     }
 
+    @Override
     public void close()
     {
         synchronized (this)
         {
-            this.done = true;
+            this.closed = true;
             this.needsFetch = false;
         }
 
@@ -133,23 +137,43 @@ public class OrientNonBlockingListener implements OCommandResultListener, Iterat
         }
     }
 
+    public boolean isClosed()
+    {
+        synchronized (this)
+        {
+            return this.closed;
+        }
+    }
+
     @Override
     public boolean hasNext()
     {
+        if (this.isClosed())
+        {
+            return false;
+        }
+
         if (this.needsFetch)
         {
             this.fetch();
         }
+
         return this.next != null;
     }
 
     @Override
     public ODocument next()
     {
+        if (this.isClosed())
+        {
+            return null;
+        }
+
         if (this.needsFetch)
         {
             this.fetch();
         }
+
         final ODocument document = this.next;
         this.next = null;
         this.needsFetch = true;
