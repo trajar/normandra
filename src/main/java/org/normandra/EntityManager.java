@@ -207,7 +207,6 @@ import java.util.Map;
 /**
  * an entity manager backed by NoSQL database
  * <p>
- * <p>
  * Date: 8/31/13
  */
 public class EntityManager implements Transactional
@@ -236,9 +235,14 @@ public class EntityManager implements Transactional
         this.database.close();
     }
 
-    public void clear() throws NormandraException
+    public void clear()
     {
         this.database.clear();
+    }
+
+    public DatabaseSession getSession()
+    {
+        return this.database;
     }
 
     public <T> DatabaseQuery<T> query(final Class<T> clazz, final String nameOrQuery) throws NormandraException
