@@ -148,17 +148,17 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.7.8</version>
+      <version>2.8.5</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.7.8</version>
+      <version>2.8.5</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.7.8</version>
+      <version>2.8.5</version>
     </dependency>
     <!-- junit -->
     <dependency>
@@ -225,7 +225,7 @@
               org.normandra.*; version="${project.version}"
             </Export-Package>
             <Import-Package>
-              com.fasterxml.jackson.*; version="[2.7, 2.8)"; resolution:="optional",
+              com.fasterxml.jackson.*; version="[2.7, 3.0)"; resolution:="optional",
               com.orientechnologies.*; version="[2.1, 3.0)"; resolution:="optional",
               javax.persistence.*; version="[2.0, 3.0)",
               javax.transaction.*; version="[1.1, 2.0)",
