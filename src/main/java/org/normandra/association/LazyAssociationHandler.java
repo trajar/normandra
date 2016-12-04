@@ -282,7 +282,7 @@ public class LazyAssociationHandler implements MethodHandler
             return false;
         }
 
-        logger.info("Intercepting proxy method invocation, fetching lazy association for [" + this.meta + "].");
+        logger.debug("Intercepting proxy method invocation, fetching lazy association for [" + this.meta + "].");
         final Object value = this.accessor.get();
         if (null == value)
         {
@@ -291,7 +291,7 @@ public class LazyAssociationHandler implements MethodHandler
         }
 
         final Object entity = this.meta.getType().cast(value);
-        logger.info("Lazy association fetched, copying entity values from instance [" + entity + "].");
+        logger.debug("Lazy association fetched, copying entity values from instance [" + entity + "].");
         for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.meta.getAccessors())
         {
             final ColumnAccessor accessor = entry.getValue();
