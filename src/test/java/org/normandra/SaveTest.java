@@ -196,11 +196,13 @@ package org.normandra;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.normandra.entities.Address;
 import org.normandra.entities.CatEntity;
 import org.normandra.entities.ClassEntity;
 import org.normandra.entities.CompositeIndexEntity;
 import org.normandra.entities.DogEntity;
 import org.normandra.entities.ParkingLotEntity;
+import org.normandra.entities.StoreEntity;
 import org.normandra.entities.StudentEntity;
 import org.normandra.entities.StudentIndexEntity;
 import org.normandra.entities.ZooEntity;
@@ -238,6 +240,30 @@ public class SaveTest extends BaseTest
             final CatEntity cat = new CatEntity("hank", true);
             session.save(entityMap.get(CatEntity.class), cat);
             Assert.assertEquals(Long.valueOf(2), cat.getId());
+        }
+    }
+
+    @Test
+    public void testEmbeddableField() throws Exception
+    {
+        for (final TestHelper helper : helpers)
+        {
+            final Database database = helper.getDatabase();
+            final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, StoreEntity.class);
+
+            final DatabaseSession session = helper.getSession();
+            final Address address = new Address("main st.", "nowhereville", 1235);
+            session.save(entityMap.get(StoreEntity.class), new StoreEntity("Store A", address));
+            session.save(entityMap.get(StoreEntity.class), new StoreEntity("Store B", null));
+
+            StoreEntity storeA = (StoreEntity) session.get(entityMap.get(StoreEntity.class), "Store A");
+            Assert.assertNotNull(storeA);
+            Assert.assertNotNull(storeA.address);
+            Assert.assertEquals("nowhereville", storeA.address.city);
+
+            StoreEntity storeB = (StoreEntity) session.get(entityMap.get(StoreEntity.class), "Store B");
+            Assert.assertNotNull(storeB);
+            Assert.assertNull(storeB.address);
         }
     }
 

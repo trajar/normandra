@@ -201,15 +201,10 @@ import javax.persistence.Entity;
 public class ParkingLotEntity
 {
     @Column
-    private String name;
+    public String name;
 
     @Column
-    private int numSpots;
-
-    public ParkingLotEntity()
-    {
-
-    }
+    public int numSpots;
 
     public ParkingLotEntity(final String n, final int num)
     {

@@ -247,6 +247,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -344,7 +345,7 @@ public class AnnotationParser
         final List<Index> annotations = new ArrayList<>();
         for (final Table table : this.findAnnotations(entity.getType(), Table.class))
         {
-            if (table.indexes() != null && table.indexes().length > 0)
+            if (table.indexes().length > 0)
             {
                 annotations.addAll(Arrays.asList(table.indexes()));
             }
@@ -365,12 +366,12 @@ public class AnnotationParser
             }
             final List<ColumnMeta> columns = columnNames.stream()
                 .map(entity::findColumn)
-                .filter((x) -> x != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
             if (!columns.isEmpty())
             {
                 String defaultName = annotation.name();
-                if (null == defaultName || defaultName.trim().isEmpty())
+                if (defaultName.trim().isEmpty())
                 {
                     if (columns.size() == 1)
                     {
@@ -500,7 +501,7 @@ public class AnnotationParser
             return null;
         }
         final String name = entity.name();
-        if (name != null && !name.isEmpty())
+        if (!name.isEmpty())
         {
             return name;
         }
@@ -527,7 +528,7 @@ public class AnnotationParser
 
         // first determine if we have an inherited entity split across a table
         final Inheritance inheritance = this.findAnnotation(entity.getClass(), Inheritance.class);
-        if (null == inheritance || null == inheritance.strategy() || !InheritanceType.JOINED.equals(inheritance.strategy()))
+        if (null == inheritance || !InheritanceType.JOINED.equals(inheritance.strategy()))
         {
             return tableName;
         }
@@ -762,9 +763,10 @@ public class AnnotationParser
         {
             // regular primary key
             final Field key = regularKeys.get(0);
-            for (final ColumnMeta column : this.configureId(key, false).keySet())
+            final Collection<ColumnMeta> keyColumns = this.configureId(key, false).keySet();
+            if (!keyColumns.isEmpty())
             {
-                entity.setId(new BasicIdAccessor(key, column));
+                entity.setId(new BasicIdAccessor(key, keyColumns.iterator().next()));
                 return true;
             }
         }
@@ -873,12 +875,37 @@ public class AnnotationParser
         // regular column
         if (field.getAnnotation(Column.class) != null)
         {
-            final ColumnAccessor accessor = this.factory.createBasic(field, type);
-            final boolean json = !this.findAnnotations(type, JsonProperty.class).isEmpty();
-            final ColumnMeta column = new ColumnMeta(name, field.getName(), type, false, false, json);
-            final boolean modified = table.addColumn(column);
-            entity.setAccessor(column, accessor);
-            return modified;
+            if (this.findAnnotations(type, Embeddable.class).isEmpty())
+            {
+                // basic column
+                final boolean json = !this.findAnnotations(type, JsonProperty.class).isEmpty();
+                final ColumnAccessor accessor = this.factory.createBasic(field, type);
+                final ColumnMeta column = new ColumnMeta(name, field.getName(), type, false, false, json);
+                final boolean modified = table.addColumn(column);
+                entity.setAccessor(column, accessor);
+                return modified;
+            }
+            else
+            {
+                // embeddable column
+                boolean modified = false;
+                for (final Field embeddedColumn : new AnnotationParser(this.factory, type).getFields(type))
+                {
+                    final Class<?> embeddedClass = embeddedColumn.getType();
+                    final boolean json = !this.findAnnotations(embeddedClass, JsonProperty.class).isEmpty();
+                    final String embeddedName = this.getColumnName(embeddedColumn);
+                    final String property = field.getName() + "." + embeddedColumn.getName();
+                    final ColumnMeta column = new ColumnMeta(embeddedName, property, embeddedClass, false, false, json);
+                    final ColumnAccessor basic = this.factory.createBasic(embeddedColumn, embeddedClass);
+                    final ColumnAccessor accessor = new NestedColumnAccessor(field, basic);
+                    if (table.addColumn(column))
+                    {
+                        modified = true;
+                        entity.setAccessor(column, accessor);
+                    }
+                }
+                return modified;
+            }
         }
 
         // unsupported column
@@ -937,7 +964,7 @@ public class AnnotationParser
         final OneToMany oneToMany = field.getAnnotation(OneToMany.class);
         final boolean lazy = FetchType.LAZY.equals(oneToMany.fetch());
         final Class<?> parameterizedClass;
-        if (oneToMany.targetEntity() != null && !void.class.equals(oneToMany.targetEntity()))
+        if (!void.class.equals(oneToMany.targetEntity()))
         {
             parameterizedClass = oneToMany.targetEntity();
         }
@@ -989,7 +1016,7 @@ public class AnnotationParser
             parentEntity.setAccessor(column, accessor);
             return true;
         }
-        else if (oneToMany.mappedBy() != null && !oneToMany.mappedBy().trim().isEmpty())
+        else if (!oneToMany.mappedBy().trim().isEmpty())
         {
             // we query this value via the other side of the relationship (which would require indices)
             for (final EntityMeta entity : associatedEntity.getEntities())
@@ -1081,7 +1108,7 @@ public class AnnotationParser
                 break;
             }
         }
-        if (null == column || null == column.discriminatorType())
+        if (null == column)
         {
             return null;
         }

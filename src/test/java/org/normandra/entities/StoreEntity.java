@@ -192,140 +192,29 @@
  *    limitations under the License.
  */
 
-package org.normandra.data;
+package org.normandra.entities;
 
-import org.apache.commons.lang.NullArgumentException;
-import org.normandra.EntitySession;
-import org.normandra.NormandraException;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
-import java.lang.reflect.Field;
-
-/**
- * a nested column accessor, used with embedded column values
- * <p>
- * Date: 1/21/14
- */
-public class NestedColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
+@Entity
+public class StoreEntity
 {
-    private final ColumnAccessor delegate;
+    @Id
+    public String name;
 
-    private final Class<?> type;
+    @Column
+    public Address address;
 
-    public NestedColumnAccessor(final Field field, final ColumnAccessor delegate)
+    public StoreEntity(final String name, final Address address)
     {
-        super(field);
-        if (null == delegate)
-        {
-            throw new NullArgumentException("accessor");
-        }
-        this.type = field.getType();
-        this.delegate = delegate;
+        this.name = name;
+        this.address = address;
     }
 
-    @Override
-    public boolean isLoaded(final Object entity) throws NormandraException
+    public StoreEntity()
     {
-        return true;
-    }
 
-    @Override
-    public boolean isEmpty(final Object entity) throws NormandraException
-    {
-        return this.getValue(entity, null) == null;
-    }
-
-    @Override
-    public Object getValue(final Object entity, EntitySession session) throws NormandraException
-    {
-        final Object base;
-        try
-        {
-            base = this.get(entity);
-        }
-        catch (final Exception e)
-        {
-            throw new NormandraException("Unable to get base value for nested property [" + this.getField().getName() + "].", e);
-        }
-        if (null == base)
-        {
-            return null;
-        }
-        return this.delegate.getValue(base, session);
-    }
-
-    @Override
-    public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException
-    {
-        Object base;
-        try
-        {
-            base = this.get(entity);
-        }
-        catch (final Exception e)
-        {
-            throw new NormandraException("Unable to get base value for nested property [" + this.getField().getName() + "].", e);
-        }
-
-        if (null == base)
-        {
-            if (data.isEmpty())
-            {
-                return false;
-            }
-            try
-            {
-                base = this.type.newInstance();
-                this.set(entity, base);
-            }
-            catch (final Exception e)
-            {
-                throw new NormandraException("Unable to instantiate new instance of nested/embedded type [" + this.type + "] for property [" + this.getField().getName() + "].", e);
-            }
-        }
-
-        if (null == base)
-        {
-            return false;
-        }
-        return this.delegate.setValue(base, data, session);
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-        if (!super.equals(o))
-        {
-            return false;
-        }
-
-        NestedColumnAccessor that = (NestedColumnAccessor) o;
-
-        if (delegate != null ? !delegate.equals(that.delegate) : that.delegate != null)
-        {
-            return false;
-        }
-        if (type != null ? !type.equals(that.type) : that.type != null)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        int result = super.hashCode();
-        result = 31 * result + (delegate != null ? delegate.hashCode() : 0);
-        result = 31 * result + (type != null ? type.hashCode() : 0);
-        return result;
     }
 }
