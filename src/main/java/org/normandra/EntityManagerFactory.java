@@ -207,16 +207,13 @@ import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.EntityMetaCollection;
 import org.normandra.meta.EntityMetaLookup;
-import org.normandra.meta.HierarchyEntityContext;
 import org.normandra.meta.QueryMeta;
-import org.normandra.meta.SingleEntityContext;
 import org.normandra.orientdb.OrientAccessorFactory;
 import org.normandra.orientdb.OrientDatabase;
 import org.normandra.orientdb.OrientDatabaseFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -435,20 +432,13 @@ public class EntityManagerFactory
             throw new NullArgumentException("type");
         }
 
-        final List<EntityMeta> list = this.lookup.findMeta(clazz);
-        if (list.isEmpty())
+        final EntityMeta meta = this.lookup.getMeta(clazz);
+        if (null == meta)
         {
             return false;
         }
 
-        if (list.size() == 1)
-        {
-            return this.database.registerQuery(new SingleEntityContext(list.get(0)), name, query);
-        }
-        else
-        {
-            return this.database.registerQuery(new HierarchyEntityContext(list), name, query);
-        }
+        return this.database.registerQuery(meta, name, query);
     }
 
     public boolean unregisterQuery(final String name) throws NormandraException

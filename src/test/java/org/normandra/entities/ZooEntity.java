@@ -217,7 +217,7 @@ public class ZooEntity
     private UUID id;
 
     @OneToMany
-    private Set<AnimalEntity> animals;
+    private Set<CatEntity> cats;
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<ZooLocation> locations = new HashSet<>();
@@ -227,20 +227,20 @@ public class ZooEntity
 
     }
 
-    public ZooEntity(final Collection<? extends AnimalEntity> c)
+    public ZooEntity(final Collection<CatEntity> c)
     {
-        this.animals = new ArraySet<>(c);
+        this.cats = new ArraySet<>(c);
     }
 
-    public Set<AnimalEntity> getAnimals()
+    public Set<CatEntity> getCats()
     {
-        if (null == this.animals)
+        if (null == this.cats)
         {
             return Collections.emptySet();
         }
         else
         {
-            return Collections.unmodifiableSet(this.animals);
+            return Collections.unmodifiableSet(this.cats);
         }
     }
 

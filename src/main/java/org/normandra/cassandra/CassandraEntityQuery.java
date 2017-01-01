@@ -201,9 +201,7 @@ import com.datastax.driver.core.querybuilder.Select;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 import org.normandra.util.EntityBuilder;
 import org.slf4j.Logger;
@@ -234,13 +232,13 @@ public class CassandraEntityQuery
 
     private final EntityCache cache;
 
-    public CassandraEntityQuery(final CassandraDatabaseSession session, final EntityCache cache)
+    CassandraEntityQuery(final CassandraDatabaseSession session, final EntityCache cache)
     {
         this.session = session;
         this.cache = cache;
     }
 
-    public Object query(final EntityContext meta, final Object key) throws NormandraException
+    public Object query(final EntityMeta meta, final Object key) throws NormandraException
     {
         if (null == meta || null == key)
         {
@@ -257,19 +255,16 @@ public class CassandraEntityQuery
         try
         {
             // pull primary tables necessary
-            final Map<TableMeta, Future<ResultSet>> primaryFutures = new LinkedHashMap<>();
-            for (final TableMeta table : meta.getPrimaryTables())
+            final Map<EntityMeta, Future<ResultSet>> primaryFutures = new LinkedHashMap<>();
+            final Future<ResultSet> future = this.buildEagerQuery(meta, key);
+            if (future != null)
             {
-                final Future<ResultSet> future = this.buildEagerQuery(meta, table, key);
-                if (future != null)
-                {
-                    primaryFutures.put(table, future);
-                }
+                primaryFutures.put(meta, future);
             }
             final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
-            for (final Map.Entry<TableMeta, Future<ResultSet>> entry : primaryFutures.entrySet())
+            for (final Map.Entry<EntityMeta, Future<ResultSet>> entry : primaryFutures.entrySet())
             {
-                final TableMeta table = entry.getKey();
+                final EntityMeta table = entry.getKey();
                 final ResultSet results = entry.getValue().get();
                 final Row row = results != null ? results.one() : null;
                 if (row != null)
@@ -277,36 +272,29 @@ public class CassandraEntityQuery
                     data.putAll(CassandraUtils.unpackValues(table, row));
                 }
             }
-            if (data.isEmpty())
+            if (meta.validate(data))
             {
-                return null;
+                // create new instance, copy values
+                final Object instance = new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(meta, data);
+                if (instance != null)
+                {
+                    this.cache.put(meta, key, instance);
+                    return instance;
+                }
             }
-
-            // create new instance, copy values
-            final EntityMeta entity = meta.findEntity(data);
-            if (null == entity)
-            {
-                return null;
-            }
-            final Object instance = new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(meta, data);
-            if (null == instance)
-            {
-                return null;
-            }
-            this.cache.put(entity, key, instance);
-
-            // done
-            return instance;
         }
         catch (final Exception e)
         {
             throw new NormandraException("Unable to get entity [" + meta + "] by key [" + key + "].", e);
         }
+
+        // not found
+        return null;
     }
 
-    public List<Object> query(final EntityContext context, final Object... keys) throws NormandraException
+    public List<Object> query(final EntityMeta meta, final Object... keys) throws NormandraException
     {
-        if (null == context || null == keys || keys.length <= 0)
+        if (null == meta || null == keys || keys.length <= 0)
         {
             return null;
         }
@@ -314,16 +302,13 @@ public class CassandraEntityQuery
         final List<Object> entities = new ArrayList<>(keys.length);
         for (final Object key : keys)
         {
-            for (final EntityMeta entity : context.getEntities())
+            if (key instanceof Serializable)
             {
-                if (key instanceof Serializable)
+                // check cache
+                final Object existing = this.cache.get(meta, key, Object.class);
+                if (existing != null)
                 {
-                    // check cache
-                    final Object existing = this.cache.get(entity, key, Object.class);
-                    if (existing != null)
-                    {
-                        entities.add(existing);
-                    }
+                    entities.add(existing);
                 }
             }
         }
@@ -335,44 +320,32 @@ public class CassandraEntityQuery
         try
         {
             // query each table as necessary
-            final Map<TableMeta, Future<ResultSet>> primaryFutures = new LinkedHashMap<>();
-            for (final TableMeta table : context.getPrimaryTables())
+            final Map<EntityMeta, Future<ResultSet>> primaryFutures = new LinkedHashMap<>();
+            final Future<ResultSet> future = this.buildEagerQuery(meta, keys);
+            if (future != null)
             {
-                final Future<ResultSet> future = this.buildEagerQuery(context, table, keys);
-                if (future != null)
-                {
-                    primaryFutures.put(table, future);
-                }
+                primaryFutures.put(meta, future);
             }
             final Map<Object, KeyContext> keymap = new HashMap<>(keys.length);
-            for (final Map.Entry<TableMeta, Future<ResultSet>> entry : primaryFutures.entrySet())
+            for (final Map.Entry<EntityMeta, Future<ResultSet>> entry : primaryFutures.entrySet())
             {
-                final TableMeta table = entry.getKey();
+                final EntityMeta table = entry.getKey();
                 final ResultSet results = entry.getValue().get();
                 if (results != null)
                 {
                     for (final Row row : results)
                     {
                         final Map<ColumnMeta, Object> data = CassandraUtils.unpackValues(table, row);
-                        final EntityMeta entity = context.findEntity(data);
-                        if (entity != null)
+                        final Object key = meta.getId().toKey(data);
+                        if (key != null)
                         {
-                            final Map<String, Object> dataByName = new HashMap<>(data.size());
-                            for (final Map.Entry<ColumnMeta, Object> pair : data.entrySet())
+                            KeyContext ctx = keymap.get(key);
+                            if (null == ctx)
                             {
-                                dataByName.put(pair.getKey().getName(), pair.getValue());
+                                ctx = new KeyContext(meta);
+                                keymap.put(key, ctx);
                             }
-                            final Object key = entity.getId().toKey(dataByName);
-                            if (key != null)
-                            {
-                                KeyContext ctx = keymap.get(key);
-                                if (null == ctx)
-                                {
-                                    ctx = new KeyContext(entity);
-                                    keymap.put(key, ctx);
-                                }
-                                ctx.rows.add(row);
-                            }
+                            ctx.rows.add(row);
                         }
                     }
                 }
@@ -388,35 +361,32 @@ public class CassandraEntityQuery
                 final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
                 for (final Row row : ctx.rows)
                 {
-                    final TableMeta table = ctx.entity.getTable(row.getColumnDefinitions().getTable(0));
-                    data.putAll(CassandraUtils.unpackValues(table, row));
+                    data.putAll(CassandraUtils.unpackValues(ctx.entity, row));
                 }
-                final Object instance = new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(context, data);
-                if (instance != null)
+                if (meta.validate(data))
                 {
-                    final Object key = context.getId().fromEntity(instance);
-                    this.cache.put(ctx.entity, key, instance);
-                    entities.add(instance);
+                    final Object instance = new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(meta, data);
+                    if (instance != null)
+                    {
+                        final Object key = meta.getId().fromEntity(instance);
+                        this.cache.put(ctx.entity, key, instance);
+                        entities.add(instance);
+                    }
                 }
             }
             return Collections.unmodifiableList(entities);
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to get entity [" + context + "] by keys " + Arrays.asList(keys) + ".", e);
+            throw new NormandraException("Unable to get entity [" + meta + "] by keys " + Arrays.asList(keys) + ".", e);
         }
     }
 
-    private Future<ResultSet> buildEagerQuery(final EntityContext meta, final TableMeta table, final Object... keys) throws NormandraException
+    private Future<ResultSet> buildEagerQuery(final EntityMeta meta, final Object... keys) throws NormandraException
     {
         // get columns to query
         final Set<ColumnMeta> columns = new ArraySet<>(meta.getColumns());
-        columns.retainAll(table.getEagerLoaded());
-        if (table.isJoinTable())
-        {
-            // for secondary tables, only query extra fields
-            columns.removeAll(meta.getPrimaryKeys());
-        }
+        columns.retainAll(meta.getEagerLoaded());
         if (columns.isEmpty())
         {
             return null;
@@ -432,46 +402,46 @@ public class CassandraEntityQuery
         // setup select statement
         final Select statement = QueryBuilder
             .select(names)
-            .from(this.session.getKeyspace(), table.getName());
+            .from(this.session.getKeyspace(), meta.getTable());
         boolean hasWhere = false;
         if (keys.length == 1)
         {
-            for (final Map.Entry<String, Object> entry : meta.getId().fromKey(keys[0]).entrySet())
+            for (final Map.Entry<ColumnMeta, Object> entry : meta.getId().fromKey(keys[0]).entrySet())
             {
-                final String name = entry.getKey();
+                final ColumnMeta property = entry.getKey();
                 final Object value = entry.getValue();
-                statement.where(QueryBuilder.eq(name, value));
+                statement.where(QueryBuilder.eq(property.getName(), value));
                 hasWhere = true;
             }
         }
         else if (keys.length > 0)
         {
-            final Map<String, List<Object>> values = new LinkedHashMap<>();
+            final Map<ColumnMeta, List<Object>> values = new LinkedHashMap<>();
             for (final Object key : keys)
             {
-                for (final Map.Entry<String, Object> entry : meta.getId().fromKey(key).entrySet())
+                for (final Map.Entry<ColumnMeta, Object> entry : meta.getId().fromKey(key).entrySet())
                 {
-                    final String name = entry.getKey();
+                    final ColumnMeta property = entry.getKey();
                     final Object value = entry.getValue();
                     if (value != null)
                     {
-                        List<Object> list = values.get(name);
+                        List<Object> list = values.get(property);
                         if (null == list)
                         {
                             list = new ArrayList<>();
-                            values.put(name, list);
+                            values.put(property, list);
                         }
                         list.add(value);
                     }
                 }
             }
-            for (final Map.Entry<String, List<Object>> entry : values.entrySet())
+            for (final Map.Entry<ColumnMeta, List<Object>> entry : values.entrySet())
             {
-                final String name = entry.getKey();
+                final ColumnMeta property = entry.getKey();
                 final List list = entry.getValue();
                 if (!list.isEmpty())
                 {
-                    statement.where(QueryBuilder.in(name, list.toArray()));
+                    statement.where(QueryBuilder.in(property.getName(), list.toArray()));
                     hasWhere = true;
                 }
             }

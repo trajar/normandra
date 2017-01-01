@@ -195,13 +195,10 @@
 package org.normandra;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.EntityMetaLookup;
-import org.normandra.meta.SingleEntityContext;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -257,13 +254,13 @@ public class EntityManager implements Transactional
             throw new NullArgumentException("type");
         }
 
-        final EntityContext ctx = this.lookup.findContext(clazz);
-        if (null == ctx)
+        final EntityMeta meta = this.lookup.getMeta(clazz);
+        if (null == meta)
         {
             return null;
         }
 
-        return this.database.executeQuery(ctx, name, parameters);
+        return this.database.executeQuery(meta, name, parameters);
     }
 
     public Object scalarQuery(final String nameOrQuery) throws NormandraException
@@ -282,18 +279,13 @@ public class EntityManager implements Transactional
             return false;
         }
 
-        final List<EntityMeta> list = this.lookup.findMeta(clazz);
-        if (list.isEmpty())
-        {
-            return false;
-        }
-
-        final EntityMeta meta = list.get(0);
+        final EntityMeta meta = this.lookup.getMeta(clazz);
         if (null == meta)
         {
             return false;
         }
-        return this.database.exists(new SingleEntityContext(meta), key);
+
+        return this.database.exists(meta, key);
     }
 
     public <T> T get(final Class<? extends T> clazz, final Object key) throws NormandraException
@@ -307,17 +299,19 @@ public class EntityManager implements Transactional
             return null;
         }
 
-        final EntityContext context = this.lookup.findContext(clazz);
-        if (null == context)
+        final EntityMeta meta = this.lookup.getMeta(clazz);
+        if (null == meta)
         {
             return null;
         }
-        final Object obj = this.database.get(context, key);
-        if (null == obj)
+
+        final Object obj = this.database.get(meta, key);
+        if (obj != null)
         {
-            return null;
+            return (T) obj;
         }
-        return (T) obj;
+
+        return null;
     }
 
     public <T> void delete(final T element) throws NormandraException

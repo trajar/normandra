@@ -195,7 +195,6 @@
 package org.normandra.cache;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -303,24 +302,6 @@ public class MemoryCache implements EntityCache
     }
 
     @Override
-    public <T> T get(final EntityContext context, final Object key, final Class<T> clazz)
-    {
-        if (null == context || null == key)
-        {
-            return null;
-        }
-        for (final EntityMeta meta : context.getEntities())
-        {
-            final T existing = this.get(meta, key, clazz);
-            if (existing != null)
-            {
-                return existing;
-            }
-        }
-        return null;
-    }
-
-    @Override
     public <T> Map<Object, T> find(final EntityMeta meta, final Collection<?> keys, final Class<T> clazz)
     {
         if (null == meta || null == keys || keys.isEmpty())
@@ -332,26 +313,6 @@ public class MemoryCache implements EntityCache
         for (final Object key : keys)
         {
             final T item = this.get(meta, key, clazz);
-            if (item != null)
-            {
-                map.put(key, item);
-            }
-        }
-        return Collections.unmodifiableMap(map);
-    }
-
-    @Override
-    public <T> Map<Object, T> find(final EntityContext context, final Collection<?> keys, final Class<T> clazz)
-    {
-        if (null == context || null == keys || keys.isEmpty())
-        {
-            return Collections.emptyMap();
-        }
-
-        final Map<Object, T> map = new HashMap<>();
-        for (final Object key : keys)
-        {
-            final T item = this.get(context, key, clazz);
             if (item != null)
             {
                 map.put(key, item);
@@ -428,23 +389,6 @@ public class MemoryCache implements EntityCache
             logger.warn("Unable to retrieve key to cache entity [" + instance + "] of type [" + meta + "].", e);
             return false;
         }
-    }
-
-    @Override
-    public boolean put(final EntityContext context, final Object key, final Object instance)
-    {
-        if (null == context || null == key || null == instance)
-        {
-            return false;
-        }
-
-        boolean updated = false;
-        for (final EntityMeta meta : context.getEntities())
-        {
-            updated |= this.put(meta, key, instance);
-        }
-        this.checkPurge();
-        return updated;
     }
 
     synchronized private void checkPurge()

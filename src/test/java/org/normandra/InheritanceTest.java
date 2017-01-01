@@ -206,7 +206,7 @@ import java.util.Arrays;
 /**
  * unit tests for inheritance and abstract entity classes
  * <p>
- * 
+ * <p>
  * Date: 2/1/14
  */
 public class InheritanceTest extends BaseTest
@@ -215,7 +215,6 @@ public class InheritanceTest extends BaseTest
     {
         super(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }
-
 
     @Test
     public void testSave() throws Exception
@@ -236,7 +235,6 @@ public class InheritanceTest extends BaseTest
         }
     }
 
-
     @Test
     public void testHierarchy() throws Exception
     {
@@ -248,15 +246,15 @@ public class InheritanceTest extends BaseTest
             manager.save(dog);
             manager.save(cat);
 
-            final ZooEntity zoo = new ZooEntity(Arrays.asList(dog, cat));
+            final ZooEntity zoo = new ZooEntity(Arrays.asList(cat));
             manager.save(zoo);
             manager.clear();
 
             final ZooEntity existing = manager.get(ZooEntity.class, zoo.getId());
             Assert.assertNotNull(existing);
-            Assert.assertEquals(2, existing.getAnimals().size());
-            Assert.assertTrue(existing.getAnimals().contains(dog));
-            Assert.assertTrue(existing.getAnimals().contains(cat));
+            Assert.assertEquals(1, existing.getCats().size());
+            Assert.assertFalse(existing.getCats().contains(dog));
+            Assert.assertTrue(existing.getCats().contains(cat));
         }
     }
 }

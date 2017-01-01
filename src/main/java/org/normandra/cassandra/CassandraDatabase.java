@@ -213,10 +213,8 @@ import org.normandra.data.BasicColumnAccessorFactory;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.DatabaseMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.IndexMeta;
-import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 import org.normandra.util.CaseUtils;
 import org.normandra.util.QueryUtils;
@@ -232,6 +230,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -305,7 +304,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
     }
 
     @Override
-    public boolean registerQuery(final EntityContext entity, final String name, final String query) throws NormandraException
+    public boolean registerQuery(final EntityMeta entity, final String name, final String query) throws NormandraException
     {
         if (null == name || name.isEmpty())
         {
@@ -410,79 +409,79 @@ public class CassandraDatabase implements Database, CassandraAccessor
         // setup any table sequence/id generators
         for (final EntityMeta entity : meta)
         {
-            final Class<?> entityType = entity.getType();
-            final AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), entityType);
-            for (final Map.Entry<Field, GeneratedValue> entry : parser.getGenerators(entityType).entrySet())
+            for (final Class<?> entityType : entity.getTypes())
             {
-                final Field field = entry.getKey();
-                final GeneratedValue generator = entry.getValue();
-                final String type = generator.generator();
-                String tableName = "id_generator";
-                String keyColumn = "id";
-                String keyValue = entity.getTables().size() == 1 ? entity.getTables().iterator().next().getName() : CaseUtils.camelToSnakeCase(entity.getName());
-                String valueColumn = "value";
-
-                if (GenerationType.TABLE.equals(generator.strategy()))
+                final AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), entityType);
+                for (final Map.Entry<Field, GeneratedValue> entry : parser.getGenerators(entityType).entrySet())
                 {
-                    for (final TableGenerator table : parser.findAnnotations(entityType, TableGenerator.class))
+                    final Field field = entry.getKey();
+                    final GeneratedValue generator = entry.getValue();
+                    final String type = generator.generator();
+                    String tableName = "id_generator";
+                    String keyColumn = "id";
+                    String keyValue = CaseUtils.camelToSnakeCase(entity.getTable());
+                    String valueColumn = "value";
+
+                    if (GenerationType.TABLE.equals(generator.strategy()))
                     {
-                        if (type.equalsIgnoreCase(table.name()))
+                        for (final TableGenerator table : parser.findAnnotations(entityType, TableGenerator.class))
                         {
-                            if (!table.table().isEmpty())
+                            if (type.equalsIgnoreCase(table.name()))
                             {
-                                tableName = table.table();
-                            }
-                            if (!table.pkColumnName().isEmpty())
-                            {
-                                keyColumn = table.pkColumnName();
-                            }
-                            if (!table.pkColumnValue().isEmpty())
-                            {
-                                keyValue = table.pkColumnValue();
-                            }
-                            if (!table.valueColumnName().isEmpty())
-                            {
-                                valueColumn = table.valueColumnName();
+                                if (!table.table().isEmpty())
+                                {
+                                    tableName = table.table();
+                                }
+                                if (!table.pkColumnName().isEmpty())
+                                {
+                                    keyColumn = table.pkColumnName();
+                                }
+                                if (!table.pkColumnValue().isEmpty())
+                                {
+                                    keyValue = table.pkColumnValue();
+                                }
+                                if (!table.valueColumnName().isEmpty())
+                                {
+                                    valueColumn = table.valueColumnName();
+                                }
                             }
                         }
                     }
-                }
-                else if (GenerationType.SEQUENCE.equals(generator.strategy()))
-                {
-                    for (final SequenceGenerator sequence : parser.findAnnotations(entityType, SequenceGenerator.class))
+                    else if (GenerationType.SEQUENCE.equals(generator.strategy()))
                     {
-                        if (type.equalsIgnoreCase(sequence.name()))
+                        for (final SequenceGenerator sequence : parser.findAnnotations(entityType, SequenceGenerator.class))
                         {
-                            if (!sequence.sequenceName().isEmpty())
+                            if (type.equalsIgnoreCase(sequence.name()))
                             {
-                                keyValue = sequence.sequenceName();
+                                if (!sequence.sequenceName().isEmpty())
+                                {
+                                    keyValue = sequence.sequenceName();
+                                }
                             }
                         }
                     }
-                }
-                else if (GenerationType.IDENTITY.equals(generator.strategy()))
-                {
-                    throw new NormandraException("Cassandra CQL3 does not support identity primary key generation.");
-                }
+                    else if (GenerationType.IDENTITY.equals(generator.strategy()))
+                    {
+                        throw new NormandraException("Cassandra CQL3 does not support identity primary key generation.");
+                    }
 
-                try
-                {
-                    this.refreshTableGenerator(tableName, keyColumn, valueColumn);
-                }
-                catch (final Exception e)
-                {
-                    throw new NormandraException("Unable to refresh id generator [" + generator.generator() + "].", e);
-                }
+                    try
+                    {
+                        this.refreshTableGenerator(tableName, keyColumn, valueColumn);
+                    }
+                    catch (final Exception e)
+                    {
+                        throw new NormandraException("Unable to refresh id generator [" + generator.generator() + "].", e);
+                    }
 
-                final String fieldName = field.getName();
-                for (final TableMeta table : entity)
-                {
-                    final ColumnMeta column = table.getColumn(fieldName);
+                    final String fieldName = field.getName();
+                    final ColumnMeta column = entity.findColumn(fieldName);
                     if (column != null)
                     {
                         final CassandraCounterIdGenerator counter = new CassandraCounterIdGenerator(tableName, keyColumn, valueColumn, keyValue, this);
                         entity.setGenerator(column, counter);
                         logger.info("Set counter id generator for [" + column + "] on entity [" + entity + "].");
+                        break;
                     }
                 }
             }
@@ -526,19 +525,18 @@ public class CassandraDatabase implements Database, CassandraAccessor
             this.ensureSession().execute(new SimpleStatement(cql.toString()));
         }
 
+        // build columns
         final Set<ColumnMeta> uniqueSet = new ArraySet<>();
         final Collection<ColumnMeta> primaryColumns = new ArrayList<>();
         final Collection<ColumnMeta> allColumns = new ArrayList<>();
         for (final EntityMeta entity : meta)
         {
-            final TableMeta table = entity.getTable(tableName);
-            if (table != null)
+            if (tableName.equalsIgnoreCase(entity.getTable()))
             {
-                for (final ColumnMeta column : table)
+                for (final ColumnMeta column : entity)
                 {
-                    if (!uniqueSet.contains(column))
+                    if (uniqueSet.add(column))
                     {
-                        uniqueSet.add(column);
                         allColumns.add(column);
                         if (column.isPrimaryKey())
                         {
@@ -582,8 +580,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
                 this.ensureSession().execute(statement);
                 for (final EntityMeta entity : meta)
                 {
-                    final TableMeta table = entity.getTable(tableName);
-                    if (table != null)
+                    if (tableName.equalsIgnoreCase(entity.getTable()))
                     {
                         // cassandra supports index-per-column, so find all the columns we want
                         final List<ColumnMeta> columns = new ArrayList<>();
@@ -591,7 +588,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
                         {
                             for (final ColumnMeta column : index.getColumns())
                             {
-                                if (table.hasColumn(column))
+                                if (entity.hasColumn(column))
                                 {
                                     columns.add(column);
                                 }
@@ -697,7 +694,7 @@ public class CassandraDatabase implements Database, CassandraAccessor
         }
 
         final Collection<String> keys = columns.stream()
-            .filter((x) -> x != null)
+            .filter(Objects::nonNull)
             .filter(ColumnMeta::isPrimaryKey)
             .map(ColumnMeta::getName)
             .collect(Collectors.toList());

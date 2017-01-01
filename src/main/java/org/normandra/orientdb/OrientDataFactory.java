@@ -198,13 +198,10 @@ import org.normandra.data.BasicDataHolder;
 import org.normandra.data.DataHolder;
 import org.normandra.data.DataHolderFactory;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
-import org.normandra.meta.SingleEntityContext;
-import org.normandra.meta.TableMeta;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -233,24 +230,24 @@ public class OrientDataFactory implements DataHolderFactory
     }
 
     @Override
-    public DataHolder createLazy(final EntityMeta entity, final TableMeta table, final ColumnMeta column, final Object key)
+    public DataHolder createLazy(final EntityMeta entity, final ColumnMeta column, final Object key)
     {
-        if (null == entity || null == table || null == column || null == key)
+        if (null == entity || null == column || null == key)
         {
             return null;
         }
-        return new OrientLazyDataHolder(this.session, new SingleEntityContext(entity), column, key);
+        return new OrientLazyDataHolder(this.session, entity, column, key);
     }
 
     @Override
-    public DataHolder createJoinCollection(final EntityMeta entity, final TableMeta table, final JoinCollectionMeta column, final Object key)
+    public DataHolder createJoinCollection(final EntityMeta entity, final JoinCollectionMeta column, final Object key)
     {
-        if (null == entity || null == table || null == column || null == key)
+        if (null == entity || null == column || null == key)
         {
             return null;
         }
 
-        final Map<String, Object> keymap = entity.getId().fromKey(key);
+        final Map<ColumnMeta, Object> keymap = entity.getId().fromKey(key);
         if (null == keymap || keymap.isEmpty())
         {
             return null;
@@ -258,33 +255,33 @@ public class OrientDataFactory implements DataHolderFactory
 
         final List<Object> parameters = new ArrayList<>(keymap.size());
         final StringBuilder query = new StringBuilder();
-        query.append("select ").append(column.getName()).append(" from ").append(table.getName()).append(" where ");
+        query.append("select ").append(column.getName()).append(" from ").append(entity.getTable()).append(" where ");
         boolean first = true;
-        for (final Map.Entry<String, Object> entry : keymap.entrySet())
+        for (final Map.Entry<ColumnMeta, Object> entry : keymap.entrySet())
         {
             if (!first)
             {
                 query.append(" and ");
             }
-            final String columnName = entry.getKey();
+            final String columnName = entry.getKey().getName();
             final Object value = entry.getValue();
             query.append(columnName).append(" = ?");
             first = false;
             parameters.add(value);
         }
         final OrientDocumentHandler handler = document -> OrientUtils.unpackValue(document, column);
-        return new OrientLazyQueryHolder(this.session, new SingleEntityContext(entity), table, column.isCollection(), query.toString(), parameters, handler);
+        return new OrientLazyQueryHolder(this.session, entity, column.isCollection(), query.toString(), parameters, handler);
     }
 
     @Override
-    public DataHolder createJoinColumn(final EntityMeta entity, final TableMeta table, final JoinColumnMeta column, final Object key)
+    public DataHolder createJoinColumn(final EntityMeta entity, final JoinColumnMeta column, final Object key)
     {
-        if (null == entity || null == table || null == column || null == key)
+        if (null == entity || null == column || null == key)
         {
             return null;
         }
 
-        final Map<String, Object> keymap = entity.getId().fromKey(key);
+        final Map<ColumnMeta, Object> keymap = entity.getId().fromKey(key);
         if (null == keymap || keymap.isEmpty())
         {
             return null;
@@ -292,22 +289,22 @@ public class OrientDataFactory implements DataHolderFactory
 
         final List<Object> parameters = new ArrayList<>(keymap.size());
         final StringBuilder query = new StringBuilder();
-        query.append("select from ").append(table.getName()).append(" where ");
+        query.append("select from ").append(entity.getTable()).append(" where ");
         boolean first = true;
-        for (final Map.Entry<String, Object> entry : keymap.entrySet())
+        for (final Map.Entry<ColumnMeta, Object> entry : keymap.entrySet())
         {
             if (!first)
             {
                 query.append(" and ");
             }
-            final String columnName = entry.getKey();
+            final String columnName = entry.getKey().getName();
             final Object value = entry.getValue();
             query.append(columnName).append(" = ?");
             first = false;
             parameters.add(value);
         }
         final OrientDocumentHandler handler = document -> OrientUtils.unpackKey(entity, document);
-        return new OrientLazyQueryHolder(this.session, new SingleEntityContext(entity), table, column.isCollection(), query.toString(), parameters, handler);
+        return new OrientLazyQueryHolder(this.session, entity, column.isCollection(), query.toString(), parameters, handler);
     }
 
     @Override
@@ -318,16 +315,15 @@ public class OrientDataFactory implements DataHolderFactory
             return null;
         }
 
-        final EntityContext mappedEntity = column.getEntity();
-        final TableMeta mappedTable = column.getTable();
+        final EntityMeta mappedEntity = column.getEntity();
         final ColumnMeta mappedColumn = column.getColumn();
 
         final String query = new StringBuilder()
-            .append("select from ").append(mappedTable.getName()).append(" ")
+            .append("select from ").append(mappedEntity.getTable()).append(" ")
             .append("where ").append(mappedColumn.getName()).append(" = ?")
             .toString();
         final OrientDocumentHandler handler = document -> OrientUtils.unpackKey(mappedEntity, document);
-        final Object rid = this.session.findIdByKey(new SingleEntityContext(entity), key);
-        return new OrientLazyQueryHolder(this.session, mappedEntity, mappedTable, column.isCollection(), query, Collections.singletonList(rid), handler);
+        final Object rid = this.session.findIdByKey(entity, key);
+        return new OrientLazyQueryHolder(this.session, mappedEntity, column.isCollection(), query, Collections.singletonList(rid), handler);
     }
 }

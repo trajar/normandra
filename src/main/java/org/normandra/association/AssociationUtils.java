@@ -252,11 +252,12 @@ public class AssociationUtils
             return null;
         }
 
-        final Class<?> clazz = meta.getType();
+        final Class<?> clazz = meta.getType(meta.getId().fromKey(key));
         Class<?> proxy = proxies.get(clazz);
         if (null == proxy)
         {
-            ProxyFactory.classLoaderProvider = pf -> {
+            ProxyFactory.classLoaderProvider = pf ->
+            {
                 final List<ClassLoader> loaders = new ArrayList<>(2);
                 loaders.add(AssociationUtils.class.getClassLoader());
                 if (null == pf)

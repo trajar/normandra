@@ -239,7 +239,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
     }
 
     @Override
-    public Map<String, Object> fromKey(final Object key)
+    public Map<ColumnMeta, Object> fromKey(final Object key)
     {
         if (null == key)
         {
@@ -250,7 +250,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
             return Collections.emptyMap();
         }
 
-        final Map<String, Object> map = new LinkedHashMap<>(this.accessors.size());
+        final Map<ColumnMeta, Object> map = new LinkedHashMap<>(this.accessors.size());
         for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet())
         {
             final ColumnMeta column = entry.getKey();
@@ -260,7 +260,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
                 final Object value = accessor.getValue(key, null);
                 if (value != null)
                 {
-                    map.put(column.getName(), value);
+                    map.put(column, value);
                 }
             }
             catch (final Exception e)
@@ -298,7 +298,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
     }
 
     @Override
-    public Object toKey(final Map<String, Object> map)
+    public Object toKey(final Map<ColumnMeta, Object> map)
     {
         if (null == map || map.isEmpty())
         {
@@ -311,7 +311,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
             {
                 final ColumnMeta column = entry.getKey();
                 final ColumnAccessor accessor = entry.getValue();
-                final Object value = map.get(column.getName());
+                final Object value = map.get(column);
                 final DataHolder data = new BasicDataHolder(value);
                 accessor.setValue(instance, data, null);
             }

@@ -215,7 +215,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * lazy loaded object handler
  * <p>
- *  Date: 2/2/14
+ * Date: 2/2/14
  */
 public class LazyAssociationHandler implements MethodHandler
 {
@@ -269,8 +269,7 @@ public class LazyAssociationHandler implements MethodHandler
         }
         if (!skip && !this.loaded.get())
         {
-            final Object selfcasted = this.meta.getType().cast(self);
-            this.load(selfcasted);
+            this.load(self);
         }
         return proceed.invoke(self, args);
     }
@@ -290,12 +289,11 @@ public class LazyAssociationHandler implements MethodHandler
             return false;
         }
 
-        final Object entity = this.meta.getType().cast(value);
-        logger.debug("Lazy association fetched, copying entity values from instance [" + entity + "].");
+        logger.debug("Lazy association fetched, copying entity values from instance [" + value + "].");
         for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.meta.getAccessors())
         {
             final ColumnAccessor accessor = entry.getValue();
-            final Object columnValue = accessor.getValue(entity, session);
+            final Object columnValue = accessor.getValue(value, session);
             final DataHolder data = new BasicDataHolder(columnValue);
             accessor.setValue(self, data, this.session);
         }

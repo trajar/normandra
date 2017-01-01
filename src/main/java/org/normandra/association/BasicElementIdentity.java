@@ -197,7 +197,7 @@ package org.normandra.association;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -208,9 +208,9 @@ import java.util.List;
  */
 public class BasicElementIdentity<T> implements ElementIdentity<T>
 {
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
-    public BasicElementIdentity(final EntityContext entity)
+    public BasicElementIdentity(final EntityMeta entity)
     {
         if (null == entity)
         {
@@ -219,7 +219,7 @@ public class BasicElementIdentity<T> implements ElementIdentity<T>
         this.entity = entity;
     }
 
-    public EntityContext getEntity()
+    public EntityMeta getEntity()
     {
         return entity;
     }

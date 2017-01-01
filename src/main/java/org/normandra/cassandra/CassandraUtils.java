@@ -199,13 +199,10 @@ import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
 import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EmbeddedCollectionMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.MappedColumnMeta;
-import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 import org.normandra.util.DataUtils;
 
@@ -220,7 +217,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -231,9 +227,9 @@ import java.util.UUID;
  */
 public class CassandraUtils
 {
-    public static Map<ColumnMeta, Object> unpackValues(final TableMeta table, final Row row) throws IOException, ClassNotFoundException, NormandraException
+    public static Map<ColumnMeta, Object> unpackValues(final EntityMeta meta, final Row row) throws IOException, ClassNotFoundException, NormandraException
     {
-        if (null == row || null == table)
+        if (null == row || null == meta)
         {
             return Collections.emptyMap();
         }
@@ -241,7 +237,7 @@ public class CassandraUtils
         for (final ColumnDefinitions.Definition def : row.getColumnDefinitions().asList())
         {
             final String columnName = def.getName();
-            final ColumnMeta column = table.getColumn(columnName);
+            final ColumnMeta column = meta.findColumn(columnName);
             if (column != null)
             {
                 final Object value = CassandraUtils.unpackValue(row, column);
@@ -251,35 +247,23 @@ public class CassandraUtils
         return Collections.unmodifiableMap(data);
     }
 
-    public static Object unpackKey(final Row row, final EntityContext entity) throws NormandraException, IOException, ClassNotFoundException
+    public static Object unpackKey(final Row row, final EntityMeta meta) throws NormandraException, IOException, ClassNotFoundException
     {
-        if (null == row || null == entity)
+        if (null == row || null == meta)
         {
             return null;
         }
 
-        final Collection<ColumnMeta> keys = entity.getPrimaryKeys();
-        final Set<ColumnMeta> columns = new ArraySet<>(keys.size() + 1);
-        columns.addAll(keys);
-        for (final EntityMeta meta : entity.getEntities())
-        {
-            final DiscriminatorMeta descrim = meta.getDiscriminator();
-            if (descrim != null)
-            {
-                columns.add(descrim.getColumn());
-            }
-        }
-
-        final Map<String, Object> data = new LinkedHashMap<>();
-        for (final ColumnMeta column : columns)
+        final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
+        for (final ColumnMeta column : meta.getPrimaryKeys())
         {
             final Object value = unpackValue(row, column);
             if (value != null)
             {
-                data.put(column.getName(), value);
+                data.put(column, value);
             }
         }
-        return entity.getId().toKey(data);
+        return meta.getId().toKey(data);
     }
 
     public static Object packValue(final ColumnMeta column, final Object value)
@@ -389,7 +373,11 @@ public class CassandraUtils
         if (column.isCollection() && column.isEmbedded())
         {
             final Class<?> generic;
-            if (column instanceof EmbeddedCollectionMeta)
+            if (column.isJson())
+            {
+                generic = String.class;
+            }
+            else if (column instanceof EmbeddedCollectionMeta)
             {
                 generic = ((EmbeddedCollectionMeta) column).getGeneric();
             }
@@ -504,7 +492,11 @@ public class CassandraUtils
         if (column.isCollection() && column.isEmbedded())
         {
             final Class<?> generic;
-            if (column instanceof EmbeddedCollectionMeta)
+            if (column.isJson())
+            {
+                generic = String.class;
+            }
+            else if (column instanceof EmbeddedCollectionMeta)
             {
                 generic = ((EmbeddedCollectionMeta) column).getGeneric();
             }

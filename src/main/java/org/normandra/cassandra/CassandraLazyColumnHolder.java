@@ -201,7 +201,6 @@ import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
 import java.util.ArrayList;
@@ -226,19 +225,16 @@ public class CassandraLazyColumnHolder implements DataHolder
 
     private final EntityMeta entity;
 
-    private final TableMeta table;
-
     private final ColumnMeta column;
 
-    private final Map<String, Object> keys;
+    private final Map<ColumnMeta, Object> keys;
 
     private final List<Row> rows = new ArrayList<>();
 
-    public CassandraLazyColumnHolder(final CassandraDatabaseSession session, final EntityMeta meta, final TableMeta table, final ColumnMeta column, final Map<String, Object> keys)
+    public CassandraLazyColumnHolder(final CassandraDatabaseSession session, final EntityMeta meta, final ColumnMeta column, final Map<ColumnMeta, Object> keys)
     {
         this.session = session;
         this.entity = meta;
-        this.table = table;
         this.column = column;
         this.keys = new LinkedHashMap<>(keys);
     }
@@ -252,7 +248,7 @@ public class CassandraLazyColumnHolder implements DataHolder
         }
         catch (final Exception e)
         {
-            throw new IllegalStateException("Unable to query lazy loaded results from table [" + this.table + "] on column [" + this.column + "].", e);
+            throw new IllegalStateException("Unable to query lazy loaded results from table [" + this.entity + "] on column [" + this.column + "].", e);
         }
     }
 
@@ -306,15 +302,15 @@ public class CassandraLazyColumnHolder implements DataHolder
 
         final Select statement = QueryBuilder
             .select(this.column.getName())
-            .from(this.session.getKeyspace(), this.table.getName());
+            .from(this.session.getKeyspace(), this.entity.getTable());
         boolean hasWhere = false;
-        for (final Map.Entry<String, Object> entry : this.keys.entrySet())
+        for (final Map.Entry<ColumnMeta, Object> entry : this.keys.entrySet())
         {
-            final String name = entry.getKey();
+            final ColumnMeta property = entry.getKey();
             final Object value = entry.getValue();
             if (value != null)
             {
-                statement.where(QueryBuilder.eq(name, value));
+                statement.where(QueryBuilder.eq(property.getName(), value));
                 hasWhere = true;
             }
         }

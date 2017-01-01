@@ -210,10 +210,7 @@ import org.normandra.Transaction;
 import org.normandra.cache.EntityCache;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
-import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityBuilder;
 import org.normandra.util.EntityPersistence;
 import org.slf4j.Logger;
@@ -370,23 +367,20 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
 
         try (final Transaction tx = this.beginTransaction())
         {
-            for (final TableMeta table : meta)
+            final Map<ColumnMeta, Object> datamap = new LinkedHashMap<>();
+            for (final ColumnMeta column : meta.getPrimaryKeys())
             {
-                final Map<String, Object> datamap = new LinkedHashMap<>();
-                for (final ColumnMeta column : table.getPrimaryKeys())
+                final ColumnAccessor accessor = meta.getAccessor(column);
+                final Object value = accessor != null ? accessor.getValue(element, this) : null;
+                if (value != null)
                 {
-                    final ColumnAccessor accessor = meta.getAccessor(column);
-                    final Object value = accessor != null ? accessor.getValue(element, this) : null;
-                    if (value != null)
-                    {
-                        datamap.put(column.getName(), value);
-                    }
+                    datamap.put(column, value);
                 }
-                final OIdentifiable rid = this.findIdByMap(table, datamap);
-                if (rid != null)
-                {
-                    this.database.delete(rid.getIdentity());
-                }
+            }
+            final OIdentifiable rid = this.findIdByMap(meta, datamap);
+            if (rid != null)
+            {
+                this.database.delete(rid.getIdentity());
             }
 
             tx.success();
@@ -401,7 +395,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
     @Override
-    public DatabaseQuery executeQuery(final EntityContext meta, final String queryOrName, final Map<String, Object> params) throws NormandraException
+    public DatabaseQuery executeQuery(final EntityMeta meta, final String queryOrName, final Map<String, Object> params) throws NormandraException
     {
         final OrientQuery query = this.statementsByName.get(queryOrName);
         if (query != null)
@@ -450,13 +444,13 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         }
     }
 
-    private DatabaseQuery executeNamedQuery(final EntityContext meta, final OrientQuery query, final Map<String, Object> params) throws NormandraException
+    private DatabaseQuery executeNamedQuery(final EntityMeta meta, final OrientQuery query, final Map<String, Object> params) throws NormandraException
     {
         final OrientNonBlockingDocumentQuery activity = new OrientNonBlockingDocumentQuery(this.database, query.getQuery(), params);
         return new OrientDatabaseQuery(this, meta, activity);
     }
 
-    private DatabaseQuery executeDynamicQuery(final EntityContext meta, final String query, final Map<String, Object> params) throws NormandraException
+    private DatabaseQuery executeDynamicQuery(final EntityMeta meta, final String query, final Map<String, Object> params) throws NormandraException
     {
         final OrientNonBlockingDocumentQuery activity = new OrientNonBlockingDocumentQuery(this.database, query, params);
         return new OrientDatabaseQuery(this, meta, activity);
@@ -478,82 +472,24 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
     }
 
     @Override
-    public boolean exists(final EntityContext context, final Object key) throws NormandraException
-    {
-        if (null == context)
-        {
-            throw new NullArgumentException("entity context");
-        }
-        if (null == key)
-        {
-            return false;
-        }
-
-        try
-        {
-            return this.findIdByKey(context, key) != null;
-        }
-        catch (final Exception e)
-        {
-            throw new NormandraException("Unable to delete orientdb document.", e);
-        }
-    }
-
-    @Override
     public boolean exists(final EntityMeta meta, final Object key) throws NormandraException
     {
         if (null == meta)
         {
-            throw new NullArgumentException("entity metadata");
+            throw new NullArgumentException("entity meta");
         }
         if (null == key)
         {
             return false;
         }
 
-        return this.exists(new SingleEntityContext(meta), key);
-    }
-
-    @Override
-    public Object get(final EntityContext context, final Object key) throws NormandraException
-    {
-        if (null == context)
-        {
-            throw new NullArgumentException("entity context");
-        }
-        if (null == key)
-        {
-            return null;
-        }
-
-        final Object existing = this.cache.get(context, key, Object.class);
-        if (existing != null)
-        {
-            return existing;
-        }
-
         try
         {
-            final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
-            final OIdentifiable rid = this.findIdByKey(context, key);
-            final ODocument document = this.findDocument(rid);
-            if (document != null)
-            {
-                data.putAll(OrientUtils.unpackValues(context, document));
-            }
-
-            final EntityMeta meta = context.findEntity(data);
-            if (null == meta)
-            {
-                return null;
-            }
-
-            final EntityBuilder builder = new EntityBuilder(this, new OrientDataFactory(this));
-            return builder.build(context, data);
+            return this.findIdByKey(meta, key) != null;
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to get orientdb document by key [" + key + "].", e);
+            throw new NormandraException("Unable to delete orientdb document.", e);
         }
     }
 
@@ -564,13 +500,45 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         {
             throw new NullArgumentException("entity meta");
         }
-        return this.get(new SingleEntityContext(meta), key);
+        if (null == key)
+        {
+            return null;
+        }
+
+        final Object existing = this.cache.get(meta, key, Object.class);
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        try
+        {
+            final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
+            final OIdentifiable rid = this.findIdByKey(meta, key);
+            final ODocument document = this.findDocument(rid);
+            if (document != null)
+            {
+                data.putAll(OrientUtils.unpackValues(meta, document));
+            }
+            if (meta.validate(data))
+            {
+                final EntityBuilder builder = new EntityBuilder(this, new OrientDataFactory(this));
+                return builder.build(meta, data);
+            }
+        }
+        catch (final Exception e)
+        {
+            throw new NormandraException("Unable to get orientdb document by key [" + key + "].", e);
+        }
+
+        // not found
+        return null;
     }
 
     @Override
-    public List<Object> get(final EntityContext context, final Object... keys) throws NormandraException
+    public List<Object> get(final EntityMeta meta, final Object... keys) throws NormandraException
     {
-        if (null == context)
+        if (null == meta)
         {
             throw new NullArgumentException("entity meta");
         }
@@ -579,42 +547,33 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             return Collections.emptyList();
         }
 
-        // query context
+        // query meta
         final Set<Object> keyset = new HashSet<>(Arrays.asList(keys));
-        final Map<Object, Object> cached = this.cache.find(context, Arrays.asList(keys), Object.class);
+        final Map<Object, Object> cached = this.cache.find(meta, Arrays.asList(keys), Object.class);
         keyset.removeAll(cached.keySet());
         if (keyset.isEmpty())
         {
             return Collections.unmodifiableList(new ArrayList<>(cached.values()));
         }
 
-        // query ids for each entity context
+        // query ids for each entity meta
         final Map<Object, Map<ColumnMeta, Object>> entityData = new HashMap<>();
-        for (final OIdentifiable rid : this.findIdByKeys(context, keyset))
+        for (final OIdentifiable rid : this.findIdByKeys(meta, keyset))
         {
             final ODocument document = this.findDocument(rid);
             if (document != null)
             {
-                final Map<ColumnMeta, Object> data = OrientUtils.unpackValues(context, document);
-                final EntityMeta entity = context.findEntity(data);
-                if (entity != null)
+                final Map<ColumnMeta, Object> data = OrientUtils.unpackValues(meta, document);
+                final Object key = meta.getId().toKey(data);
+                if (key != null)
                 {
-                    final Map<String, Object> keymap = new LinkedHashMap<>();
-                    for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
+                    Map<ColumnMeta, Object> datamap = entityData.get(key);
+                    if (null == datamap)
                     {
-                        keymap.put(entry.getKey().getName(), entry.getValue());
+                        datamap = new LinkedHashMap<>();
+                        entityData.put(key, datamap);
                     }
-                    final Object key = entity.getId().toKey(keymap);
-                    if (key != null)
-                    {
-                        Map<ColumnMeta, Object> datamap = entityData.get(key);
-                        if (null == datamap)
-                        {
-                            datamap = new LinkedHashMap<>();
-                            entityData.put(key, datamap);
-                        }
-                        datamap.putAll(data);
-                    }
+                    datamap.putAll(data);
                 }
             }
         }
@@ -624,22 +583,19 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         for (final Map.Entry<Object, Map<ColumnMeta, Object>> entry : entityData.entrySet())
         {
             final Map<ColumnMeta, Object> data = entry.getValue();
-            final EntityBuilder builder = new EntityBuilder(this, new OrientDataFactory(this));
-            final Object instance = builder.build(context, data);
-            if (instance != null)
+            if (meta.validate(data))
             {
-                final Object key = context.findEntity(data);
-                this.cache.put(context, key, instance);
-                result.add(instance);
+                final EntityBuilder builder = new EntityBuilder(this, new OrientDataFactory(this));
+                final Object instance = builder.build(meta, data);
+                if (instance != null)
+                {
+                    final Object key = meta.getId().fromData(data);
+                    this.cache.put(meta, key, instance);
+                    result.add(instance);
+                }
             }
         }
         return Collections.unmodifiableList(result);
-    }
-
-    @Override
-    public List<Object> get(final EntityMeta meta, final Object... keys) throws NormandraException
-    {
-        return this.get(new SingleEntityContext(meta), keys);
     }
 
     protected final ODatabaseDocumentTx getDatabase()
@@ -673,16 +629,14 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         return document;
     }
 
-    public OIdentifiable findIdByMap(final TableMeta table, final Map<String, Object> keys)
+    public OIdentifiable findIdByMap(final EntityMeta table, final Map<ColumnMeta, Object> keys)
     {
         final List<ColumnMeta> keyColumns = new ArrayList<>();
         keys.keySet().stream()
-            .map(table::getColumn)
-            .filter((x) -> x != null)
             .filter(ColumnMeta::isPrimaryKey)
             .forEach(keyColumns::add);
         final List<Object> parameters = keyColumns.stream()
-            .map(column -> OrientUtils.packValue(column, keys.get(column.getName())))
+            .map(column -> OrientUtils.packValue(column, keys.get(column)))
             .collect(Collectors.toList());
 
         if (parameters.isEmpty())
@@ -693,7 +647,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         if (parameters.size() == 1)
         {
             final String indexName = OrientUtils.keyIndex(table);
-            final String schemaName = table.getName();
+            final String schemaName = table.getTable();
             final OIndex keyIdx = this.database.getMetadata().getIndexManager().getClassIndex(schemaName, indexName);
             if (keyIdx != null)
             {
@@ -739,9 +693,9 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         return null;
     }
 
-    public final Collection<OIdentifiable> findIdByKeys(final EntityContext context, final Set<Object> keys)
+    public final Collection<OIdentifiable> findIdByKeys(final EntityMeta meta, final Set<Object> keys)
     {
-        if (null == context || null == keys || keys.isEmpty())
+        if (null == meta || null == keys || keys.isEmpty())
         {
             return Collections.emptyList();
         }
@@ -749,7 +703,7 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         final Collection<OIdentifiable> docs = new ArrayList<>(keys.size());
         for (final Object key : keys)
         {
-            final OIdentifiable doc = this.findIdByKey(context, key);
+            final OIdentifiable doc = this.findIdByKey(meta, key);
             if (doc != null)
             {
                 docs.add(doc);
@@ -758,9 +712,9 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         return Collections.unmodifiableCollection(docs);
     }
 
-    public final OIdentifiable findIdByKey(final EntityContext context, final Object key)
+    public final OIdentifiable findIdByKey(final EntityMeta meta, final Object key)
     {
-        if (null == context || null == key)
+        if (null == meta || null == key)
         {
             return null;
         }
@@ -770,15 +724,15 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
             return fixIdentifiable((OIdentifiable) key);
         }
 
-        for (final TableMeta table : context.getPrimaryTables())
+        final OIdentifiable doc = this.findIdByMap(meta, meta.getId().fromKey(key));
+        if (doc != null)
         {
-            final OIdentifiable doc = this.findIdByMap(table, context.getId().fromKey(key));
-            if (doc != null)
-            {
-                return fixIdentifiable(doc);
-            }
+            return fixIdentifiable(doc);
         }
-        return null;
+        else
+        {
+            return null;
+        }
     }
 
     private OIdentifiable fixIdentifiable(final OIdentifiable record)
@@ -810,27 +764,26 @@ public class OrientDatabaseSession extends AbstractTransactional implements Data
         return record;
     }
 
-    final <T> T build(final EntityContext context, final ODocument document) throws NormandraException
+    final <T> T build(final EntityMeta meta, final ODocument document) throws NormandraException
     {
         if (null == document)
         {
             return null;
         }
 
-        final Map<ColumnMeta, Object> datamap = OrientUtils.unpackValues(context, document);
+        final Map<ColumnMeta, Object> datamap = OrientUtils.unpackValues(meta, document);
         if (null == datamap || datamap.isEmpty())
         {
             return null;
         }
 
         final OrientDataFactory factory = new OrientDataFactory(this);
-        final T element = (T) new EntityBuilder(this, factory).build(context, datamap);
+        final T element = (T) new EntityBuilder(this, factory).build(meta, datamap);
         if (null == element)
         {
             return null;
         }
-        final Object key = context.getId().fromEntity(element);
-        final EntityMeta meta = context.findEntity(datamap);
+        final Object key = meta.getId().fromEntity(element);
         this.cache.put(meta, key, element);
         return element;
     }

@@ -200,14 +200,14 @@
 package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.util.ArraySet;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * a set of entity meta instances
@@ -224,7 +224,10 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         }
         for (final EntityMeta entity : metas)
         {
-            this.classMap.put(entity.getType(), entity);
+            for (final Class<?> clazz : entity.getTypes())
+            {
+                this.classMap.put(clazz, entity);
+            }
         }
     }
 
@@ -235,21 +238,25 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         {
             return null;
         }
+
         final EntityMeta existing = this.classMap.get(clazz);
         if (existing != null)
         {
             return existing;
         }
-        final List<EntityMeta> list = this.findMeta(clazz);
+
+        final Collection<EntityMeta> list = this.findMeta(clazz);
         if (list.isEmpty())
         {
             return null;
         }
+
         if (list.size() != 1)
         {
-            throw new IllegalArgumentException("Found multiple entities for [" + clazz + "].");
+            throw new IllegalArgumentException("Multiple entities available for [" + clazz + "].");
         }
-        return list.get(0);
+
+        return list.iterator().next();
     }
 
     @Override
@@ -259,36 +266,46 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         {
             return null;
         }
+
         for (final EntityMeta meta : this.classMap.values())
         {
             if (labelOrType.equalsIgnoreCase(meta.getName()))
             {
                 return meta;
             }
-            for (final TableMeta table : meta)
+            else if (labelOrType.equalsIgnoreCase(meta.getTable()))
             {
-                if (!table.isJoinTable() && labelOrType.equalsIgnoreCase(table.getName()))
+                return meta;
+            }
+            else
+            {
+                for (final Class<?> clazz : meta.getTypes())
                 {
-                    return meta;
+                    if (labelOrType.equalsIgnoreCase(clazz.getSimpleName()))
+                    {
+                        return meta;
+                    }
                 }
             }
         }
+
         return null;
     }
 
-    @Override
-    public final List<EntityMeta> findMeta(final Class<?> clazz)
+    private Collection<EntityMeta> findMeta(final Class<?> clazz)
     {
         if (null == clazz)
         {
             return Collections.emptyList();
         }
+
         final EntityMeta existing = this.classMap.get(clazz);
         if (existing != null)
         {
             return Collections.singletonList(existing);
         }
-        final List<EntityMeta> list = new ArrayList<>(4);
+
+        final Set<EntityMeta> list = new ArraySet<>(4);
         for (final Map.Entry<Class, EntityMeta> entry : this.classMap.entrySet())
         {
             final Class<?> entityClass = entry.getKey();
@@ -305,28 +322,7 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         }
         else
         {
-            return Collections.unmodifiableList(list);
-        }
-    }
-
-    @Override
-    public final EntityContext findContext(final Class<?> clazz)
-    {
-        final List<EntityMeta> list = this.findMeta(clazz);
-        if (list.isEmpty())
-        {
-            return null;
-        }
-        if (list.size() == 1)
-        {
-            // simple entity
-            final EntityMeta meta = list.get(0);
-            return new SingleEntityContext(meta);
-        }
-        else
-        {
-            // inherited entity
-            return new HierarchyEntityContext(list);
+            return Collections.unmodifiableCollection(list);
         }
     }
 
@@ -349,6 +345,7 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
         {
             return false;
         }
+
         for (final Map.Entry<Class, EntityMeta> entry : this.classMap.entrySet())
         {
             if (meta == entry.getValue() || meta.compareTo(entry.getValue()) == 0)
@@ -356,6 +353,7 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
                 return true;
             }
         }
+
         return false;
     }
 

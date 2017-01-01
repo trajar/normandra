@@ -203,13 +203,12 @@ import java.util.TreeSet;
 /**
  * database meta-data
  * <p>
- * 
+ * <p>
  * Date: 9/4/13
  */
 public class DatabaseMeta implements Iterable<EntityMeta>
 {
     private final EntityMetaCollection entities;
-
 
     public DatabaseMeta(final Collection<EntityMeta> c)
     {
@@ -220,57 +219,56 @@ public class DatabaseMeta implements Iterable<EntityMeta>
         this.entities = new EntityMetaCollection(c);
     }
 
-
     public Collection<String> getTables()
     {
         final Set<String> tables = new TreeSet<>();
         for (final EntityMeta meta : this.entities)
         {
-            for (final TableMeta table : meta)
-            {
-                tables.add(table.getName());
-            }
+            tables.add(meta.getTable());
         }
         return Collections.unmodifiableCollection(tables);
     }
-
 
     public Collection<EntityMeta> getEntities()
     {
         return this.entities.list();
     }
 
-
-    public EntityMeta getEntity(final String name)
+    public EntityMeta getEntity(final String labelOrType)
     {
-        if (null == name || name.isEmpty())
+        if (null == labelOrType || labelOrType.isEmpty())
         {
             return null;
         }
         for (final EntityMeta meta : this.entities)
         {
-            if (name.equalsIgnoreCase(meta.getName()))
+            if (labelOrType.equalsIgnoreCase(meta.getName()))
             {
                 return meta;
             }
-            for (final TableMeta table : meta)
+            else if (labelOrType.equalsIgnoreCase(meta.getTable()))
             {
-                if (name.equalsIgnoreCase(table.getName()))
+                return meta;
+            }
+            else
+            {
+                for (final Class<?> clazz : meta.getTypes())
                 {
-                    return meta;
+                    if (labelOrType.equalsIgnoreCase(clazz.getSimpleName()))
+                    {
+                        return meta;
+                    }
                 }
             }
         }
         return null;
     }
 
-
     @Override
     public Iterator<EntityMeta> iterator()
     {
         return this.entities.iterator();
     }
-
 
     @Override
     public boolean equals(Object o)
@@ -293,7 +291,6 @@ public class DatabaseMeta implements Iterable<EntityMeta>
 
         return true;
     }
-
 
     @Override
     public int hashCode()

@@ -212,7 +212,7 @@ import java.util.Map;
 /**
  * test utilities
  * <p>
- * 
+ * <p>
  * Date: 6/8/14
  */
 public class TestUtils
@@ -230,13 +230,15 @@ public class TestUtils
         list.addAll(parser.read());
         for (final EntityMeta meta : list)
         {
-            map.put(meta.getType(), meta);
+            for (final Class<?> clazz : meta.getTypes())
+            {
+                map.put(clazz, meta);
+            }
         }
         final DatabaseMeta meta = new DatabaseMeta(list);
         database.refresh(meta);
         return Collections.unmodifiableMap(map);
     }
-
 
     private TestUtils()
     {

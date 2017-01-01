@@ -203,18 +203,14 @@ import org.normandra.data.BasicColumnAccessorFactory;
 import org.normandra.data.CompositeIdAccessor;
 import org.normandra.data.NullIdAccessor;
 import org.normandra.entities.CatEntity;
-import org.normandra.entities.ClassEntity;
 import org.normandra.entities.CompositeIndexEntity;
 import org.normandra.entities.DogEntity;
 import org.normandra.entities.SimpleEntity;
-import org.normandra.entities.StudentDirectoryEntity;
-import org.normandra.entities.StudentEntity;
 import org.normandra.entities.StudentIndexEntity;
 import org.normandra.entities.ZooEntity;
 import org.normandra.meta.AnnotationParser;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 
 import java.util.Arrays;
@@ -257,10 +253,6 @@ public class CassandraSchemaTest
         final AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), SimpleEntity.class);
         final EntityMeta entity = parser.read().iterator().next();
         Assert.assertNotNull(entity);
-        for (final TableMeta table : entity.getTables())
-        {
-            Assert.assertFalse(database.hasTable(table.getName()));
-        }
 
         // construct schema
         final DatabaseMeta meta = new DatabaseMeta(Arrays.asList(entity));
@@ -325,45 +317,15 @@ public class CassandraSchemaTest
         Assert.assertTrue(database.hasColumn("composite_index", "name"));
 
         final EntityMeta student = meta.getEntity("student_index");
-        final TableMeta studentTable = student.getTables().iterator().next();
         Assert.assertNotNull(student);
-        Assert.assertEquals(2, studentTable.getPrimaryKeys().size());
+        Assert.assertEquals(2, student.getPrimaryKeys().size());
         Assert.assertNotNull(student.getId());
         Assert.assertTrue(student.getId() instanceof NullIdAccessor);
 
         final EntityMeta composite = meta.getEntity("composite_index");
-        final TableMeta compositeTable = student.getTables().iterator().next();
         Assert.assertNotNull(composite);
-        Assert.assertEquals(2, compositeTable.getPrimaryKeys().size());
+        Assert.assertEquals(2, composite.getPrimaryKeys().size());
         Assert.assertNotNull(composite.getId());
         Assert.assertTrue(composite.getId() instanceof CompositeIdAccessor);
-    }
-
-    @Test
-    public void testJoinTable() throws Exception
-    {
-        final AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), StudentEntity.class, StudentDirectoryEntity.class, ClassEntity.class);
-        final Collection<EntityMeta> list = parser.read();
-        Assert.assertFalse(list.isEmpty());
-        Assert.assertEquals(3, list.size());
-
-        final CassandraDatabase database = helper.getDatabase();
-        final DatabaseMeta meta = new DatabaseMeta(list);
-        database.refresh(meta);
-
-        Assert.assertTrue(meta.getTables().contains("classroom"));
-        Assert.assertTrue(meta.getTables().contains("student_directory_xref"));
-
-        final EntityMeta classroomMeta = meta.getEntity("classroom");
-        Assert.assertNotNull(classroomMeta);
-        Assert.assertNotNull(classroomMeta.getTable("classroom"));
-
-        final EntityMeta direcoryMeta = meta.getEntity("student_directory");
-        final TableMeta joinMeta = direcoryMeta.getTable("student_directory_xref");
-        Assert.assertTrue(joinMeta.isJoinTable());
-        Assert.assertTrue(joinMeta.hasColumn("id"));
-        Assert.assertTrue(joinMeta.hasColumn("student_id"));
-        Assert.assertEquals(2, joinMeta.getColumns().size());
-        Assert.assertEquals(2, joinMeta.getPrimaryKeys().size());
     }
 }

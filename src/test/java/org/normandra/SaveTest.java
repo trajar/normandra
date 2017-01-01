@@ -215,7 +215,6 @@ import java.util.Map;
 /**
  * unit test to test persistence
  * <p>
- * <p>
  * Date: 1/20/14
  */
 public class SaveTest extends BaseTest
@@ -276,8 +275,17 @@ public class SaveTest extends BaseTest
             final Map<Class, EntityMeta> entityMap = TestUtils.refresh(database, ParkingLotEntity.class);
 
             final DatabaseSession session = helper.getSession();
-            session.save(entityMap.get(ParkingLotEntity.class), new ParkingLotEntity("A", 100));
-            session.save(entityMap.get(ParkingLotEntity.class), new ParkingLotEntity("B", 220));
+            Exception exception = null;
+            try
+            {
+                session.save(entityMap.get(ParkingLotEntity.class), new ParkingLotEntity("A", 100));
+                session.save(entityMap.get(ParkingLotEntity.class), new ParkingLotEntity("B", 220));
+            }
+            catch (final Exception e)
+            {
+                exception = e;
+            }
+            Assert.assertNotNull(exception);
         }
     }
 
@@ -346,7 +354,7 @@ public class SaveTest extends BaseTest
             session.save(entityMap.get(CatEntity.class), cat);
             Assert.assertEquals(Long.valueOf(2), cat.getId());
 
-            ZooEntity zoo = new ZooEntity(Arrays.asList(dog, cat));
+            ZooEntity zoo = new ZooEntity(Arrays.asList(cat));
             zoo.addLocation(new ZooLocation("boston", "bean town"));
             session.save(entityMap.get(ZooEntity.class), zoo);
 
@@ -354,8 +362,8 @@ public class SaveTest extends BaseTest
 
             ZooEntity existing = (ZooEntity) session.get(entityMap.get(ZooEntity.class), zoo.getId());
             Assert.assertNotNull(existing);
-            Assert.assertTrue(zoo.getAnimals().containsAll(existing.getAnimals()));
-            Assert.assertTrue(existing.getAnimals().containsAll(zoo.getAnimals()));
+            Assert.assertTrue(zoo.getCats().containsAll(existing.getCats()));
+            Assert.assertTrue(existing.getCats().containsAll(zoo.getCats()));
         }
     }
 

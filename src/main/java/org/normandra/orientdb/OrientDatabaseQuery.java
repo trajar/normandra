@@ -197,7 +197,7 @@ package org.normandra.orientdb;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -213,16 +213,16 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
 {
     private final OrientDatabaseSession session;
 
-    private final EntityContext context;
+    private final EntityMeta meta;
 
     private final OrientNonBlockingDocumentQuery query;
 
     private T firstItem = null;
 
-    public OrientDatabaseQuery(final OrientDatabaseSession session, final EntityContext context, final OrientNonBlockingDocumentQuery query)
+    public OrientDatabaseQuery(final OrientDatabaseSession session, final EntityMeta meta, final OrientNonBlockingDocumentQuery query)
     {
         this.session = session;
-        this.context = context;
+        this.meta = meta;
         this.query = query;
     }
 
@@ -288,11 +288,11 @@ public class OrientDatabaseQuery<T> implements DatabaseQuery<T>
                 }
                 try
                 {
-                    return session.build(context, doc);
+                    return session.build(meta, doc);
                 }
                 catch (final Exception e)
                 {
-                    throw new IllegalStateException("Unable to get next entity [" + context + "] from document [" + doc.getIdentity() + "].", e);
+                    throw new IllegalStateException("Unable to get next entity [" + meta + "] from document [" + doc.getIdentity() + "].", e);
                 }
             }
         };

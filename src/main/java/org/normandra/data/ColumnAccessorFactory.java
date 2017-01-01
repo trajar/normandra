@@ -194,7 +194,7 @@
 
 package org.normandra.data;
 
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 
 import java.lang.reflect.Field;
 
@@ -207,6 +207,6 @@ import java.lang.reflect.Field;
 public interface ColumnAccessorFactory
 {
     ColumnAccessor createBasic(Field field, Class<?> clazz);
-    ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy);
-    ColumnAccessor createSingleJoin(Field field, EntityContext meta, boolean lazy);
+    ColumnAccessor createManyJoin(Field field, EntityMeta meta, boolean lazy);
+    ColumnAccessor createSingleJoin(Field field, EntityMeta meta, boolean lazy);
 }

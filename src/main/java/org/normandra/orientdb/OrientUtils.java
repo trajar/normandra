@@ -200,15 +200,11 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.DiscriminatorMeta;
 import org.normandra.meta.EmbeddedCollectionMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
-import org.normandra.meta.SingleEntityContext;
-import org.normandra.meta.TableMeta;
 import org.normandra.util.ArraySet;
 import org.normandra.util.DataUtils;
 
@@ -222,7 +218,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -249,37 +244,6 @@ public class OrientUtils
         return OrientUtils.unpackRaw(column, raw);
     }
 
-    public static Object unpackKey(final EntityContext context, final ODocument document)
-    {
-        if (null == context || null == document)
-        {
-            return null;
-        }
-
-        final Collection<ColumnMeta> keys = context.getPrimaryKeys();
-        final Set<ColumnMeta> columns = new ArraySet<>(keys.size() + 1);
-        columns.addAll(keys);
-        for (final EntityMeta meta : context.getEntities())
-        {
-            final DiscriminatorMeta descrim = meta.getDiscriminator();
-            if (descrim != null)
-            {
-                columns.add(descrim.getColumn());
-            }
-        }
-
-        final Map<String, Object> data = new LinkedHashMap<>();
-        for (final ColumnMeta column : columns)
-        {
-            final Object value = unpackValue(document, column);
-            if (value != null)
-            {
-                data.put(column.getName(), value);
-            }
-        }
-        return context.getId().toKey(data);
-    }
-
     public static Object unpackKey(final EntityMeta meta, final ODocument document)
     {
         if (null == meta || null == document)
@@ -287,46 +251,34 @@ public class OrientUtils
             return null;
         }
 
-        final Collection<ColumnMeta> keys = new SingleEntityContext(meta).getPrimaryKeys();
-        final Set<ColumnMeta> columns = new ArraySet<>(keys.size() + 1);
-        columns.addAll(keys);
-        final DiscriminatorMeta descrim = meta.getDiscriminator();
-        if (descrim != null)
-        {
-            columns.add(descrim.getColumn());
-        }
-
-        final Map<String, Object> data = new LinkedHashMap<>();
-        for (final ColumnMeta column : columns)
+        final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
+        for (final ColumnMeta column : meta.getPrimaryKeys())
         {
             final Object value = unpackValue(document, column);
             if (value != null)
             {
-                data.put(column.getName(), value);
+                data.put(column, value);
             }
         }
         return meta.getId().toKey(data);
     }
 
-    public static Map<ColumnMeta, Object> unpackValues(final EntityContext context, final ODocument document)
+    public static Map<ColumnMeta, Object> unpackValues(final EntityMeta meta, final ODocument document)
     {
-        if (null == context || null == document)
+        if (null == meta || null == document)
         {
             return Collections.emptyMap();
         }
 
         final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
-        for (final TableMeta table : context.getPrimaryTables())
+        for (final ColumnMeta column : meta.getColumns())
         {
-            for (final ColumnMeta column : table.getColumns())
+            final String name = column.getName();
+            if (document.containsField(name))
             {
-                final String name = column.getName();
-                if (document.containsField(name))
-                {
-                    final Object raw = document.field(name);
-                    final Object value = raw != null ? OrientUtils.unpackRaw(column, raw) : null;
-                    data.put(column, value);
-                }
+                final Object raw = document.field(name);
+                final Object value = raw != null ? OrientUtils.unpackRaw(column, raw) : null;
+                data.put(column, value);
             }
         }
         return Collections.unmodifiableMap(data);
@@ -662,7 +614,7 @@ public class OrientUtils
         return OType.BINARY;
     }
 
-    static String keyIndex(final TableMeta table)
+    static String keyIndex(final EntityMeta table)
     {
         if (null == table)
         {
@@ -673,28 +625,12 @@ public class OrientUtils
         if (keys.size() == 1)
         {
             final ColumnMeta key = keys.iterator().next();
-            return table.getName() + "." + key.getName();
+            return table.getTable() + "." + key.getName();
         }
         else
         {
-            return table.getName() + ".key";
+            return table.getTable() + ".key";
         }
-    }
-
-    public static String schemaName(final EntityMeta meta)
-    {
-        if (null == meta)
-        {
-            return null;
-        }
-        for (final TableMeta table : meta.getTables())
-        {
-            if (!table.isJoinTable())
-            {
-                return table.getName();
-            }
-        }
-        return meta.getName();
     }
 
     private OrientUtils()

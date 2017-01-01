@@ -197,7 +197,7 @@ package org.normandra.association;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -213,7 +213,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
 {
     protected final DataHolder data;
 
-    protected final EntityContext entity;
+    protected final EntityMeta entity;
 
     protected final EntitySession session;
 
@@ -225,7 +225,7 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
 
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
-    public LazyEntityCollection(final EntitySession session, final EntityContext meta, final DataHolder data, ElementIdentity<T> ef, final CollectionFactory<T> cf)
+    public LazyEntityCollection(final EntitySession session, final EntityMeta meta, final DataHolder data, ElementIdentity<T> ef, final CollectionFactory<T> cf)
     {
         if (null == data)
         {

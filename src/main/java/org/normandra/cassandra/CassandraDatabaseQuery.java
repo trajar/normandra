@@ -201,9 +201,7 @@ import org.apache.commons.lang.NullArgumentException;
 import org.normandra.DatabaseQuery;
 import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityBuilder;
 
 import java.util.ArrayList;
@@ -221,7 +219,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
 {
     private final CassandraDatabaseSession session;
 
-    private final EntityContext context;
+    private final EntityMeta entity;
 
     private final Statement statement;
 
@@ -229,7 +227,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
 
     private final List<Row> rows = new ArrayList<>();
 
-    public CassandraDatabaseQuery(final EntityContext context, final Statement statement, final CassandraDatabaseSession session)
+    CassandraDatabaseQuery(final EntityMeta context, final Statement statement, final CassandraDatabaseSession session)
     {
         if (null == statement)
         {
@@ -240,7 +238,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
             throw new NullArgumentException("session");
         }
         this.session = session;
-        this.context = context;
+        this.entity = context;
         this.statement = statement;
     }
 
@@ -319,7 +317,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
                 }
                 catch (final Exception e)
                 {
-                    throw new IllegalStateException("Unable to get next entity [" + context + "] from row [" + row + "].", e);
+                    throw new IllegalStateException("Unable to get next entity [" + entity + "] from row [" + row + "].", e);
                 }
             }
         };
@@ -343,21 +341,15 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
             return null;
         }
 
-        if (null == this.context)
+        if (null == this.entity)
         {
-            throw new NormandraException("No entity context specified.");
-        }
-
-        final TableMeta table = this.context.findTable(row.getColumnDefinitions().getTable(0));
-        if (null == table)
-        {
-            return null;
+            throw new NormandraException("No entity entity specified.");
         }
 
         final Map<ColumnMeta, Object> data;
         try
         {
-            data = CassandraUtils.unpackValues(table, row);
+            data = CassandraUtils.unpackValues(this.entity, row);
         }
         catch (final Exception e)
         {
@@ -368,12 +360,7 @@ public class CassandraDatabaseQuery<T> implements DatabaseQuery<T>
             return null;
         }
 
-        final EntityMeta entity = this.context.findEntity(data);
-        if (null == entity)
-        {
-            return null;
-        }
-        return (T) new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(this.context, data);
+        return (T) new EntityBuilder(this.session, new CassandraDataFactory(this.session)).build(this.entity, data);
     }
 
     private ResultSet ensurResults()

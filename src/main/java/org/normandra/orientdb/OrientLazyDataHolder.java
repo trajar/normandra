@@ -199,14 +199,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a lazy-loaded orientdb data holder based on key/index lookup
  * <p>
- *  Date: 4/5/14
+ * Date: 4/5/14
  */
 public class OrientLazyDataHolder implements DataHolder
 {
@@ -214,7 +214,7 @@ public class OrientLazyDataHolder implements DataHolder
 
     private final OrientDatabaseSession session;
 
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
     private final ColumnMeta column;
 
@@ -222,15 +222,13 @@ public class OrientLazyDataHolder implements DataHolder
 
     private ODocument document;
 
-
-    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityContext meta, final ColumnMeta column, final Object key)
+    public OrientLazyDataHolder(final OrientDatabaseSession session, final EntityMeta meta, final ColumnMeta column, final Object key)
     {
         this.session = session;
         this.entity = meta;
         this.column = column;
         this.key = key;
     }
-
 
     @Override
     public boolean isEmpty()
@@ -244,7 +242,6 @@ public class OrientLazyDataHolder implements DataHolder
             throw new IllegalStateException("Unable to query lazy loaded results from [" + this.entity + "] column [" + this.column + "].", e);
         }
     }
-
 
     @Override
     public Object get() throws NormandraException
@@ -263,7 +260,6 @@ public class OrientLazyDataHolder implements DataHolder
             throw new NormandraException("Unable to toEntity lazy loaded results for column [" + this.column + "] on entity [" + this.entity + "].", e);
         }
     }
-
 
     private ODocument ensureResults() throws NormandraException
     {

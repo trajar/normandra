@@ -198,8 +198,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
-import org.normandra.meta.EntityContext;
-import org.normandra.meta.TableMeta;
+import org.normandra.meta.EntityMeta;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -218,9 +217,7 @@ public class OrientLazyQueryHolder implements DataHolder
 
     private final OrientDatabaseSession session;
 
-    private final EntityContext entity;
-
-    private final TableMeta table;
+    private final EntityMeta entity;
 
     private final boolean collection;
 
@@ -232,11 +229,10 @@ public class OrientLazyQueryHolder implements DataHolder
 
     private final List<ODocument> documents = new ArrayList<>();
 
-    public OrientLazyQueryHolder(final OrientDatabaseSession session, final EntityContext meta, final TableMeta table, final boolean collection, final String query, final List<Object> params, final OrientDocumentHandler handler)
+    public OrientLazyQueryHolder(final OrientDatabaseSession session, final EntityMeta meta, final boolean collection, final String query, final List<Object> params, final OrientDocumentHandler handler)
     {
         this.session = session;
         this.entity = meta;
-        this.table = table;
         this.collection = collection;
         this.query = query;
         this.parameters = new ArrayList<>(params);
@@ -252,7 +248,7 @@ public class OrientLazyQueryHolder implements DataHolder
         }
         catch (final Exception e)
         {
-            throw new IllegalStateException("Unable to query lazy loaded results from [" + this.entity + "] table [" + this.table + "].", e);
+            throw new IllegalStateException("Unable to query lazy loaded results from [" + this.entity + "].", e);
         }
     }
 
@@ -286,7 +282,7 @@ public class OrientLazyQueryHolder implements DataHolder
         }
         catch (final Exception e)
         {
-            throw new NormandraException("Unable to toEntity lazy loaded results for table [" + this.table + "] on entity [" + this.entity + "].", e);
+            throw new NormandraException("Unable to toEntity lazy loaded results for entity [" + this.entity + "].", e);
         }
     }
 

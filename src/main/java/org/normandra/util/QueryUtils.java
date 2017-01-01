@@ -195,12 +195,8 @@
 package org.normandra.util;
 
 import org.normandra.NormandraException;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -212,7 +208,7 @@ import java.util.regex.Pattern;
  */
 public class QueryUtils
 {
-    public static String prepare(final EntityContext entity, final String query) throws NormandraException
+    public static String prepare(final EntityMeta entity, final String query) throws NormandraException
     {
         if (null == query || query.isEmpty())
         {
@@ -224,34 +220,21 @@ public class QueryUtils
         return result;
     }
 
-    private static String replaceEntityNames(final EntityContext entity, final String query) throws NormandraException
+    private static String replaceEntityNames(final EntityMeta meta, final String query) throws NormandraException
     {
-        if (null == entity)
+        if (null == meta)
         {
             return query;
         }
 
         String result = query;
-        for (final EntityMeta meta : entity.getEntities())
+        for (final Class<?> clazz : meta.getTypes())
         {
-            final List<String> tables = new ArrayList<>(2);
-            for (final TableMeta table : meta)
-            {
-                if (!table.isJoinTable())
-                {
-                    tables.add(table.getName());
-                }
-            }
-            if (tables.size() > 1)
-            {
-                throw new NormandraException("CQL3 queries only support a table table.");
-            }
-            final String table = tables.get(0);
-            result = result.replace(meta.getName(), table);
-            Class<?> parent = meta.getType().getSuperclass();
+            result = result.replace(clazz.getSimpleName(), meta.getTable());
+            Class<?> parent = clazz.getSuperclass();
             while (parent != null && !Object.class.equals(parent))
             {
-                result = result.replace(parent.getSimpleName(), table);
+                result = result.replace(parent.getSimpleName(), meta.getTable());
                 parent = parent.getSuperclass();
             }
         }

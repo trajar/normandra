@@ -194,7 +194,6 @@
 
 package org.normandra;
 
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 
 import java.util.Map;
@@ -230,7 +229,7 @@ public interface DatabaseSession extends EntitySession, Transactional
     /**
      * query database using string with mapped parameters
      */
-    DatabaseQuery executeQuery(EntityContext meta, String query, Map<String, Object> parameters) throws NormandraException;
+    DatabaseQuery executeQuery(EntityMeta meta, String query, Map<String, Object> parameters) throws NormandraException;
 
     /**
      * execute scalar query

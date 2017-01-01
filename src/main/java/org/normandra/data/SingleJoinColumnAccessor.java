@@ -198,7 +198,6 @@ import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.association.AssociationUtils;
 import org.normandra.association.ElementIdentity;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 
 import java.lang.reflect.Field;
@@ -213,11 +212,11 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
 {
     private final ElementIdentity factory;
 
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
     private final boolean lazy;
 
-    public SingleJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final ElementIdentity factory)
+    public SingleJoinColumnAccessor(final Field field, final EntityMeta meta, final boolean lazy, final ElementIdentity factory)
     {
         super(field);
         this.entity = meta;
@@ -302,12 +301,7 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
                 final Object associated;
                 if (this.lazy)
                 {
-                    if (this.entity.getEntities().size() > 1)
-                    {
-                        throw new IllegalStateException("Proxy instances for inherited entities not currently supported.");
-                    }
-                    final EntityMeta meta = this.entity.getEntities().iterator().next();
-                    associated = AssociationUtils.createProxy(meta, key, session, this.factory);
+                    associated = AssociationUtils.createProxy(this.entity, key, session, this.factory);
                 }
                 else
                 {

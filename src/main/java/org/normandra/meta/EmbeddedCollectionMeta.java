@@ -199,7 +199,6 @@ import org.apache.commons.lang.NullArgumentException;
 /**
  * collection column meta-data
  * <p>
- * <p>
  * Date: 9/1/13
  */
 public class EmbeddedCollectionMeta extends ColumnMeta

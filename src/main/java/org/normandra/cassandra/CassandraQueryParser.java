@@ -198,7 +198,7 @@ import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import org.normandra.NormandraException;
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 import org.normandra.util.QueryUtils;
 
 import java.util.Map;
@@ -216,9 +216,9 @@ public class CassandraQueryParser<T>
 {
     private final CassandraDatabaseSession session;
 
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
-    public CassandraQueryParser(final EntityContext entity, final CassandraDatabaseSession session)
+    public CassandraQueryParser(final EntityMeta entity, final CassandraDatabaseSession session)
     {
         this.entity = entity;
         this.session = session;

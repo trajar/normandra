@@ -204,9 +204,9 @@ import org.apache.commons.lang.NullArgumentException;
  */
 public class JoinColumnMeta extends ColumnMeta
 {
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
-    public JoinColumnMeta(final String name, final String property, final Class<?> clazz, final EntityContext entity, final boolean primaryKey)
+    public JoinColumnMeta(final String name, final String property, final Class<?> clazz, final EntityMeta entity, final boolean primaryKey)
     {
         super(name, property, clazz, primaryKey, false, false);
         if (null == entity)
@@ -216,7 +216,7 @@ public class JoinColumnMeta extends ColumnMeta
         this.entity = entity;
     }
 
-    public EntityContext getEntity()
+    public EntityMeta getEntity()
     {
         return this.entity;
     }

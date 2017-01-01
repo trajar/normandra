@@ -200,10 +200,7 @@ import com.datastax.driver.core.querybuilder.Select;
 import org.normandra.NormandraException;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.DiscriminatorMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -224,21 +221,18 @@ public class CassandraLazyKeyHolder implements DataHolder
 
     private final CassandraDatabaseSession session;
 
-    private final EntityContext entity;
-
-    private final TableMeta table;
+    private final EntityMeta entity;
 
     private final boolean collection;
 
-    private final Map<String, Object> whereValues;
+    private final Map<ColumnMeta, Object> whereValues;
 
     private final List<Row> rows = new ArrayList<>();
 
-    public CassandraLazyKeyHolder(final CassandraDatabaseSession session, final EntityContext meta, final TableMeta table, final boolean collection, final Map<String, Object> keys)
+    CassandraLazyKeyHolder(final CassandraDatabaseSession session, final EntityMeta meta, final boolean collection, final Map<ColumnMeta, Object> keys)
     {
         this.session = session;
         this.entity = meta;
-        this.table = table;
         this.collection = collection;
         this.whereValues = new LinkedHashMap<>(keys);
     }
@@ -252,7 +246,7 @@ public class CassandraLazyKeyHolder implements DataHolder
         }
         catch (final Exception e)
         {
-            throw new IllegalStateException("Unable to query lazy loaded results from table [" + this.table + "].", e);
+            throw new IllegalStateException("Unable to query lazy loaded results from [" + this.entity + "].", e);
         }
     }
 
@@ -297,33 +291,25 @@ public class CassandraLazyKeyHolder implements DataHolder
             return this.rows;
         }
 
-        final Collection<ColumnMeta> keys = this.table.getPrimaryKeys();
+        final Collection<ColumnMeta> keys = this.entity.getPrimaryKeys();
         final List<String> names = new ArrayList<>(keys.size() + 1);
         for (final ColumnMeta column : keys)
         {
             names.add(column.getName());
         }
-        for (final EntityMeta meta : this.entity.getEntities())
-        {
-            final DiscriminatorMeta descrim = meta.getDiscriminator();
-            if (descrim != null)
-            {
-                names.add(descrim.getColumn().getName());
-            }
-        }
         final String[] namesList = names.toArray(new String[names.size()]);
 
         final Select statement = QueryBuilder
             .select(namesList)
-            .from(this.session.getKeyspace(), this.table.getName());
+            .from(this.session.getKeyspace(), this.entity.getTable());
         boolean hasWhere = false;
-        for (final Map.Entry<String, Object> entry : this.whereValues.entrySet())
+        for (final Map.Entry<ColumnMeta, Object> entry : this.whereValues.entrySet())
         {
-            final String name = entry.getKey();
+            final ColumnMeta property = entry.getKey();
             final Object value = entry.getValue();
             if (value != null)
             {
-                statement.where(QueryBuilder.eq(name, value));
+                statement.where(QueryBuilder.eq(property.getName(), value));
                 hasWhere = true;
             }
         }

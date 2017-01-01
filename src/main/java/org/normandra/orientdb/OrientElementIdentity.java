@@ -200,9 +200,7 @@ import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.association.ElementIdentity;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -213,18 +211,9 @@ import java.util.List;
  */
 public class OrientElementIdentity<T> implements ElementIdentity<T>
 {
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
     public OrientElementIdentity(final EntityMeta entity)
-    {
-        if (null == entity)
-        {
-            throw new NullArgumentException("entity meta");
-        }
-        this.entity = new SingleEntityContext(entity);
-    }
-
-    public OrientElementIdentity(final EntityContext entity)
     {
         if (null == entity)
         {

@@ -222,7 +222,7 @@ public class NullIdAccessor implements IdAccessor
     }
 
     @Override
-    public Map<String, Object> fromKey(Object key)
+    public Map<ColumnMeta, Object> fromKey(Object key)
     {
         return Collections.emptyMap();
     }
@@ -234,7 +234,7 @@ public class NullIdAccessor implements IdAccessor
     }
 
     @Override
-    public Object toKey(Map<String, Object> map)
+    public Object toKey(Map<ColumnMeta, Object> map)
     {
         return null;
     }

@@ -201,12 +201,10 @@ import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHolder;
 import org.normandra.data.DataHolderFactory;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
-import org.normandra.meta.TableMeta;
 
 import java.util.Map;
 
@@ -227,21 +225,6 @@ public class EntityBuilder
         this.factory = factory;
     }
 
-    public Object build(final EntityContext context, final Map<ColumnMeta, Object> data) throws NormandraException
-    {
-        if (null == data || data.isEmpty())
-        {
-            return null;
-        }
-
-        final EntityMeta entity = context.findEntity(data);
-        if (null == entity)
-        {
-            return null;
-        }
-        return this.build(entity, data);
-    }
-
     public Object build(final EntityMeta meta, final Map<ColumnMeta, Object> data) throws NormandraException
     {
         if (null == meta)
@@ -257,7 +240,7 @@ public class EntityBuilder
         final Object instance;
         try
         {
-            instance = meta.getType().newInstance();
+            instance = meta.build(data);
             if (null == instance)
             {
                 return null;
@@ -278,36 +261,33 @@ public class EntityBuilder
         {
             return null;
         }
-        for (final TableMeta table : meta.getTables())
+        for (final ColumnMeta column : meta)
         {
-            for (final ColumnMeta column : table)
+            if (!data.containsKey(column))
             {
-                if (!data.containsKey(column))
+                final ColumnAccessor accessor = meta.getAccessor(column);
+                if (accessor != null && !accessor.isLoaded(instance))
                 {
-                    final ColumnAccessor accessor = meta.getAccessor(column);
-                    if (accessor != null && !accessor.isLoaded(instance))
+                    DataHolder lazy = null;
+                    if (column instanceof JoinColumnMeta)
                     {
-                        DataHolder lazy = null;
-                        if (column instanceof JoinColumnMeta)
-                        {
-                            lazy = this.factory.createJoinColumn(meta, table, (JoinColumnMeta) column, key);
-                        }
-                        else if (column instanceof JoinCollectionMeta)
-                        {
-                            lazy = this.factory.createJoinCollection(meta, table, (JoinCollectionMeta) column, key);
-                        }
-                        else if (column instanceof MappedColumnMeta)
-                        {
-                            lazy = this.factory.createMappedColumn(meta, (MappedColumnMeta) column, key);
-                        }
-                        else if (!column.isEmbedded() && !data.containsKey(column))
-                        {
-                            lazy = this.factory.createLazy(meta, table, column, key);
-                        }
-                        if (lazy != null)
-                        {
-                            accessor.setValue(instance, lazy, this.session);
-                        }
+                        lazy = this.factory.createJoinColumn(meta, (JoinColumnMeta) column, key);
+                    }
+                    else if (column instanceof JoinCollectionMeta)
+                    {
+                        lazy = this.factory.createJoinCollection(meta, (JoinCollectionMeta) column, key);
+                    }
+                    else if (column instanceof MappedColumnMeta)
+                    {
+                        lazy = this.factory.createMappedColumn(meta, (MappedColumnMeta) column, key);
+                    }
+                    else if (!column.isEmbedded() && !data.containsKey(column))
+                    {
+                        lazy = this.factory.createLazy(meta, column, key);
+                    }
+                    if (lazy != null)
+                    {
+                        accessor.setValue(instance, lazy, this.session);
                     }
                 }
             }

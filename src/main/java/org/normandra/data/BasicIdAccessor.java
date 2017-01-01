@@ -205,13 +205,12 @@ import java.util.Map;
 /**
  * a simple id accessor based on a single primary key
  * <p>
- * 
+ * <p>
  * Date: 2/15/14
  */
 public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
 {
     private final ColumnMeta primary;
-
 
     public BasicIdAccessor(final Field field, final ColumnMeta key)
     {
@@ -222,7 +221,6 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
         }
         this.primary = key;
     }
-
 
     @Override
     public Object fromEntity(final Object entity)
@@ -241,19 +239,17 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
         }
     }
 
-
     @Override
-    public Map<String, Object> fromKey(final Object key)
+    public Map<ColumnMeta, Object> fromKey(final Object key)
     {
         if (null == key)
         {
             return Collections.emptyMap();
         }
-        final Map<String, Object> map = new HashMap<>(1);
-        map.put(this.primary.getName(), key);
+        final Map<ColumnMeta, Object> map = new HashMap<>(1);
+        map.put(this.primary, key);
         return Collections.unmodifiableMap(map);
     }
-
 
     @Override
     public Object fromData(final Map<ColumnMeta, Object> data)
@@ -265,17 +261,15 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
         return data.get(this.primary);
     }
 
-
     @Override
-    public Object toKey(final Map<String, Object> map)
+    public Object toKey(final Map<ColumnMeta, Object> map)
     {
         if (null == map || map.isEmpty())
         {
             return null;
         }
-        return map.get(this.primary.getName());
+        return map.get(this.primary);
     }
-
 
     @Override
     public boolean equals(Object o)
@@ -302,7 +296,6 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
 
         return true;
     }
-
 
     @Override
     public int hashCode()

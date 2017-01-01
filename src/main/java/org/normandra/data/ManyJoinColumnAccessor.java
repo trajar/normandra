@@ -200,7 +200,7 @@ import org.normandra.association.ElementIdentity;
 import org.normandra.association.LazyEntityList;
 import org.normandra.association.LazyEntitySet;
 import org.normandra.association.LazyLoadedCollection;
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 import org.normandra.util.ArraySet;
 
 import java.lang.reflect.Field;
@@ -213,19 +213,18 @@ import java.util.Set;
 /**
  * a one-to-many or many-to-many collection accessor
  * <p>
- * 
+ * <p>
  * Date: 3/20/14
  */
 public class ManyJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
 {
     private final ElementIdentity factory;
 
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
     private final boolean lazy;
 
-
-    public ManyJoinColumnAccessor(final Field field, final EntityContext meta, final boolean lazy, final ElementIdentity factory)
+    public ManyJoinColumnAccessor(final Field field, final EntityMeta meta, final boolean lazy, final ElementIdentity factory)
     {
         super(field);
         this.factory = factory;
@@ -233,18 +232,15 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
         this.lazy = lazy;
     }
 
-
-    public EntityContext getEntity()
+    public EntityMeta getEntity()
     {
         return entity;
     }
-
 
     public boolean isLazy()
     {
         return lazy;
     }
-
 
     @Override
     public boolean isLoaded(final Object entity) throws NormandraException
@@ -279,7 +275,6 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
         }
     }
 
-
     protected final Collection<?> getCollection(final Object entity) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException
     {
         final Object obj = this.get(entity);
@@ -297,7 +292,6 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
         }
     }
 
-
     @Override
     public boolean isEmpty(final Object entity) throws NormandraException
     {
@@ -310,7 +304,6 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
             throw new NormandraException("Unable to query join-column collection.", e);
         }
     }
-
 
     @Override
     public Collection getValue(final Object entity, EntitySession session) throws NormandraException
@@ -345,7 +338,6 @@ public class ManyJoinColumnAccessor extends FieldColumnAccessor implements Colum
             throw new NormandraException("Unable to get join-column collection.", e);
         }
     }
-
 
     @Override
     public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException

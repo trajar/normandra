@@ -196,7 +196,7 @@ package org.normandra.data;
 
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -207,7 +207,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * a lazy data holder that queries entities by id
  * <p>
- * 
+ * <p>
  * Date: 4/25/15
  */
 public class FindByIdDataHolder implements DataHolder
@@ -216,20 +216,18 @@ public class FindByIdDataHolder implements DataHolder
 
     private final EntitySession session;
 
-    private final EntityContext entity;
+    private final EntityMeta entity;
 
     private final List<?> keys;
 
     private List<?> items;
 
-
-    public FindByIdDataHolder(final EntitySession session, final EntityContext entity, final Collection<?> keys)
+    public FindByIdDataHolder(final EntitySession session, final EntityMeta entity, final Collection<?> keys)
     {
         this.session = session;
         this.entity = entity;
         this.keys = new ArrayList<>(keys);
     }
-
 
     @Override
     public boolean isEmpty()
@@ -244,13 +242,11 @@ public class FindByIdDataHolder implements DataHolder
         }
     }
 
-
     @Override
     public Collection<?> get() throws NormandraException
     {
         return this.ensureResults();
     }
-
 
     private Collection<?> ensureResults() throws NormandraException
     {

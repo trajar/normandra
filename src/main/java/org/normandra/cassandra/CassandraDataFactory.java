@@ -198,15 +198,12 @@ import org.normandra.data.BasicDataHolder;
 import org.normandra.data.DataHolder;
 import org.normandra.data.DataHolderFactory;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.JoinCollectionMeta;
 import org.normandra.meta.JoinColumnMeta;
 import org.normandra.meta.MappedColumnMeta;
-import org.normandra.meta.SingleEntityContext;
-import org.normandra.meta.TableMeta;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -231,58 +228,57 @@ public class CassandraDataFactory implements DataHolderFactory
     }
 
     @Override
-    public DataHolder createLazy(final EntityMeta entity, final TableMeta table, final ColumnMeta column, final Object key)
+    public DataHolder createLazy(final EntityMeta entity, final ColumnMeta column, final Object key)
     {
-        if (null == entity || null == table || null == column || null == key)
+        if (null == entity || null == column || null == key)
         {
             return null;
         }
-        final Map<String, Object> keymap = entity.getId().fromKey(key);
+        final Map<ColumnMeta, Object> keymap = entity.getId().fromKey(key);
         if (null == keymap || keymap.isEmpty())
         {
             return null;
         }
-        return new CassandraLazyColumnHolder(this.session, entity, table, column, keymap);
+        return new CassandraLazyColumnHolder(this.session, entity, column, keymap);
     }
 
     @Override
-    public DataHolder createJoinCollection(final EntityMeta entity, final TableMeta table, final JoinCollectionMeta column, final Object key)
+    public DataHolder createJoinCollection(final EntityMeta entity, final JoinCollectionMeta column, final Object key)
     {
-        if (null == entity || null == table || null == column || null == key)
+        if (null == entity || null == column || null == key)
         {
             return null;
         }
-        final Map<String, Object> keymap = entity.getId().fromKey(key);
+        final Map<ColumnMeta, Object> keymap = entity.getId().fromKey(key);
         if (null == keymap || keymap.isEmpty())
         {
             return null;
         }
-        return new CassandraLazyColumnHolder(session, entity, table, column, keymap);
+        return new CassandraLazyColumnHolder(session, entity, column, keymap);
     }
 
     @Override
-    public DataHolder createJoinColumn(final EntityMeta entity, final TableMeta table, final JoinColumnMeta column, final Object key)
+    public DataHolder createJoinColumn(final EntityMeta entity, final JoinColumnMeta column, final Object key)
     {
-        if (null == entity || null == table || null == column || null == key)
+        if (null == entity || null == column || null == key)
         {
             return null;
         }
-        final Map<String, Object> keymap = entity.getId().fromKey(key);
+        final Map<ColumnMeta, Object> keymap = entity.getId().fromKey(key);
         if (null == keymap || keymap.isEmpty())
         {
             return null;
         }
-        return new CassandraLazyKeyHolder(session, new SingleEntityContext(entity), table, column.isCollection(), keymap);
+        return new CassandraLazyKeyHolder(session, entity, column.isCollection(), keymap);
     }
 
     @Override
     public DataHolder createMappedColumn(final EntityMeta entity, final MappedColumnMeta column, final Object key)
     {
-        final EntityContext mappedEntity = column.getEntity();
-        final TableMeta mappedTable = column.getTable();
+        final EntityMeta mappedEntity = column.getEntity();
         final ColumnMeta mappedColumn = column.getColumn();
-        final Map<String, Object> datamap = new LinkedHashMap<>();
-        datamap.put(mappedColumn.getName(), key);
-        return new CassandraLazyKeyHolder(this.session, mappedEntity, mappedTable, column.isCollection(), datamap);
+        final Map<ColumnMeta, Object> datamap = new HashMap<>(1);
+        datamap.put(mappedColumn, key);
+        return new CassandraLazyKeyHolder(this.session, mappedEntity, column.isCollection(), datamap);
     }
 }

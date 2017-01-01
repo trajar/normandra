@@ -200,60 +200,243 @@ import org.normandra.data.IdAccessor;
 import org.normandra.data.NullIdAccessor;
 import org.normandra.generator.IdGenerator;
 import org.normandra.generator.UUIDGenerator;
+import org.normandra.util.ArraySet;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.UUID;
 
 /**
  * entity meta-data
  * <p>
- * <p>
  * Date: 9/1/13
  */
-public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
+public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta>
 {
     private final String name;
 
-    private final Set<TableMeta> tables = new TreeSet<>();
+    private final Set<Class<?>> types;
 
-    private final Class<?> type;
+    private String table;
 
-    private String inherited;
-
-    private DiscriminatorMeta discriminator;
+    private final Collection<ColumnMeta> columns = new ArraySet<>();
 
     private final List<IndexMeta> indexed = new ArrayList<>();
 
-    private final Map<ColumnMeta, ColumnAccessor> accessors = new TreeMap<>();
+    private final Map<Class<?>, DiscriminatorMeta> discriminators = new HashMap<>();
 
-    private final Map<ColumnMeta, IdGenerator> generators = new TreeMap<>();
+    private final Map<ColumnMeta, ColumnAccessor> accessors = new HashMap<>();
+
+    private final Map<ColumnMeta, IdGenerator> generators = new HashMap<>();
 
     private IdAccessor id = NullIdAccessor.getInstance();
 
-    public EntityMeta(final String name, final Class<?> clazz)
+    public EntityMeta(final String name, final String table, final Collection<Class> types)
     {
         if (null == name || name.isEmpty())
         {
             throw new IllegalArgumentException("Name cannot be empty/null.");
         }
-        if (null == clazz)
+        if (null == types || types.isEmpty())
         {
-            throw new NullArgumentException("class");
+            throw new IllegalArgumentException("Types cannot be empty/null.");
         }
         this.name = name;
-        this.type = clazz;
+        this.table = table;
+        this.types = new HashSet<>(types.size());
+        types.forEach(this.types::add);
     }
 
-    public DiscriminatorMeta getDiscriminator()
+    public Map<ColumnMeta, Object> filter(final Map<ColumnMeta, Object> data, final Object instance)
     {
-        return this.discriminator;
+        if (null == data || data.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+
+        // check discriminator
+        final Map<ColumnMeta, Object> filtered = new HashMap<>(data.size());
+        if (!this.discriminators.isEmpty())
+        {
+            DiscriminatorMeta discriminator = null;
+            for (final Map.Entry<Class<?>, DiscriminatorMeta> entry : this.discriminators.entrySet())
+            {
+                if (entry.getKey().isInstance(instance))
+                {
+                    discriminator = entry.getValue();
+                    break;
+                }
+            }
+            if (null == discriminator)
+            {
+                return Collections.emptyMap();
+            }
+            filtered.put(discriminator.getColumn(), discriminator.getValue());
+        }
+
+        // remove columns not associated with this entity
+        for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
+        {
+            if (this.hasColumn(entry.getKey()))
+            {
+                filtered.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return filtered;
+    }
+
+    public boolean validate(final Map<ColumnMeta, Object> data)
+    {
+        if (null == data || data.isEmpty())
+        {
+            return false;
+        }
+
+        for (final ColumnMeta key : this.getPrimaryKeys())
+        {
+            if (null == data.get(key))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public Object build(final Map<ColumnMeta, Object> data) throws IllegalAccessException, InstantiationException
+    {
+        if (!this.validate(data))
+        {
+            return null;
+        }
+
+        final Class<?> clazz = this.getType(data);
+        if (null == clazz)
+        {
+            return null;
+        }
+
+        return clazz.newInstance();
+    }
+
+    public Class getType(final Map<ColumnMeta, Object> data)
+    {
+        if (null == data || data.isEmpty())
+        {
+            return null;
+        }
+
+        if (this.types.isEmpty())
+        {
+            return null;
+        }
+
+        if (this.discriminators.isEmpty() || this.types.size() == 1)
+        {
+            // simple class
+            return this.types.iterator().next();
+        }
+
+        for (final Map.Entry<Class<?>, DiscriminatorMeta> entry : this.discriminators.entrySet())
+        {
+            // inherited or complex type
+            final Object discriminatorValue = entry.getValue().getValue();
+            final Object dataValue = data.get(entry.getValue().getColumn());
+            if (dataValue != null && dataValue.equals(discriminatorValue))
+            {
+                return entry.getKey();
+            }
+        }
+
+        return null;
+    }
+
+    public Set<Class<?>> getTypes()
+    {
+        return Collections.unmodifiableSet(this.types);
+    }
+
+    public Collection<ColumnMeta> getLazyLoaded()
+    {
+        final List<ColumnMeta> list = new ArrayList<>();
+        for (final ColumnMeta column : this.getColumns())
+        {
+            if (column.isLazyLoaded())
+            {
+                list.add(column);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+    public Collection<ColumnMeta> getEagerLoaded()
+    {
+        final List<ColumnMeta> list = new ArrayList<>();
+        for (final ColumnMeta column : this.getColumns())
+        {
+            if (!column.isLazyLoaded())
+            {
+                list.add(column);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+    public ColumnMeta getPrimaryKey()
+    {
+        for (final ColumnMeta column : this.getColumns())
+        {
+            if (column.isPrimaryKey())
+            {
+                return column;
+            }
+        }
+        return null;
+    }
+
+    public Set<ColumnMeta> getPrimaryKeys()
+    {
+        final Set<ColumnMeta> keys = new ArraySet<>(4);
+        for (final ColumnMeta column : this.getColumns())
+        {
+            if (column.isPrimaryKey())
+            {
+                keys.add(column);
+            }
+        }
+        return Collections.unmodifiableSet(keys);
+    }
+
+    public boolean hasColumn(final ColumnMeta column)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+        return this.columns.contains(column);
+    }
+
+    public Collection<ColumnMeta> getColumns()
+    {
+        return Collections.unmodifiableCollection(this.columns);
+    }
+
+    public int getNumColumns()
+    {
+        return this.columns.size();
+    }
+
+    public boolean hasColumn(final String nameOrProperty)
+    {
+        return this.findColumn(nameOrProperty) != null;
     }
 
     public ColumnMeta findColumn(final String nameOrProperty)
@@ -262,10 +445,13 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         {
             return null;
         }
-        for (final TableMeta table : this.tables)
+        for (final ColumnMeta meta : this.columns)
         {
-            final ColumnMeta meta = table.getColumn(nameOrProperty);
-            if (meta != null)
+            if (nameOrProperty.equalsIgnoreCase(meta.getName()))
+            {
+                return meta;
+            }
+            if (nameOrProperty.equalsIgnoreCase(meta.getProperty()))
             {
                 return meta;
             }
@@ -273,22 +459,31 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         return null;
     }
 
-    public Set<TableMeta> getTables()
+    boolean addColumn(final ColumnMeta column)
     {
-        return Collections.unmodifiableSet(this.tables);
+        if (null == column)
+        {
+            return false;
+        }
+        return this.columns.add(column);
     }
 
-    public String getInherited()
+    boolean removeColumn(final ColumnMeta column)
     {
-        return this.inherited;
+        if (null == column)
+        {
+            return false;
+        }
+        return this.columns.remove(column);
     }
 
-    public void setInherited(final String inherited)
+    @Override
+    public Iterator<ColumnMeta> iterator()
     {
-        this.inherited = inherited;
+        return Collections.unmodifiableCollection(this.columns).iterator();
     }
 
-    public boolean addIndexed(final IndexMeta column)
+    boolean addIndexed(final IndexMeta column)
     {
         if (null == column)
         {
@@ -297,7 +492,7 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         return this.indexed.add(column);
     }
 
-    public boolean removeIndexed(final IndexMeta column)
+    boolean removeIndexed(final IndexMeta column)
     {
         if (null == column)
         {
@@ -358,9 +553,20 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         return null;
     }
 
-    protected void setDiscriminator(DiscriminatorMeta discriminator)
+    void setDiscriminator(Class<?> clazz, DiscriminatorMeta discriminator)
     {
-        this.discriminator = discriminator;
+        if (null == clazz)
+        {
+            return;
+        }
+        if (discriminator != null)
+        {
+            this.discriminators.put(clazz, discriminator);
+        }
+        else
+        {
+            this.discriminators.remove(clazz);
+        }
     }
 
     public IdGenerator getGenerator(final ColumnMeta column)
@@ -386,7 +592,7 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         return true;
     }
 
-    public boolean setAccessor(final ColumnMeta column, final ColumnAccessor accessor)
+    boolean setAccessor(final ColumnMeta column, final ColumnAccessor accessor)
     {
         if (null == column)
         {
@@ -403,71 +609,29 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         }
     }
 
-    boolean putColumns(final TableMeta table, final Map<ColumnMeta, ColumnAccessor> map)
+    boolean putColumns(final Map<ColumnMeta, ColumnAccessor> map)
     {
         if (null == map || map.isEmpty())
         {
             return false;
         }
-        if (!this.tables.contains(table))
-        {
-            return false;
-        }
+
         for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : map.entrySet())
         {
             final ColumnMeta column = entry.getKey();
             final ColumnAccessor accessor = entry.getValue();
-            table.addColumn(column);
+            this.addColumn(column);
             if (column.isPrimaryKey() && column.getType().equals(UUID.class))
             {
                 this.setGenerator(column, UUIDGenerator.getInstance());
             }
             this.setAccessor(column, accessor);
         }
+
         return true;
     }
 
-    @Override
-    public Iterator<TableMeta> iterator()
-    {
-        return Collections.unmodifiableCollection(this.tables).iterator();
-    }
-
-    public TableMeta getTable(final String tableName)
-    {
-        if (null == tableName || tableName.isEmpty())
-        {
-            return null;
-        }
-        for (final TableMeta table : this.tables)
-        {
-            if (tableName.equalsIgnoreCase(table.getName()))
-            {
-                return table;
-            }
-        }
-        return null;
-    }
-
-    protected boolean addTable(final TableMeta tbl)
-    {
-        if (null == tbl)
-        {
-            return false;
-        }
-        return this.tables.add(tbl);
-    }
-
-    protected boolean removeTable(final TableMeta tbl)
-    {
-        if (null == tbl)
-        {
-            return false;
-        }
-        return this.tables.remove(tbl);
-    }
-
-    protected void setId(final IdAccessor id)
+    void setId(final IdAccessor id)
     {
         if (null == id)
         {
@@ -486,9 +650,14 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
         return this.name;
     }
 
-    public Class<?> getType()
+    public String getTable()
     {
-        return this.type;
+        return this.table;
+    }
+
+    void setTable(final String table)
+    {
+        this.table = table;
     }
 
     @Override
@@ -521,43 +690,23 @@ public class EntityMeta implements Iterable<TableMeta>, Comparable<EntityMeta>
 
         EntityMeta that = (EntityMeta) o;
 
-        if (discriminator != null ? !discriminator.equals(that.discriminator) : that.discriminator != null)
-        {
-            return false;
-        }
-        if (id != null ? !id.equals(that.id) : that.id != null)
-        {
-            return false;
-        }
-        if (inherited != null ? !inherited.equals(that.inherited) : that.inherited != null)
-        {
-            return false;
-        }
         if (name != null ? !name.equals(that.name) : that.name != null)
         {
             return false;
         }
-        if (tables != null ? !tables.equals(that.tables) : that.tables != null)
+        if (types != null ? !types.equals(that.types) : that.types != null)
         {
             return false;
         }
-        if (type != null ? !type.equals(that.type) : that.type != null)
-        {
-            return false;
-        }
-
-        return true;
+        return table != null ? table.equals(that.table) : that.table == null;
     }
 
     @Override
     public int hashCode()
     {
         int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (tables != null ? tables.hashCode() : 0);
-        result = 31 * result + (type != null ? type.hashCode() : 0);
-        result = 31 * result + (inherited != null ? inherited.hashCode() : 0);
-        result = 31 * result + (discriminator != null ? discriminator.hashCode() : 0);
-        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (types != null ? types.hashCode() : 0);
+        result = 31 * result + (table != null ? table.hashCode() : 0);
         return result;
     }
 }

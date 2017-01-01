@@ -199,14 +199,14 @@ import org.normandra.data.ColumnAccessor;
 import org.normandra.data.ColumnAccessorFactory;
 import org.normandra.data.ManyJoinColumnAccessor;
 import org.normandra.data.SingleJoinColumnAccessor;
-import org.normandra.meta.EntityContext;
+import org.normandra.meta.EntityMeta;
 
 import java.lang.reflect.Field;
 
 /**
  * a factory using orientdb's graph-relation properties for single/multi-joined columns
  * <p>
- * 
+ * <p>
  * Date: 9/23/14
  */
 public class OrientAccessorFactory implements ColumnAccessorFactory
@@ -217,16 +217,14 @@ public class OrientAccessorFactory implements ColumnAccessorFactory
         return new BasicColumnAccessor(field, clazz);
     }
 
-
     @Override
-    public ColumnAccessor createManyJoin(Field field, EntityContext meta, boolean lazy)
+    public ColumnAccessor createManyJoin(Field field, EntityMeta meta, boolean lazy)
     {
         return new ManyJoinColumnAccessor(field, meta, lazy, new OrientElementIdentity(meta));
     }
 
-
     @Override
-    public ColumnAccessor createSingleJoin(Field field, EntityContext meta, boolean lazy)
+    public ColumnAccessor createSingleJoin(Field field, EntityMeta meta, boolean lazy)
     {
         return new SingleJoinColumnAccessor(field, meta, lazy, new OrientElementIdentity(meta));
     }

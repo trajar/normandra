@@ -202,28 +202,20 @@ package org.normandra.meta;
  */
 public class MappedColumnMeta extends ColumnMeta
 {
-    private final EntityContext entity;
-
-    private final TableMeta table;
+    private final EntityMeta entity;
 
     private final ColumnMeta column;
 
-    public MappedColumnMeta(final EntityContext entity, final TableMeta table, final ColumnMeta column, final String name, final String property, final Class<?> clazz, final boolean lazy)
+    public MappedColumnMeta(final EntityMeta entity, final ColumnMeta column, final String name, final String property, final Class<?> clazz, final boolean lazy)
     {
         super(name, property, clazz, false, lazy, false);
         this.entity = entity;
-        this.table = table;
         this.column = column;
     }
 
-    public EntityContext getEntity()
+    public EntityMeta getEntity()
     {
         return this.entity;
-    }
-
-    public TableMeta getTable()
-    {
-        return this.table;
     }
 
     public ColumnMeta getColumn()

@@ -197,16 +197,11 @@ package org.normandra.orientdb;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.normandra.data.DataHandler;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.TableMeta;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -222,36 +217,48 @@ public class OrientDataHandler implements DataHandler
 
     private final List<ODocument> documents = new ArrayList<>();
 
-    public OrientDataHandler(OrientDatabaseSession session)
+    OrientDataHandler(OrientDatabaseSession session)
     {
         this.session = session;
     }
 
     @Override
-    public boolean save(final EntityMeta entity, final TableMeta table, final Map<ColumnMeta, Object> data)
+    public boolean save(final EntityMeta entity, final Map<ColumnMeta, Object> data)
     {
-        final Map<String, Object> keymap = new LinkedHashMap<>();
-        for (final ColumnMeta column : table.getPrimaryKeys())
+        final Map<ColumnMeta, Object> keymap = new LinkedHashMap<>();
+        for (final ColumnMeta column : entity.getPrimaryKeys())
         {
-            final String columnName = column.getName();
             final Object value = data.get(column);
             if (value != null)
             {
-                keymap.put(columnName, value);
+                keymap.put(column, value);
             }
         }
 
-        final ODocument document;
-        final OIdentifiable existing = this.session.findIdByMap(table, keymap);
+        ODocument document = null;
+        final OIdentifiable existing = this.session.findIdByMap(entity, keymap);
         if (existing != null)
         {
             document = this.session.findDocument(existing);
         }
-        else
+        else if (!keymap.isEmpty())
         {
-            final String schemaName = table.getName();
+            final String schemaName = entity.getTable();
             document = this.session.getDatabase().newInstance(schemaName);
         }
+
+        if (null == document)
+        {
+            return false;
+        }
+
+        if (data.isEmpty() || keymap.isEmpty())
+        {
+            this.documents.remove(document);
+            document.delete();
+            return true;
+        }
+
         for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet())
         {
             final ColumnMeta column = entry.getKey();
@@ -268,127 +275,14 @@ public class OrientDataHandler implements DataHandler
                 document.removeField(name);
             }
         }
-        document.save();
-        return this.documents.add(document);
-    }
 
-    @Override
-    public boolean save(final EntityMeta entity, final TableMeta table, final Map<ColumnMeta, Object> keys, final ColumnMeta column, final Collection<?> items)
-    {
-        if (items.isEmpty())
+        final ODocument saved = document.save();
+        if (null == saved)
         {
-            // clear all items with key
-            boolean updated = false;
-            for (final ODocument document : this.findMatching(table, keys))
-            {
-                document.delete();
-                updated = true;
-            }
-            return updated;
+            return false;
         }
 
-        // get existing collection values
-        final List<Object> removed = new ArrayList<>();
-        for (final ODocument document : this.findMatching(table, keys))
-        {
-            final Object item = OrientUtils.unpackValue(document, column);
-            if (item != null && !items.contains(item))
-            {
-                removed.add(item);
-            }
-        }
-
-        // delete any removed items
-        boolean updated = false;
-        final Map<ColumnMeta, Object> datamap = new LinkedHashMap<>(keys);
-        for (final Object item : removed)
-        {
-            datamap.put(column, OrientUtils.packValue(column, item));
-            for (final ODocument document : this.findMatching(table, datamap))
-            {
-                document.delete();
-                updated = true;
-            }
-        }
-
-        // build up key map
-        final Map<String, Object> keymap = new HashMap<>(keys.size());
-        for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
-        {
-            final String columnName = entry.getKey().getName();
-            final Object value = entry.getValue();
-            keymap.put(columnName, value);
-        }
-
-        // save new items
-        for (final Object item : items)
-        {
-            // setup document
-            keymap.put(column.getName(), item);
-            final ODocument document;
-            final OIdentifiable rid = this.session.findIdByMap(table, keymap);
-            if (rid != null)
-            {
-                document = this.session.findDocument(rid);
-            }
-            else
-            {
-                final String schemaName = table.getName();
-                document = this.session.getDatabase().newInstance(schemaName);
-            }
-
-            // save primary keys
-            for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
-            {
-                final ColumnMeta key = entry.getKey();
-                final Object value = entry.getValue();
-                final String name = key.getName();
-                final OType type = OrientUtils.columnType(key);
-                final Object packed = OrientUtils.packValue(key, value);
-                document.field(name, packed, type);
-            }
-
-            // save column value
-            final String name = column.getName();
-            final OType type = OrientUtils.columnType(column);
-            final Object packed = OrientUtils.packValue(column, item);
-            document.field(name, packed, type);
-            document.save();
-            updated |= this.documents.add(document);
-        }
-        return updated;
-    }
-
-    private Collection<ODocument> findMatching(final TableMeta table, final Map<ColumnMeta, Object> keys)
-    {
-        final List<Object> parameters = new ArrayList<>(keys.size());
-        final StringBuilder query = new StringBuilder()
-            .append("SELECT FROM ").append(table.getName()).append(" ")
-            .append("WHERE ");
-        for (final Map.Entry<ColumnMeta, Object> entry : keys.entrySet())
-        {
-            final ColumnMeta column = entry.getKey();
-            if (!parameters.isEmpty())
-            {
-                query.append(" AND ");
-            }
-            query.append(column.getName()).append(" = ?");
-            parameters.add(entry.getValue());
-        }
-
-        if (parameters.isEmpty())
-        {
-            return Collections.emptyList();
-        }
-
-        final List<ODocument> documents = new ArrayList<>();
-        for (final Object item : this.session.getDatabase().query(new OSQLSynchQuery(query.toString()), parameters.toArray()))
-        {
-            if (item instanceof ODocument)
-            {
-                documents.add((ODocument) item);
-            }
-        }
-        return documents;
+        this.documents.add(saved);
+        return true;
     }
 }

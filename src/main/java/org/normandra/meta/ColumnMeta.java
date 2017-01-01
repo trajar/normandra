@@ -201,7 +201,6 @@ import java.util.Collection;
 /**
  * column meta-data
  * <p>
- * <p>
  * Date: 9/1/13
  */
 public class ColumnMeta implements Comparable<ColumnMeta>

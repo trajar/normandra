@@ -210,15 +210,9 @@ import org.normandra.DatabaseQuery;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.cache.EntityCache;
-import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
-import org.normandra.data.DataHolder;
-import org.normandra.generator.IdGenerator;
 import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityContext;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.SingleEntityContext;
-import org.normandra.meta.TableMeta;
 import org.normandra.util.EntityPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -235,6 +229,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * a cassandra database session
@@ -390,7 +385,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
     }
 
     @Override
-    public boolean exists(final EntityContext meta, final Object key) throws NormandraException
+    public boolean exists(final EntityMeta meta, final Object key) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -403,20 +398,21 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
 
         try
         {
-            final Map<String, Object> columns = meta.getId().fromKey(key);
-            final List<String> namelist = new ArrayList<>(columns.keySet());
-            final TableMeta table = meta.getTables().iterator().next();
+            final Map<ColumnMeta, Object> columns = meta.getId().fromKey(key);
+            final List<String> namelist = columns.keySet().stream()
+                .map(ColumnMeta::getName)
+                .collect(Collectors.toList());
             final String[] names = namelist.toArray(new String[namelist.size()]);
             final Select statement = QueryBuilder
                 .select(names)
-                .from(this.keyspaceName, table.getName())
+                .from(this.keyspaceName, meta.getTable())
                 .limit(1);
             boolean hasWhere = false;
-            for (final Map.Entry<String, Object> entry : columns.entrySet())
+            for (final Map.Entry<ColumnMeta, Object> entry : columns.entrySet())
             {
-                final String name = entry.getKey();
+                final ColumnMeta property = entry.getKey();
                 final Object value = entry.getValue();
-                statement.where(QueryBuilder.eq(name, value));
+                statement.where(QueryBuilder.eq(property.getName(), value));
                 hasWhere = true;
             }
             if (!hasWhere)
@@ -446,13 +442,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
     }
 
     @Override
-    public boolean exists(EntityMeta meta, Object key) throws NormandraException
-    {
-        return this.exists(new SingleEntityContext(meta), key);
-    }
-
-    @Override
-    public Object get(final EntityContext meta, final Object key) throws NormandraException
+    public Object get(final EntityMeta meta, final Object key) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -463,13 +453,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
     }
 
     @Override
-    public Object get(EntityMeta meta, Object key) throws NormandraException
-    {
-        return this.get(new SingleEntityContext(meta), key);
-    }
-
-    @Override
-    public List<Object> get(final EntityContext meta, final Object... keys) throws NormandraException
+    public List<Object> get(final EntityMeta meta, final Object... keys) throws NormandraException
     {
         if (this.isClosed())
         {
@@ -477,12 +461,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         }
         final CassandraEntityQuery query = new CassandraEntityQuery(this, this.cache);
         return query.query(meta, keys);
-    }
-
-    @Override
-    public List<Object> get(EntityMeta meta, Object... keys) throws NormandraException
-    {
-        return this.get(new SingleEntityContext(meta), keys);
     }
 
     @Override
@@ -500,28 +478,25 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
         try
         {
             final List<Delete> deletes = new ArrayList<>();
-            for (final TableMeta table : meta)
+            boolean hasValue = false;
+            final Delete statement = QueryBuilder
+                .delete()
+                .all()
+                .from(this.keyspaceName, meta.getTable());
+            for (final ColumnMeta column : meta.getPrimaryKeys())
             {
-                boolean hasValue = false;
-                final Delete statement = QueryBuilder
-                    .delete()
-                    .all()
-                    .from(this.keyspaceName, table.getName());
-                for (final ColumnMeta column : table.getPrimaryKeys())
+                final String name = column.getName();
+                final ColumnAccessor accessor = meta.getAccessor(column);
+                final Object value = accessor != null ? accessor.getValue(element, this) : null;
+                if (value != null)
                 {
-                    final String name = column.getName();
-                    final ColumnAccessor accessor = meta.getAccessor(column);
-                    final Object value = accessor != null ? accessor.getValue(element, this) : null;
-                    if (value != null)
-                    {
-                        hasValue = true;
-                        statement.where(QueryBuilder.eq(name, value));
-                    }
+                    hasValue = true;
+                    statement.where(QueryBuilder.eq(name, value));
                 }
-                if (hasValue)
-                {
-                    deletes.add(statement);
-                }
+            }
+            if (hasValue)
+            {
+                deletes.add(statement);
             }
             if (deletes.isEmpty())
             {
@@ -561,7 +536,7 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
     }
 
     @Override
-    public DatabaseQuery executeQuery(final EntityContext meta, final String query, final Map<String, Object> parameters) throws NormandraException
+    public DatabaseQuery executeQuery(final EntityMeta meta, final String query, final Map<String, Object> parameters) throws NormandraException
     {
         final CassandraPreparedStatement prepared = this.preparedStatements.get(query);
         if (null == prepared)
@@ -615,22 +590,6 @@ public class CassandraDatabaseSession extends AbstractTransactional implements D
 
         try
         {
-            // generate any primary ids
-            for (final TableMeta table : meta)
-            {
-                for (final ColumnMeta column : table.getColumns())
-                {
-                    final ColumnAccessor accessor = meta.getAccessor(column);
-                    final IdGenerator generator = meta.getGenerator(column);
-                    if (generator != null && accessor != null && accessor.isEmpty(element))
-                    {
-                        final Object generated = generator.generate(this, meta);
-                        final DataHolder data = new BasicDataHolder(generated);
-                        accessor.setValue(element, data, this);
-                    }
-                }
-            }
-
             // generate insert/updateInstance statements
             final CassandraDataHandler helper = new CassandraDataHandler(this);
             new EntityPersistence(this).save(meta, element, helper);
