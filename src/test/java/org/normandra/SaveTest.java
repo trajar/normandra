@@ -221,7 +221,7 @@ public class SaveTest extends BaseTest
 {
     public SaveTest()
     {
-        super(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class, ParkingLotEntity.class));
+        super(Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class, StoreEntity.class, ParkingLotEntity.class));
     }
 
     @Test
@@ -254,6 +254,8 @@ public class SaveTest extends BaseTest
             final Address address = new Address("main st.", "nowhereville", 1235);
             session.save(entityMap.get(StoreEntity.class), new StoreEntity("Store A", address));
             session.save(entityMap.get(StoreEntity.class), new StoreEntity("Store B", null));
+
+            session.clear();
 
             StoreEntity storeA = (StoreEntity) session.get(entityMap.get(StoreEntity.class), "Store A");
             Assert.assertNotNull(storeA);

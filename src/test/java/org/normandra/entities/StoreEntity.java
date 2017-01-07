@@ -194,7 +194,7 @@
 
 package org.normandra.entities;
 
-import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -204,7 +204,7 @@ public class StoreEntity
     @Id
     public String name;
 
-    @Column
+    @Embedded
     public Address address;
 
     public StoreEntity(final String name, final Address address)

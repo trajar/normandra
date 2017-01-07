@@ -200,6 +200,7 @@ import org.normandra.data.BasicColumnAccessorFactory;
 import org.normandra.entities.CatEntity;
 import org.normandra.entities.ClassEntity;
 import org.normandra.entities.DogEntity;
+import org.normandra.entities.StoreEntity;
 import org.normandra.entities.StudentEntity;
 
 import java.util.ArrayList;
@@ -239,5 +240,16 @@ public class AnnotationParserTest
         Assert.assertEquals(Long.class, student.findColumn("class_id").getType());
         Assert.assertTrue(student.findColumn("class_id") instanceof JoinColumnMeta);
         Assert.assertEquals(entities.get(0), ((JoinColumnMeta) student.findColumn("class_id")).getEntity());
+    }
+
+    @Test
+    public void testEmbedded()
+    {
+        AnnotationParser parser = new AnnotationParser(new BasicColumnAccessorFactory(), StoreEntity.class);
+        List<EntityMeta> entities = new ArrayList<>(parser.read());
+        Assert.assertTrue(parser.isEntity(StoreEntity.class));
+        Assert.assertFalse(parser.isEntity(StudentEntity.class));
+        EntityMeta store = entities.get(0);
+        Assert.assertEquals(4, store.getColumns().size());
     }
 }

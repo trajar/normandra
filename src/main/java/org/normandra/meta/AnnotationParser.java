@@ -214,6 +214,7 @@ import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -843,8 +844,8 @@ public class AnnotationParser
             return this.configureOneToMany(entity, field, name, field.getName());
         }
 
-        // regular column
-        if (field.getAnnotation(Column.class) != null)
+        // regular or embedded column
+        if (field.getAnnotation(Column.class) != null || field.getAnnotation(Embedded.class) != null)
         {
             if (this.findAnnotations(type, Embeddable.class).isEmpty())
             {
@@ -1145,6 +1146,7 @@ public class AnnotationParser
     {
         final List<Class<? extends Annotation>> list = new ArrayList<>();
         list.add(Column.class);
+        list.add(Embedded.class);
         list.add(EmbeddedId.class);
         list.add(Id.class);
         list.add(ElementCollection.class);

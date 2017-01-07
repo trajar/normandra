@@ -466,7 +466,7 @@ public class OrientDatabase implements Database
             // drop schema
             if (hasClass(database, schemaName))
             {
-                database.command(new OCommandSQL("DELETE FROM " + schemaName)).execute();
+                database.command(new OCommandSQL("DELETE FROM " + schemaName + " UNSAFE")).execute();
             }
             if (hasIndex(database, keyIndex))
             {
