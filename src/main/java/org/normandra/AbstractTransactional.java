@@ -197,28 +197,33 @@ package org.normandra;
 /**
  * a base transactional class
  * <p>
- * 
+ * <p>
  * Date: 8/31/14
  */
-abstract public class AbstractTransactional implements Transactional
-{
+abstract public class AbstractTransactional implements Transactional {
     @Override
-    public void withTransaction(final TransactionRunnable worker) throws NormandraException
-    {
-        try (final Transaction tx = this.beginTransaction())
-        {
+    public void withTransaction(final TransactionRunnable worker) throws NormandraException {
+        try (final Transaction tx = this.beginTransaction()) {
             tx.execute(worker);
-        }
-        catch (final Exception e)
-        {
+        } catch (final Exception e) {
             throw new NormandraException("Unable to execute transaction.", e);
         }
     }
 
+    @Override
+    public <T> T withTransaction(final TransactionCallable<T> worker) throws NormandraException {
+        final Object[] tmp = new Object[1];
+        try (final Transaction tx = this.beginTransaction()) {
+            tmp[0] = tx.execute(worker);
+        } catch (final Exception e) {
+            throw new NormandraException("Unable to execute transaction.", e);
+        }
+        return (T) tmp[0];
+    }
+
 
     @Override
-    public Transaction beginTransaction() throws NormandraException
-    {
+    public Transaction beginTransaction() throws NormandraException {
         return new Transaction(this);
     }
 }

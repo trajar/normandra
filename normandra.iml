@@ -128,5 +128,7 @@
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.logging.log4j:log4j-api:2.8.2" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.logging.log4j:log4j-slf4j-impl:2.8.2" level="project" />
     <orderEntry type="library" name="Maven: org.xerial.snappy:snappy-java:1.1.2.6" level="project" />
+    <orderEntry type="library" name="R User Library" level="project" />
+    <orderEntry type="library" name="R Skeletons" level="application" />
   </component>
 </module>

@@ -195,47 +195,12 @@
 package org.normandra;
 
 /**
- * a element capable of handling unit of work operations
+ * a runnable worker within a transaction
  * <p>
- *  Date: 8/30/14
+ * 
+ * Date: 5/30/15
  */
-public interface Transactional
+public interface TransactionCallable<T>
 {
-    /**
-     * close session, release any associated resources
-     */
-    void close();
-
-    /**
-     * executes a worker within a transaction context
-     */
-    void withTransaction(TransactionRunnable worker) throws NormandraException;
-    <T> T withTransaction(TransactionCallable<T> worker) throws NormandraException;
-
-    /**
-     * start transaction or unit of work
-     *
-     * @return Returns a transaction instance, which should be closed.
-     */
-    Transaction beginTransaction() throws NormandraException;
-
-    /**
-     * @return Returns true if we have begun a unit of work (i.e. transaction).
-     */
-    boolean pendingWork();
-
-    /**
-     * being unit of work
-     */
-    void beginWork() throws NormandraException;
-
-    /**
-     * commit unit of work, executing any stored/batched operations
-     */
-    void commitWork() throws NormandraException;
-
-    /**
-     * rollback unit of work, clearing stored/batched operations
-     */
-    void rollbackWork() throws NormandraException;
+    <T> T call(Transaction tx) throws Exception;
 }

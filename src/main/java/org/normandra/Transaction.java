@@ -202,10 +202,9 @@ import org.slf4j.LoggerFactory;
 /**
  * a transaction worker
  * <p>
- *  Date: 8/30/14
+ * Date: 8/30/14
  */
-public class Transaction implements AutoCloseable
-{
+public class Transaction implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(Transaction.class);
 
     private final Transactional sesssion;
@@ -214,77 +213,75 @@ public class Transaction implements AutoCloseable
 
     private Boolean success = null;
 
-    public Transaction(final Transactional session) throws NormandraException
-    {
-        if (null == session)
-        {
+    public Transaction(final Transactional session) throws NormandraException {
+        if (null == session) {
             throw new NullArgumentException("session");
         }
         this.sesssion = session;
-        if (this.sesssion.pendingWork())
-        {
+        if (this.sesssion.pendingWork()) {
             this.ownsTransaction = false;
-        }
-        else
-        {
+        } else {
             this.ownsTransaction = true;
             this.sesssion.beginWork();
         }
     }
 
-    public void success()
-    {
-        if (Boolean.FALSE.equals(this.success))
-        {
+    public void success() {
+        if (Boolean.FALSE.equals(this.success)) {
             logger.warn("Moving transaction from 'failure' to 'success'.  Please ensure this is desired state.");
         }
         this.success = Boolean.TRUE;
     }
 
-    public void failure()
-    {
+    public void failure() {
         this.success = Boolean.FALSE;
     }
 
-    public void execute(final TransactionRunnable worker) throws NormandraException
-    {
-        if (null == worker)
-        {
+    public void execute(final TransactionRunnable worker) throws NormandraException {
+        if (null == worker) {
             return;
         }
 
-        for (int i = 1; i <= 10; i++)
-        {
-            try
-            {
+        for (int i = 1; i <= 10; i++) {
+            try {
                 worker.run(this);
                 return;
-            }
-            catch (final ONeedRetryException e)
-            {
+            } catch (final ONeedRetryException e) {
                 logger.info("Error executing unit of work, recovering from retry-exception [attempt #" + i + "].", e);
-            }
-            catch (final Exception e)
-            {
+            } catch (final Exception e) {
                 this.success = Boolean.FALSE;
                 throw new NormandraException("Unable to execute unit of work.", e);
             }
         }
     }
 
+    public Object execute(final TransactionCallable worker) throws NormandraException {
+        if (null == worker) {
+            return null;
+        }
+
+        for (int i = 1; i <= 10; i++) {
+            try {
+                return worker.call(this);
+            } catch (final ONeedRetryException e) {
+                logger.info("Error executing unit of work, recovering from retry-exception [attempt #" + i + "].", e);
+            } catch (final Exception e) {
+                this.success = Boolean.FALSE;
+                throw new NormandraException("Unable to execute unit of work.", e);
+            }
+        }
+
+        return null;
+    }
+
     @Override
-    public void close() throws Exception
-    {
-        if (!this.ownsTransaction)
-        {
+    public void close() throws Exception {
+        if (!this.ownsTransaction) {
             return;
         }
-        if (Boolean.TRUE.equals(this.success))
-        {
+        if (Boolean.TRUE.equals(this.success)) {
             this.sesssion.commitWork();
-        }
-        else
-        {
+        } else {
             this.sesssion.rollbackWork();
         }
     }

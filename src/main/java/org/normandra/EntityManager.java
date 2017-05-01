@@ -355,6 +355,11 @@ public class EntityManager implements Transactional
     }
 
     @Override
+    public <T> T withTransaction(TransactionCallable<T> worker) throws NormandraException {
+        return this.database.withTransaction(worker);
+    }
+
+    @Override
     public Transaction beginTransaction() throws NormandraException
     {
         return this.database.beginTransaction();
