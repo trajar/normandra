@@ -192,45 +192,65 @@
  *    limitations under the License.
  */
 
-package org.normandra;
+package org.normandra.property;
 
-import org.junit.After;
-import org.junit.Before;
-import org.normandra.meta.DatabaseMetaBuilder;
-import org.normandra.meta.GraphMetaBuilder;
+import org.normandra.data.DataHandler;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityMeta;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-abstract public class BaseTest {
-    protected final TestHelper helper;
+/**
+ * an in-memory property model which persists to map
+ * <p>
+ * <p>
+ * Date: 7/21/14
+ */
+public class MemoryPropertyModel implements PropertyModel, DataHandler
+{
+    private final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
 
-    private DatabaseMetaBuilder databaseMeta;
+    public MemoryPropertyModel()
+    {
 
-    private GraphMetaBuilder graphMeta;
-
-    public BaseTest(final TestHelper helper, final Collection<Class> types) {
-        this.databaseMeta = new DatabaseMetaBuilder().withClasses(types);
-        this.helper = helper;
     }
 
-    public BaseTest(final TestHelper helper, final Collection<Class> nodes, final Collection<Class> edges) {
-        this.graphMeta = new GraphMetaBuilder()
-                .withNodeClasses(nodes)
-                .withEdgeClasses(edges);
-        this.helper = helper;
-    }
-
-    @Before
-    public void create() throws Exception {
-        if (databaseMeta != null) {
-            this.helper.create(databaseMeta);
-        } else if (graphMeta != null) {
-            this.helper.create(graphMeta);
+    public MemoryPropertyModel(final Map<ColumnMeta, Object> m)
+    {
+        if (m != null)
+        {
+            this.data.putAll(m);
         }
     }
 
-    @After
-    public void cleanup() throws Exception {
-        helper.cleanup();
+    @Override
+    public Map<ColumnMeta, Object> get()
+    {
+        return Collections.unmodifiableMap(this.data);
+    }
+
+    @Override
+    public void put(final Map<ColumnMeta, Object> data)
+    {
+        if (null == data || data.isEmpty())
+        {
+            return;
+        }
+        this.data.putAll(data);
+    }
+
+    @Override
+    public boolean save(final EntityMeta entity, final Map<ColumnMeta, Object> data)
+    {
+        this.data.putAll(data);
+        return true;
+    }
+
+    @Override
+    public void close()
+    {
+        // nothing to do
     }
 }

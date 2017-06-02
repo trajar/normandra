@@ -192,45 +192,105 @@
  *    limitations under the License.
  */
 
-package org.normandra;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.normandra.property;
 
-import org.junit.After;
-import org.junit.Before;
-import org.normandra.meta.DatabaseMetaBuilder;
-import org.normandra.meta.GraphMetaBuilder;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.JoinCollectionMeta;
+import org.normandra.meta.JoinColumnMeta;
+import org.normandra.meta.MappedColumnMeta;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
-abstract public class BaseTest {
-    protected final TestHelper helper;
+/**
+ * a property filter that saves only concrete (non-joined) columns within an
+ * entity primary table
+ */
+public class BasicPropertyFilter implements PropertyFilter
+{
+    private final Set<String> ignored = new HashSet<>();
 
-    private DatabaseMetaBuilder databaseMeta;
-
-    private GraphMetaBuilder graphMeta;
-
-    public BaseTest(final TestHelper helper, final Collection<Class> types) {
-        this.databaseMeta = new DatabaseMetaBuilder().withClasses(types);
-        this.helper = helper;
+    public BasicPropertyFilter()
+    {
+        this(null);
     }
 
-    public BaseTest(final TestHelper helper, final Collection<Class> nodes, final Collection<Class> edges) {
-        this.graphMeta = new GraphMetaBuilder()
-                .withNodeClasses(nodes)
-                .withEdgeClasses(edges);
-        this.helper = helper;
-    }
-
-    @Before
-    public void create() throws Exception {
-        if (databaseMeta != null) {
-            this.helper.create(databaseMeta);
-        } else if (graphMeta != null) {
-            this.helper.create(graphMeta);
+    public BasicPropertyFilter(final Collection<String> c)
+    {
+        if (c != null && !c.isEmpty())
+        {
+            this.ignored.addAll(c);
         }
     }
 
-    @After
-    public void cleanup() throws Exception {
-        helper.cleanup();
+    @Override
+    public boolean accept(final EntityMeta meta, final ColumnMeta column)
+    {
+        if (null == column)
+        {
+            return false;
+        }
+
+        // checked ingored columns
+        if (this.ignored.contains(column.getName()))
+        {
+            return false;
+        }
+        if (this.ignored.contains(column.getProperty()))
+        {
+            return false;
+        }
+
+        // checked related or joined columns
+        if (column instanceof JoinCollectionMeta)
+        {
+            return false;
+        }
+        if (column instanceof JoinColumnMeta)
+        {
+            return false;
+        }
+        if (column instanceof MappedColumnMeta)
+        {
+            return false;
+        }
+
+        // ensure this is primary table
+        return meta.hasColumn(column);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int hash = 5;
+        hash = 79 * hash + Objects.hashCode(this.ignored);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj == null)
+        {
+            return false;
+        }
+        if (getClass() != obj.getClass())
+        {
+            return false;
+        }
+        final BasicPropertyFilter other = (BasicPropertyFilter) obj;
+        if (!Objects.equals(this.ignored, other.ignored))
+        {
+            return false;
+        }
+        return true;
     }
 }

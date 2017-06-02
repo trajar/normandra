@@ -192,45 +192,33 @@
  *    limitations under the License.
  */
 
-package org.normandra;
+package org.normandra.property;
 
-import org.junit.After;
-import org.junit.Before;
-import org.normandra.meta.DatabaseMetaBuilder;
-import org.normandra.meta.GraphMetaBuilder;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityMeta;
 
-import java.util.Collection;
+/**
+ * an empty property filter that allows everything
+ * <p>
+ *  Date: 8/29/14
+ */
+public class EmptyPropertyFilter implements PropertyFilter
+{
+    private static final PropertyFilter instance = new EmptyPropertyFilter();
 
-abstract public class BaseTest {
-    protected final TestHelper helper;
-
-    private DatabaseMetaBuilder databaseMeta;
-
-    private GraphMetaBuilder graphMeta;
-
-    public BaseTest(final TestHelper helper, final Collection<Class> types) {
-        this.databaseMeta = new DatabaseMetaBuilder().withClasses(types);
-        this.helper = helper;
+    public static PropertyFilter getInstance()
+    {
+        return EmptyPropertyFilter.instance;
     }
 
-    public BaseTest(final TestHelper helper, final Collection<Class> nodes, final Collection<Class> edges) {
-        this.graphMeta = new GraphMetaBuilder()
-                .withNodeClasses(nodes)
-                .withEdgeClasses(edges);
-        this.helper = helper;
+    private EmptyPropertyFilter()
+    {
+
     }
 
-    @Before
-    public void create() throws Exception {
-        if (databaseMeta != null) {
-            this.helper.create(databaseMeta);
-        } else if (graphMeta != null) {
-            this.helper.create(graphMeta);
-        }
-    }
-
-    @After
-    public void cleanup() throws Exception {
-        helper.cleanup();
+    @Override
+    public boolean accept(EntityMeta meta, ColumnMeta column)
+    {
+        return true;
     }
 }

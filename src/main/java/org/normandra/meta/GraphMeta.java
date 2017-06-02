@@ -192,45 +192,164 @@
  *    limitations under the License.
  */
 
-package org.normandra;
+package org.normandra.meta;
 
-import org.junit.After;
-import org.junit.Before;
-import org.normandra.meta.DatabaseMetaBuilder;
-import org.normandra.meta.GraphMetaBuilder;
+import org.normandra.property.EmptyPropertyFilter;
+import org.normandra.property.PropertyFilter;
+import org.normandra.util.ArraySet;
 
-import java.util.Collection;
+import java.util.*;
+import java.util.stream.Collectors;
 
-abstract public class BaseTest {
-    protected final TestHelper helper;
+/**
+ * graph database meta data
+ * <p>
+ * Date: 7/8/14
+ */
+public class GraphMeta extends DatabaseMeta {
+    private final EntityMetaLookup nodeEntities;
 
-    private DatabaseMetaBuilder databaseMeta;
+    private final EntityMetaLookup edgeEntities;
 
-    private GraphMetaBuilder graphMeta;
+    private final EntityMetaLookup genericEntities;
 
-    public BaseTest(final TestHelper helper, final Collection<Class> types) {
-        this.databaseMeta = new DatabaseMetaBuilder().withClasses(types);
-        this.helper = helper;
+    private final Map<EntityMeta, PropertyFilter> propertyFilters = new TreeMap<>();
+
+    public GraphMeta(final Collection<EntityMeta> vertices, final Collection<EntityMeta> edges, final Collection<EntityMeta> entities) {
+        super(merge(Arrays.asList(vertices, edges, entities)));
+        if (null == vertices || vertices.isEmpty()) {
+            throw new IllegalArgumentException("Vertex entities cannot be null/empty.");
+        }
+        if (null == edges || edges.isEmpty()) {
+            throw new IllegalArgumentException("Edge entities cannot be null/empty.");
+        }
+        this.nodeEntities = new EntityMetaCollection(vertices);
+        this.edgeEntities = new EntityMetaCollection(edges);
+        this.genericEntities = new EntityMetaCollection(entities);
     }
 
-    public BaseTest(final TestHelper helper, final Collection<Class> nodes, final Collection<Class> edges) {
-        this.graphMeta = new GraphMetaBuilder()
-                .withNodeClasses(nodes)
-                .withEdgeClasses(edges);
-        this.helper = helper;
+    public Collection<EntityMeta> getNodeEntities() {
+        return Collections.unmodifiableCollection(this.nodeEntities.list());
     }
 
-    @Before
-    public void create() throws Exception {
-        if (databaseMeta != null) {
-            this.helper.create(databaseMeta);
-        } else if (graphMeta != null) {
-            this.helper.create(graphMeta);
+    public Collection<EntityMeta> getEdgeEntities() {
+        return Collections.unmodifiableCollection(this.edgeEntities.list());
+    }
+
+    public boolean isNodeEntity(final String entityOrTable) {
+        if (null == entityOrTable || entityOrTable.isEmpty()) {
+            return false;
+        }
+        return this.getNodeMeta(entityOrTable) != null;
+    }
+
+    public boolean isNodeEntity(final EntityMeta meta) {
+        if (null == meta) {
+            return false;
+        }
+        return this.nodeEntities.contains(meta);
+    }
+
+    public boolean isEdgeEntity(final String entityOrTable) {
+        if (null == entityOrTable || entityOrTable.isEmpty()) {
+            return false;
+        }
+        return this.getEdgeMeta(entityOrTable) != null;
+    }
+
+    public boolean isEdgeEntity(final EntityMeta meta) {
+        if (null == meta) {
+            return false;
+        }
+        return this.edgeEntities.contains(meta);
+    }
+
+    public EntityMeta getNodeMeta(final String entityOrTable) {
+        return this.nodeEntities.getMeta(entityOrTable);
+    }
+
+    public EntityMeta getNodeMeta(final Class<?> type) {
+        return this.nodeEntities.getMeta(type);
+    }
+
+    public EntityMeta getEdgeMeta(final String entityOrTable) {
+        return this.edgeEntities.getMeta(entityOrTable);
+    }
+
+    public EntityMeta getEdgeMeta(final Class<?> type) {
+        return this.edgeEntities.getMeta(type);
+    }
+
+    public boolean setPropertyFilter(final EntityMeta meta, final PropertyFilter factory) {
+        if (null == meta) {
+            return false;
+        }
+        if (null == factory) {
+            return this.propertyFilters.remove(meta) != null;
+        } else {
+            this.propertyFilters.put(meta, factory);
+            return true;
         }
     }
 
-    @After
-    public void cleanup() throws Exception {
-        helper.cleanup();
+    public PropertyFilter getPropertyFilter(final EntityMeta meta) {
+        if (null == meta) {
+            return null;
+        }
+        final PropertyFilter existing = this.propertyFilters.get(meta);
+        return existing != null ? existing : EmptyPropertyFilter.getInstance();
+    }
+
+    public Collection<EntityMeta> list() {
+        final Collection<EntityMeta> items = new ArraySet<>(this.edgeEntities.size() + this.nodeEntities.size() + this.genericEntities.size());
+        items.addAll(this.nodeEntities.list());
+        items.addAll(this.edgeEntities.list());
+        items.addAll(this.genericEntities.list());
+        return Collections.unmodifiableCollection(items);
+    }
+
+    @Override
+    public Iterator<EntityMeta> iterator() {
+        return this.list().iterator();
+    }
+
+    private static Collection<EntityMeta> merge(final Collection<? extends Collection<EntityMeta>> c) {
+        final Set<EntityMeta> set = new HashSet<>();
+        for (final Collection<EntityMeta> metas : c) {
+            if (metas != null) {
+                set.addAll(metas.stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList()));
+            }
+        }
+        return set;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        GraphMeta graphMeta = (GraphMeta) o;
+
+        if (edgeEntities != null ? !edgeEntities.equals(graphMeta.edgeEntities) : graphMeta.edgeEntities != null) {
+            return false;
+        }
+        if (nodeEntities != null ? !nodeEntities.equals(graphMeta.nodeEntities) : graphMeta.nodeEntities != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = nodeEntities != null ? nodeEntities.hashCode() : 0;
+        result = 31 * result + (edgeEntities != null ? edgeEntities.hashCode() : 0);
+        return result;
     }
 }

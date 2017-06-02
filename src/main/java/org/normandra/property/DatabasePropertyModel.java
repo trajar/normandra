@@ -192,45 +192,96 @@
  *    limitations under the License.
  */
 
-package org.normandra;
+package org.normandra.property;
 
-import org.junit.After;
-import org.junit.Before;
-import org.normandra.meta.DatabaseMetaBuilder;
-import org.normandra.meta.GraphMetaBuilder;
+import org.normandra.DatabaseSession;
+import org.normandra.NormandraException;
+import org.normandra.data.DataHolderFactory;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityMeta;
+import org.normandra.util.EntityBuilder;
+import org.normandra.util.EntityPersistence;
 
-import java.util.Collection;
+import java.io.IOException;
+import java.util.Map;
 
-abstract public class BaseTest {
-    protected final TestHelper helper;
+/**
+ * a database property model
+ * <p>
+ * 
+ * Date: 7/15/14
+ */
+public class DatabasePropertyModel implements PropertyModel
+{
+    private final DatabaseSession session;
 
-    private DatabaseMetaBuilder databaseMeta;
+    private final DataHolderFactory factory;
 
-    private GraphMetaBuilder graphMeta;
+    private final EntityMeta meta;
 
-    public BaseTest(final TestHelper helper, final Collection<Class> types) {
-        this.databaseMeta = new DatabaseMetaBuilder().withClasses(types);
-        this.helper = helper;
+    private final Object key;
+
+    private Object instance;
+
+    private boolean ownTransaction = false;
+
+
+    public DatabasePropertyModel(final DatabaseSession session, final DataHolderFactory factory, final EntityMeta meta, final Object key)
+    {
+        this.session = session;
+        this.factory = factory;
+        this.meta = meta;
+        this.key = key;
     }
 
-    public BaseTest(final TestHelper helper, final Collection<Class> nodes, final Collection<Class> edges) {
-        this.graphMeta = new GraphMetaBuilder()
-                .withNodeClasses(nodes)
-                .withEdgeClasses(edges);
-        this.helper = helper;
+
+    @Override
+    public Map<ColumnMeta, Object> get() throws NormandraException
+    {
+        final MemoryPropertyModel model = new MemoryPropertyModel();
+        new EntityPersistence(this.session).save(this.meta, this.ensureInstance(), model);
+        return model.get();
     }
 
-    @Before
-    public void create() throws Exception {
-        if (databaseMeta != null) {
-            this.helper.create(databaseMeta);
-        } else if (graphMeta != null) {
-            this.helper.create(graphMeta);
+
+    @Override
+    public void put(final Map<ColumnMeta, Object> data) throws NormandraException
+    {
+        if (!this.session.pendingWork())
+        {
+            this.ownTransaction = true;
+            this.session.beginWork();
         }
+        new EntityBuilder(this.session, this.factory).update(this.meta, this.ensureInstance(), data);
     }
 
-    @After
-    public void cleanup() throws Exception {
-        helper.cleanup();
+
+    private Object ensureInstance() throws NormandraException
+    {
+        if (this.instance != null)
+        {
+            return this.instance;
+        }
+        this.instance = this.session.get(this.meta, this.key);
+        return this.instance;
+    }
+
+
+    @Override
+    public void close() throws IOException
+    {
+        if (this.ownTransaction)
+        {
+            try
+            {
+                this.session.commitWork();
+                this.ownTransaction = false;
+            }
+            catch (final NormandraException e)
+            {
+                throw new IOException("Unable to commit transaction.", e);
+            }
+        }
+        this.session.close();
     }
 }

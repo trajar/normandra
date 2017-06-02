@@ -8,20 +8,11 @@
   <groupId>org.normandra</groupId>
   <artifactId>normandra</artifactId>
   <version>1.12</version>
-
   <packaging>bundle</packaging>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <orientdb.version>2.2.19</orientdb.version>
   </properties>
-
-  <repositories>
-    <repository>
-      <id>sonatype-nexus-snapshots</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </repository>
-  </repositories>
 
   <dependencies>
     <!-- apache commons -->
@@ -50,50 +41,6 @@
       <artifactId>commons-lang3</artifactId>
       <version>3.5</version>
     </dependency>
-    <!-- cassandra -->
-    <dependency>
-      <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
-      <artifactId>concurrentlinkedhashmap-lru</artifactId>
-      <version>1.4.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>cassandra-all</artifactId>
-      <version>3.10</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.mortbay.jetty</groupId>
-          <artifactId>servlet-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>javax.servlet</groupId>
-          <artifactId>servlet-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>cassandra-thrift</artifactId>
-      <version>3.10</version>
-    </dependency>
-    <!-- datastax driver -->
-    <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-core</artifactId>
-      <version>3.2.0</version>
-    </dependency>
     <!-- java-assist -->
     <dependency>
       <groupId>org.javassist</groupId>
@@ -105,22 +52,6 @@
       <groupId>org.eclipse.persistence</groupId>
       <artifactId>javax.persistence</artifactId>
       <version>2.1.0</version>
-    </dependency>
-    <!-- orientdb -->
-    <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orientdb-core</artifactId>
-      <version>${orientdb.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orientdb-client</artifactId>
-      <version>${orientdb.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orientdb-graphdb</artifactId>
-      <version>${orientdb.version}</version>
     </dependency>
     <!-- osgi -->
     <dependency>
@@ -212,21 +143,11 @@
             <Bundle-Name>normandra</Bundle-Name>
             <Bundle-Activator>org.normandra.Activator</Bundle-Activator>
             <Embed-Transitive>true</Embed-Transitive>
-            <Embed-Dependency>
-              cassandra-all|cassandra-clientutil|cassandra-thrift|jamm|libthrift|lz4|guava|antlr|*orient*
-            </Embed-Dependency>
-            <_exportcontents>
-              org.apache.cassandra.serializers.*,
-              org.apache.cassandra.utils.*,
-              com.tinkerpop.blueprints.impls.orient.*; version="${orientdb.version}",
-              com.orientechnologies.*; version="${orientdb.version}"
-            </_exportcontents>
             <Export-Package>
               org.normandra.*; version="${project.version}"
             </Export-Package>
             <Import-Package>
               com.fasterxml.jackson.*; version="[2.7, 3.0)"; resolution:="optional",
-              com.orientechnologies.*; version="[2.1, 3.0)"; resolution:="optional",
               javax.persistence.*; version="[2.0, 3.0)",
               javax.transaction.*; version="[1.1, 2.0)",
               javassist.*; version="[3.19, 4.0)",

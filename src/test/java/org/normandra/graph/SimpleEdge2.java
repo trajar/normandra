@@ -192,45 +192,75 @@
  *    limitations under the License.
  */
 
-package org.normandra;
+package org.normandra.graph;
 
-import org.junit.After;
-import org.junit.Before;
-import org.normandra.meta.DatabaseMetaBuilder;
-import org.normandra.meta.GraphMetaBuilder;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import java.util.Date;
+import java.util.UUID;
 
-import java.util.Collection;
+@Entity
+public class SimpleEdge2 {
+    @Id
+    private UUID id;
 
-abstract public class BaseTest {
-    protected final TestHelper helper;
+    @Column
+    private String name;
 
-    private DatabaseMetaBuilder databaseMeta;
+    @Column
+    private Date created = new Date();
 
-    private GraphMetaBuilder graphMeta;
+    @Deprecated
+    public SimpleEdge2() {
 
-    public BaseTest(final TestHelper helper, final Collection<Class> types) {
-        this.databaseMeta = new DatabaseMetaBuilder().withClasses(types);
-        this.helper = helper;
     }
 
-    public BaseTest(final TestHelper helper, final Collection<Class> nodes, final Collection<Class> edges) {
-        this.graphMeta = new GraphMetaBuilder()
-                .withNodeClasses(nodes)
-                .withEdgeClasses(edges);
-        this.helper = helper;
+    public SimpleEdge2(final String name) {
+        this.name = name;
     }
 
-    @Before
-    public void create() throws Exception {
-        if (databaseMeta != null) {
-            this.helper.create(databaseMeta);
-        } else if (graphMeta != null) {
-            this.helper.create(graphMeta);
+    public UUID getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Date getDate() {
+        return created;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
         }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SimpleEdge2 that = (SimpleEdge2) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) {
+            return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        return created != null ? created.equals(that.created) : that.created == null;
     }
 
-    @After
-    public void cleanup() throws Exception {
-        helper.cleanup();
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (created != null ? created.hashCode() : 0);
+        return result;
     }
 }
