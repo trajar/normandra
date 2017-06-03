@@ -201,10 +201,10 @@ import org.normandra.meta.EntityMeta;
 /**
  * a NoSQL database abstraction
  * <p/>
- * 
  * Date: 8/31/13
  */
 public interface Database {
+    DatabaseMeta getMeta();
     DatabaseSession createSession();
     void refresh() throws NormandraException;
     boolean registerQuery(EntityMeta meta, String name, String query) throws NormandraException;

@@ -197,7 +197,6 @@ package org.normandra.graph;
 import org.normandra.DatabaseSession;
 import org.normandra.NormandraException;
 import org.normandra.meta.EntityMeta;
-import org.normandra.meta.GraphMeta;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -220,7 +219,7 @@ public interface Graph extends DatabaseSession {
     /**
      * Query node by entity id.
      *
-     * @param key   entity key
+     * @param key entity key
      * @param <T>
      * @return Node instance if found, else null.
      * @throws NormandraException
@@ -230,7 +229,7 @@ public interface Graph extends DatabaseSession {
     /**
      * Query nodes by set of entity ids.
      *
-     * @param keys  set of entity keys
+     * @param keys set of entity keys
      * @param <T>
      * @return Collection of nodes matching one or more keys.
      * @throws NormandraException
@@ -242,6 +241,16 @@ public interface Graph extends DatabaseSession {
         }
         return getNodes(meta, Arrays.asList(keys));
     }
+
+    /**
+     * Query edge by entity id.
+     *
+     * @param meta
+     * @param key
+     * @return
+     * @throws NormandraException
+     */
+    Edge getEdge(EntityMeta meta, Object key) throws NormandraException;
 
     /**
      * Clear graph session context, release any cached entities.

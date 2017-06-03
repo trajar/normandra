@@ -106,4 +106,26 @@ public class GraphManager extends EntityManager {
     public <T> Collection<Node> getNodes(final Class<T> clazz, final Object... keys) throws NormandraException {
         return getNodes(clazz, Arrays.asList(keys));
     }
+
+    /**
+     * Query edge by entity id.
+     *
+     * @param clazz
+     * @param key
+     * @param <T>
+     * @return
+     * @throws NormandraException
+     */
+    public <T> Edge<T> getEdge(final Class<T> clazz, final Object key) throws NormandraException {
+        if (null == clazz || null == key) {
+            return null;
+        }
+
+        final EntityMeta meta = this.meta.getEdgeMeta(clazz);
+        if (null == meta) {
+            throw new IllegalArgumentException("Entity [" + clazz + "] is not edge type.");
+        }
+
+        return this.graph.getEdge(meta, key);
+    }
 }
