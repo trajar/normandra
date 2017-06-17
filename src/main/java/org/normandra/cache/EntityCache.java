@@ -202,11 +202,9 @@ import java.util.Map;
 /**
  * entity cache api
  * <p/>
- * 
  * Date: 2/3/14
  */
-public interface EntityCache
-{
+public interface EntityCache {
     void clear();
     <T> T get(EntityMeta meta, Object key, Class<T> clazz);
     <T> Map<Object, T> find(EntityMeta meta, Collection<?> keys, Class<T> clazz);

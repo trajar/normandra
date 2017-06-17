@@ -218,7 +218,7 @@ public class EntityManagerFactory {
         return new EntityManager(this.database.createSession(), this.databaseMeta);
     }
 
-    synchronized private void ensureDatabase() throws NormandraException {
+    synchronized protected final void ensureDatabase() throws NormandraException {
         if (this.configured) {
             return;
         }
