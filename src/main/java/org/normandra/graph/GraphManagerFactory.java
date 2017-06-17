@@ -12,8 +12,6 @@ public class GraphManagerFactory extends EntityManagerFactory {
 
     private final GraphMeta graphMeta;
 
-    private boolean configured = false;
-
     public GraphManagerFactory(final GraphDatabase db, final GraphMeta meta) {
         super(db, meta);
         this.database = db;
