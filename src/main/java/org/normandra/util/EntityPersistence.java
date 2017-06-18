@@ -196,15 +196,15 @@ package org.normandra.util;
 
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
-import org.normandra.data.DataHolder;
-import org.normandra.meta.MappedColumnMeta;
 import org.normandra.NormandraException;
 import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHandler;
+import org.normandra.data.DataHolder;
 import org.normandra.generator.IdGenerator;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
+import org.normandra.meta.MappedColumnMeta;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -212,31 +212,24 @@ import java.util.Map;
 /**
  * basic entity handler api
  * <p>
- * <p>
  * Date: 5/25/14
  */
-public class EntityPersistence
-{
+public class EntityPersistence {
     private final EntitySession session;
 
-    public EntityPersistence(final EntitySession session)
-    {
-        if (null == session)
-        {
+    public EntityPersistence(final EntitySession session) {
+        if (null == session) {
             throw new NullArgumentException("session");
         }
         this.session = session;
     }
 
-    public void save(final EntityMeta entity, final Object instance, final DataHandler handler) throws NormandraException
-    {
+    public void save(final EntityMeta entity, final Object instance, final DataHandler handler) throws NormandraException {
         // generate any primary ids
-        for (final ColumnMeta column : entity.getColumns())
-        {
+        for (final ColumnMeta column : entity.getColumns()) {
             final ColumnAccessor accessor = entity.getAccessor(column);
             final IdGenerator generator = entity.getGenerator(column);
-            if (generator != null && accessor != null && accessor.isEmpty(instance))
-            {
+            if (generator != null && accessor != null && accessor.isEmpty(instance)) {
                 final Object generated = generator.generate(this.session, entity);
                 final DataHolder data = new BasicDataHolder(generated);
                 accessor.setValue(instance, data, this.session);
@@ -246,25 +239,19 @@ public class EntityPersistence
         // handle data for each entity
         final Map<ColumnMeta, Object> data = this.mapData(entity, instance);
         final Map<ColumnMeta, Object> filtered = entity.filter(data, instance);
-        if (!handler.save(entity, filtered))
-        {
+        if (!handler.save(entity, filtered)) {
             throw new NormandraException("Unable to save instance, unknown error.");
         }
     }
 
-    private Map<ColumnMeta, Object> mapData(final EntityMeta entity, final Object instance) throws NormandraException
-    {
+    private Map<ColumnMeta, Object> mapData(final EntityMeta entity, final Object instance) throws NormandraException {
         final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
-        for (final ColumnMeta column : entity)
-        {
-            if (!(column instanceof MappedColumnMeta))
-            {
+        for (final ColumnMeta column : entity) {
+            if (!(column instanceof MappedColumnMeta)) {
                 final ColumnAccessor accessor = entity.getAccessor(column);
-                if (accessor != null && accessor.isLoaded(instance))
-                {
+                if (accessor != null && accessor.isLoaded(instance)) {
                     final Object value = accessor.getValue(instance, session);
-                    if (value != null)
-                    {
+                    if (value != null) {
                         data.put(column, value);
                     }
                 }

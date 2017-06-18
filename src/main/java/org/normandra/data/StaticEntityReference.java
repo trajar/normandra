@@ -202,37 +202,30 @@ import org.normandra.NormandraException;
  * <p>
  * Date: 7/26/14
  */
-public class StaticEntityReference<T> implements EntityReference<T>
-{
+public class StaticEntityReference<T> implements EntityReference<T> {
     private final T instance;
 
-    public StaticEntityReference(final T instance)
-    {
+    public StaticEntityReference(final T instance) {
         this.instance = instance;
     }
 
     @Override
-    public T getInstance() throws NormandraException
-    {
+    public T getInstance() throws NormandraException {
         return this.instance;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass())
-        {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
         StaticEntityReference that = (StaticEntityReference) o;
 
-        if (instance != null ? !instance.equals(that.instance) : that.instance != null)
-        {
+        if (instance != null ? !instance.equals(that.instance) : that.instance != null) {
             return false;
         }
 
@@ -240,8 +233,7 @@ public class StaticEntityReference<T> implements EntityReference<T>
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return instance != null ? instance.hashCode() : 0;
     }
 }

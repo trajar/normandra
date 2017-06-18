@@ -201,7 +201,6 @@ import org.normandra.NormandraException;
  * <p>
  * Date: 7/26/14
  */
-public interface EntityReference<T>
-{
+public interface EntityReference<T> {
     T getInstance() throws NormandraException;
 }
