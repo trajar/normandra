@@ -3,7 +3,7 @@ normandra
 
 Simple client for NoSQL repositories using JPA annotations.  Currently targeting support for Cassandra, OrientDB, and Neo4J.
 
-Download library via 
+Download library via current release https://github.com/trajar/normandra/files/1173966/normandra-1.13-all.zip.
 
 ```
 meta = new GraphMetaBuilder()
