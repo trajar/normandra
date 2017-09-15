@@ -2,12 +2,12 @@
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Osmorc" name="OSGi">
-      <configuration manifestGenerationMode="OsmorcControlled" manifestLocation="" jarfileLocation="normandra-1.13.jar" outputPathType="CompilerOutputPath" bndFileLocation="" bundlorFileLocation="" bundleActivator="org.normandra.Activator" bundleSymbolicName="org.normandra" bundleVersion="1.13.0" ignoreFilePattern="" useProjectDefaultManifestFileLocation="true" alwaysRebuildBundleJAR="false" doNotSynchronizeWithMaven="false">
+      <configuration manifestGenerationMode="OsmorcControlled" manifestLocation="" jarfileLocation="normandra-1.14.jar" outputPathType="CompilerOutputPath" bndFileLocation="" bundlorFileLocation="" bundleActivator="org.normandra.Activator" bundleSymbolicName="org.normandra" bundleVersion="1.14.0" ignoreFilePattern="" useProjectDefaultManifestFileLocation="true" alwaysRebuildBundleJAR="false" doNotSynchronizeWithMaven="false">
         <additionalProperties>
           <property key="Bundle-Name" value="normandra" />
           <property key="Embed-Transitive" value="true" />
-          <property key="Export-Package" value="org.normandra.*; version=&quot;1.13&quot;" />
-          <property key="Import-Package" value="com.fasterxml.jackson.*; version=&quot;[2.7, 3.0)&quot;; resolution:=&quot;optional&quot;,javax.persistence.*; version=&quot;[2.0, 3.0)&quot;,javax.transaction.*; version=&quot;[1.1, 2.0)&quot;,javassist.*; version=&quot;[3.19, 4.0)&quot;,org.apache.commons.lang.*; version=&quot;[2.0, 3.0)&quot;,org.apache.commons.lang3.*; version=&quot;[3.0, 4.0)&quot;,org.apache.logging.log4j.*; version=&quot;[2.8, 2.9)&quot;; resolution:=&quot;optional&quot;,org.codehaus.jackson.*; version=&quot;[1.9, 2.0)&quot;; resolution:=&quot;optional&quot;,org.osgi.*,org.apache.logging.log4j.*; version=&quot;[2.0, 3.0)&quot;,org.slf4j.*; version=&quot;[1.7, 1.8)&quot;,org.xerial.snappy.*,*; resolution:=&quot;optional&quot;" />
+          <property key="Export-Package" value="org.normandra.*; version=&quot;1.14&quot;" />
+          <property key="Import-Package" value="com.fasterxml.jackson.*; version=&quot;[2.7, 3.0)&quot;; resolution:=&quot;optional&quot;,javax.persistence.*; version=&quot;[2.0, 3.0)&quot;,javax.transaction.*; version=&quot;[1.1, 2.0)&quot;,javassist.*; version=&quot;[3.19, 4.0)&quot;,org.apache.commons.lang.*; version=&quot;[2.0, 3.0)&quot;,org.apache.commons.lang3.*; version=&quot;[3.0, 4.0)&quot;,org.apache.logging.log4j.*; version=&quot;[2.0, 3.0)&quot;,org.codehaus.jackson.*; version=&quot;[1.9, 2.0)&quot;; resolution:=&quot;optional&quot;,org.osgi.*,org.slf4j.*; version=&quot;[1.7, 1.8)&quot;,org.xerial.snappy.*,*; resolution:=&quot;optional&quot;" />
         </additionalProperties>
         <additionalJARContents />
       </configuration>
@@ -43,9 +43,9 @@
     <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.12" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.25" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.logging.log4j:log4j-core:2.8.2" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.logging.log4j:log4j-api:2.8.2" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.logging.log4j:log4j-slf4j-impl:2.8.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.logging.log4j:log4j-core:2.9.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.logging.log4j:log4j-api:2.9.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.logging.log4j:log4j-slf4j-impl:2.9.0" level="project" />
     <orderEntry type="library" name="Maven: org.xerial.snappy:snappy-java:1.1.2.6" level="project" />
   </component>
 </module>
