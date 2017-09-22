@@ -28,6 +28,10 @@ public class GraphManager extends EntityManager {
         return this.graph;
     }
 
+    public GraphMeta getMeta() {
+        return this.meta;
+    }
+
     /**
      * Add entity as node to graph database.
      *
