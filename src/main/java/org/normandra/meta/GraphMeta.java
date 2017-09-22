@@ -250,6 +250,13 @@ public class GraphMeta extends DatabaseMeta {
         return this.nodeEntities.contains(meta);
     }
 
+    public boolean isNodeEntity(final Class<?> clazz) {
+        if (null == clazz) {
+            return false;
+        }
+        return this.nodeEntities.contains(clazz);
+    }
+
     public boolean isEdgeEntity(final String entityOrTable) {
         if (null == entityOrTable || entityOrTable.isEmpty()) {
             return false;
@@ -262,6 +269,13 @@ public class GraphMeta extends DatabaseMeta {
             return false;
         }
         return this.edgeEntities.contains(meta);
+    }
+
+    public boolean isEdgeEntity(final Class<?> clazz) {
+        if (null == clazz) {
+            return false;
+        }
+        return this.edgeEntities.contains(clazz);
     }
 
     public EntityMeta getNodeMeta(final String entityOrTable) {
