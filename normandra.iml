@@ -2,11 +2,11 @@
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Osmorc" name="OSGi">
-      <configuration manifestGenerationMode="OsmorcControlled" manifestLocation="" jarfileLocation="normandra-1.14.jar" outputPathType="CompilerOutputPath" bndFileLocation="" bundlorFileLocation="" bundleActivator="org.normandra.Activator" bundleSymbolicName="org.normandra" bundleVersion="1.14.0" ignoreFilePattern="" useProjectDefaultManifestFileLocation="true" alwaysRebuildBundleJAR="false" doNotSynchronizeWithMaven="false">
+      <configuration manifestGenerationMode="OsmorcControlled" manifestLocation="" jarfileLocation="normandra-1.15.jar" outputPathType="CompilerOutputPath" bndFileLocation="" bundlorFileLocation="" bundleActivator="org.normandra.Activator" bundleSymbolicName="org.normandra" bundleVersion="1.15.0" ignoreFilePattern="" useProjectDefaultManifestFileLocation="true" alwaysRebuildBundleJAR="false" doNotSynchronizeWithMaven="false">
         <additionalProperties>
           <property key="Bundle-Name" value="normandra" />
           <property key="Embed-Transitive" value="true" />
-          <property key="Export-Package" value="org.normandra.*; version=&quot;1.14&quot;" />
+          <property key="Export-Package" value="org.normandra.*; version=&quot;1.15&quot;" />
           <property key="Import-Package" value="com.fasterxml.jackson.*; version=&quot;[2.7, 3.0)&quot;; resolution:=&quot;optional&quot;,javax.persistence.*; version=&quot;[2.0, 3.0)&quot;,javax.transaction.*; version=&quot;[1.1, 2.0)&quot;,javassist.*; version=&quot;[3.19, 4.0)&quot;,org.apache.commons.lang.*; version=&quot;[2.0, 3.0)&quot;,org.apache.commons.lang3.*; version=&quot;[3.0, 4.0)&quot;,org.apache.logging.log4j.*; version=&quot;[2.0, 3.0)&quot;,org.codehaus.jackson.*; version=&quot;[1.9, 2.0)&quot;; resolution:=&quot;optional&quot;,org.osgi.*,org.slf4j.*; version=&quot;[1.7, 1.8)&quot;,org.xerial.snappy.*,*; resolution:=&quot;optional&quot;" />
         </additionalProperties>
         <additionalJARContents />
