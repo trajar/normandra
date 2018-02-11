@@ -203,7 +203,7 @@ import java.util.UUID;
 @Entity
 public class SimpleEdge {
     @Id
-    private UUID id;
+    private UUID guid;
 
     @Column
     private String name;
@@ -221,7 +221,7 @@ public class SimpleEdge {
     }
 
     public UUID getId() {
-        return id;
+        return guid;
     }
 
     public String getName() {
@@ -250,7 +250,7 @@ public class SimpleEdge {
         if (created != null ? !created.equals(that.created) : that.created != null) {
             return false;
         }
-        if (id != null ? !id.equals(that.id) : that.id != null) {
+        if (guid != null ? !guid.equals(that.guid) : that.guid != null) {
             return false;
         }
         if (name != null ? !name.equals(that.name) : that.name != null) {
@@ -262,7 +262,7 @@ public class SimpleEdge {
 
     @Override
     public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
+        int result = guid != null ? guid.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (created != null ? created.hashCode() : 0);
         return result;

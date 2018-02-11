@@ -202,7 +202,7 @@ import java.util.UUID;
 @Entity
 public class SimpleNode {
     @Id
-    private UUID id = UUID.randomUUID();
+    private UUID guid = UUID.randomUUID();
 
     @Column
     private String name;
@@ -217,11 +217,11 @@ public class SimpleNode {
     }
 
     public UUID getId() {
-        return id;
+        return guid;
     }
 
     public void setId(UUID id) {
-        this.id = id;
+        this.guid = id;
     }
 
     public String getName() {
@@ -243,7 +243,7 @@ public class SimpleNode {
 
         SimpleNode that = (SimpleNode) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) {
+        if (guid != null ? !guid.equals(that.guid) : that.guid != null) {
             return false;
         }
         if (name != null ? !name.equals(that.name) : that.name != null) {
@@ -255,7 +255,7 @@ public class SimpleNode {
 
     @Override
     public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
+        int result = guid != null ? guid.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
         return result;
     }
