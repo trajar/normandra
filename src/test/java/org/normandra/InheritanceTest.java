@@ -203,7 +203,7 @@ import org.normandra.entities.ZooEntity;
 
 import java.util.Arrays;
 
-public class InheritanceTest extends BaseTest {
+abstract public class InheritanceTest extends BaseTest {
     public InheritanceTest(final TestHelper helper) {
         super(helper, Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }

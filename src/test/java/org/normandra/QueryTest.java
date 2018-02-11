@@ -206,7 +206,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class QueryTest extends BaseTest {
+abstract public class QueryTest extends BaseTest {
     public QueryTest(final TestHelper helper) {
         super(helper, Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class));
     }

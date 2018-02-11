@@ -200,7 +200,7 @@ import org.normandra.graph.*;
 
 import java.util.*;
 
-public class GraphTest extends BaseTest {
+abstract public class GraphTest extends BaseTest {
 
     public GraphTest(final TestHelper helper) {
         super(helper, Arrays.asList(SimpleNode.class), Arrays.asList(SimpleEdge.class, SimpleEdge2.class));

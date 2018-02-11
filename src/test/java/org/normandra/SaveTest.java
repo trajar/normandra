@@ -200,7 +200,7 @@ import org.normandra.entities.*;
 
 import java.util.Arrays;
 
-public class SaveTest extends BaseTest {
+abstract public class SaveTest extends BaseTest {
     public SaveTest(final TestHelper helper) {
         super(helper, Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class, StoreEntity.class, ParkingLotEntity.class));
     }
