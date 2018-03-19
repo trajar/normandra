@@ -227,7 +227,7 @@ public interface Node<T> {
      * @param node   the neighbor node
      * @param entity the edge entity
      */
-    <E> boolean hasEdge(Node node, E entity) throws NormandraException;
+    <E, N> boolean hasEdge(Node<N> node, E entity) throws NormandraException;
 
     /**
      * create edge between this node and target node
@@ -235,7 +235,7 @@ public interface Node<T> {
      * @param node   the prospective neighbor node
      * @param entity the edge entity
      */
-    <E> Edge<E> createEdge(Node node, E entity) throws NormandraException;
+    <E, N> Edge<E> createEdge(Node<N> node, E entity) throws NormandraException;
 
     /**
      * @return degree of this node, or number of edges
@@ -245,7 +245,7 @@ public interface Node<T> {
     /**
      * query all immediate and unique neighbors
      */
-    Iterable<Node> getNeighbors() throws NormandraException;
+    <N> Iterable<Node<N>> getNeighbors() throws NormandraException;
 
     /**
      * query collection of immediate and unique neighbors by edge and node type
@@ -258,7 +258,7 @@ public interface Node<T> {
     /**
      * query nodes by expanding neighbor graph by given depth
      */
-    Iterable<Node> expand(int depth) throws NormandraException;
+    <N> Iterable<Node<N>> expand(int depth) throws NormandraException;
 
     /**
      * query nodes by expanding neighbor graph by given depth and edge type(s)
@@ -268,7 +268,7 @@ public interface Node<T> {
      * @return
      * @throws NormandraException
      */
-    Iterable<Node> expandByType(int depth, Class<?> edgeType) throws NormandraException;
+    <E, N> Iterable<Node<N>> expandByType(int depth, Class<E> edgeType) throws NormandraException;
 
     /**
      * query nodes by expanding neighbor graph by given depth and edge type(s)
@@ -278,7 +278,7 @@ public interface Node<T> {
      * @return
      * @throws NormandraException
      */
-    default Iterable<Node> expandByTypes(int depth, Class<?>... edgeTypes) throws NormandraException {
+    default <E, N> Iterable<Node<N>> expandByTypes(int depth, Class<E>... edgeTypes) throws NormandraException {
         if (null == edgeTypes || edgeTypes.length <= 0) {
             return Collections.emptyList();
         }
@@ -294,12 +294,12 @@ public interface Node<T> {
      * @return
      * @throws NormandraException
      */
-    Iterable<Node> expandByTypes(int depth, Iterable<Class> edgeTypes) throws NormandraException;
+    <E, N> Iterable<Node<N>> expandByTypes(int depth, Iterable<Class<E>> edgeTypes) throws NormandraException;
 
     /**
      * query all connected edges
      */
-    Iterable<Edge> getEdges() throws NormandraException;
+    <E> Iterable<Edge<E>> getEdges() throws NormandraException;
 
     /**
      * query all connected edges by type
@@ -313,7 +313,7 @@ public interface Node<T> {
      *
      * @param types the edge entity types
      */
-    default Iterable<Edge> getEdgesByTypes(final Class<?>... types) throws NormandraException {
+    default <E> Iterable<Edge<E>> getEdgesByTypes(final Class<E>... types) throws NormandraException {
         if (null == types || types.length <= 0) {
             return Collections.emptyList();
         }
@@ -326,5 +326,5 @@ public interface Node<T> {
      *
      * @param types the edge entity types
      */
-    Iterable<Edge> getEdgesByTypes(Iterable<Class> types) throws NormandraException;
+    <E> Iterable<Edge<E>> getEdgesByTypes(Iterable<Class<E>> types) throws NormandraException;
 }

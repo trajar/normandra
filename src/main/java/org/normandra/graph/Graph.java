@@ -201,6 +201,7 @@ import org.normandra.meta.EntityMeta;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * Core api for adding and querying graph data.
@@ -210,7 +211,6 @@ public interface Graph extends DatabaseSession {
      * Add entity as node to graph database.
      *
      * @param entity registered entity
-     * @param <T>
      * @return Node instance if created, else null.
      * @throws NormandraException
      */
@@ -220,7 +220,6 @@ public interface Graph extends DatabaseSession {
      * Query node by entity id.
      *
      * @param key entity key
-     * @param <T>
      * @return Node instance if found, else null.
      * @throws NormandraException
      */
@@ -230,11 +229,11 @@ public interface Graph extends DatabaseSession {
      * Query nodes by set of entity ids.
      *
      * @param keys set of entity keys
-     * @param <T>
      * @return Collection of nodes matching one or more keys.
      * @throws NormandraException
      */
     Collection<Node> getNodes(EntityMeta meta, Iterable<?> keys) throws NormandraException;
+
     default Collection<Node> getNodes(EntityMeta meta, Object... keys) throws NormandraException {
         if (null == meta || null == keys || keys.length <= 0) {
             return Collections.emptyList();
@@ -256,4 +255,26 @@ public interface Graph extends DatabaseSession {
      * Clear graph session context, release any cached entities.
      */
     void clear();
+
+    /**
+     * Query graph nodes by parameters.
+     *
+     * @param meta
+     * @param query
+     * @param parameters
+     * @return
+     * @throws NormandraException
+     */
+    NodeQuery queryNodes(EntityMeta meta, String query, Map<String, Object> parameters) throws NormandraException;
+
+    /**
+     * Query graph edges by parameters.
+     *
+     * @param meta
+     * @param query
+     * @param parameters
+     * @return
+     * @throws NormandraException
+     */
+    EdgeQuery queryEdges(EntityMeta meta, String query, Map<String, Object> parameters) throws NormandraException;
 }

@@ -192,28 +192,48 @@
  *    limitations under the License.
  */
 
-package org.normandra;
+package org.normandra.graph;
 
+import org.normandra.NormandraException;
+
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * a simple database query
- * <p>
- * Date: 4/5/14
+ * a simple graph query
  */
-public interface DatabaseQuery<T> extends Iterable<T>, AutoCloseable {
+public interface EdgeQuery<T> extends Iterable<Edge<T>>, AutoCloseable {
     /**
      * @return Returns the first item in the query result.
      */
-    T first() throws NormandraException;
+    default Edge<T> first() throws NormandraException {
+        for (Edge<T> edge : this) {
+            if (edge != null) {
+                return edge;
+            }
+        }
+        return null;
+    }
 
     /**
      * lists all items returned by query
      */
-    Collection<T> list() throws NormandraException;
+    default Collection<Edge<T>> list() throws NormandraException {
+        final List<Edge<T>> items = new ArrayList<>();
+        for (Edge<T> edge : this) {
+            if (edge != null) {
+                items.add(edge);
+            }
+        }
+        return Collections.unmodifiableList(items);
+    }
 
     /**
      * @return Returns the number of items returned by this query.
      */
-    boolean empty() throws NormandraException;
+    default boolean empty() throws NormandraException {
+        return this.first() != null;
+    }
 }

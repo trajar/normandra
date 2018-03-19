@@ -226,12 +226,12 @@ public interface DatabaseSession extends EntitySession, Transactional {
     void delete(EntityMeta meta, Object element) throws NormandraException;
 
     /**
-     * query database using string with mapped parameters
-     */
-    DatabaseQuery executeQuery(EntityMeta meta, String query, Map<String, Object> parameters) throws NormandraException;
-
-    /**
      * execute scalar query
      */
     Object scalarQuery(String query) throws NormandraException;
+
+    /**
+     * query database using string with mapped parameters
+     */
+    DatabaseQuery query(EntityMeta meta, String query, Map<String, Object> parameters) throws NormandraException;
 }

@@ -132,4 +132,48 @@ public class GraphManager extends EntityManager {
 
         return this.graph.getEdge(meta, key);
     }
+
+    /**
+     * Query graph nodes by parameters.
+     *
+     * @param clazz
+     * @param query
+     * @param parameters
+     * @return
+     * @throws NormandraException
+     */
+    public <T> NodeQuery<T> queryNodes(final Class<T> clazz, final String query, Map<String, Object> parameters) throws NormandraException {
+        if (null == clazz || null == query) {
+            return null;
+        }
+
+        final EntityMeta meta = this.meta.getEdgeMeta(clazz);
+        if (null == meta) {
+            throw new IllegalArgumentException("Entity [" + clazz + "] is not node type.");
+        }
+
+        return this.graph.queryNodes(meta, query, parameters);
+    }
+
+    /**
+     * Query graph edges by parameters.
+     *
+     * @param clazz
+     * @param query
+     * @param parameters
+     * @return
+     * @throws NormandraException
+     */
+    public <T> EdgeQuery<T> queryEdges(final Class<T> clazz, String query, Map<String, Object> parameters) throws NormandraException {
+        if (null == clazz || null == query) {
+            return null;
+        }
+
+        final EntityMeta meta = this.meta.getEdgeMeta(clazz);
+        if (null == meta) {
+            throw new IllegalArgumentException("Entity [" + clazz + "] is not edge type.");
+        }
+
+        return this.graph.queryEdges(meta, query, parameters);
+    }
 }

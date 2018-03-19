@@ -249,7 +249,7 @@ public class EntityManager extends AbstractTransactional {
             return null;
         }
 
-        return this.database.executeQuery(meta, name, parameters);
+        return this.database.query(meta, name, parameters);
     }
 
     public Object scalarQuery(final String nameOrQuery) throws NormandraException {
