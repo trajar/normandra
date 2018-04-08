@@ -217,26 +217,31 @@ abstract public class GraphTest extends BaseTest {
         final Node barNode = manager.addNode(bar);
         Assert.assertNotNull(barNode);
 
+        // test in memory cache
         Assert.assertTrue(fooNode == manager.getNode(SimpleNode.class, foo.getId()));
         Assert.assertTrue(foo == manager.getNode(SimpleNode.class, foo.getId()).getEntity());
         Assert.assertTrue(barNode == manager.getNode(SimpleNode.class, bar.getId()));
         Assert.assertTrue(bar == manager.getNode(SimpleNode.class, bar.getId()).getEntity());
         Assert.assertNull(manager.getNode(SimpleNode.class, UUID.randomUUID()));
+
+        // test get-by-id
         manager.clear();
         Assert.assertEquals(foo, manager.getNode(SimpleNode.class, foo.getId()).getEntity());
         Assert.assertEquals(bar, manager.getNode(SimpleNode.class, bar.getId()).getEntity());
         manager.clear();
-
         Assert.assertNotNull(manager.getNode(SimpleNode.class, foo.getId()));
         Assert.assertNotNull(manager.getNode(SimpleNode.class, bar.getId()));
         Assert.assertNull(manager.getNode(SimpleNode.class, UUID.randomUUID()));
 
+        // get get-by-multiple-ids
+        manager.clear();
         Collection nodes = manager.getNodes(SimpleNode.class, foo.getId(), bar.getId(), UUID.randomUUID());
         Assert.assertFalse(nodes.isEmpty());
         Assert.assertEquals(2, nodes.size());
         Assert.assertTrue(nodes.contains(fooNode));
         Assert.assertTrue(nodes.contains(barNode));
 
+        // test degree query
         Assert.assertEquals(0, fooNode.getDegree());
         Assert.assertEquals(0, barNode.getDegree());
 
