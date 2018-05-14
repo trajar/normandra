@@ -208,42 +208,32 @@ import java.util.Map;
  * <p>
  * Date: 2/15/14
  */
-public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
-{
+public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor {
     private final ColumnMeta primary;
 
-    public BasicIdAccessor(final Field field, final ColumnMeta key)
-    {
+    public BasicIdAccessor(final Field field, final ColumnMeta key) {
         super(field);
-        if (null == key)
-        {
+        if (null == key) {
             throw new NullArgumentException("primary key");
         }
         this.primary = key;
     }
 
     @Override
-    public Object fromEntity(final Object entity)
-    {
-        if (null == entity)
-        {
+    public Object fromEntity(final Object entity) {
+        if (null == entity) {
             return null;
         }
-        try
-        {
+        try {
             return this.get(entity);
-        }
-        catch (final Exception e)
-        {
+        } catch (final Exception e) {
             throw new IllegalStateException("Unable to get field [" + this.getField().getName() + "] from entity [" + entity + "].", e);
         }
     }
 
     @Override
-    public Map<ColumnMeta, Object> fromKey(final Object key)
-    {
-        if (null == key)
-        {
+    public Map<ColumnMeta, Object> fromKey(final Object key) {
+        if (null == key) {
             return Collections.emptyMap();
         }
         final Map<ColumnMeta, Object> map = new HashMap<>(1);
@@ -252,45 +242,36 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
     }
 
     @Override
-    public Object fromData(final Map<ColumnMeta, Object> data)
-    {
-        if (null == data || data.isEmpty())
-        {
+    public Object fromData(final Map<ColumnMeta, Object> data) {
+        if (null == data || data.isEmpty()) {
             return null;
         }
         return data.get(this.primary);
     }
 
     @Override
-    public Object toKey(final Map<ColumnMeta, Object> map)
-    {
-        if (null == map || map.isEmpty())
-        {
+    public Object toKey(final Map<ColumnMeta, Object> map) {
+        if (null == map || map.isEmpty()) {
             return null;
         }
         return map.get(this.primary);
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass())
-        {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o))
-        {
+        if (!super.equals(o)) {
             return false;
         }
 
         BasicIdAccessor that = (BasicIdAccessor) o;
 
-        if (primary != null ? !primary.equals(that.primary) : that.primary != null)
-        {
+        if (primary != null ? !primary.equals(that.primary) : that.primary != null) {
             return false;
         }
 
@@ -298,8 +279,7 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + (primary != null ? primary.hashCode() : 0);
         return result;

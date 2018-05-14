@@ -213,14 +213,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * Date: 2/2/14
  */
-public class AssociationUtils
-{
+public class AssociationUtils {
     private final static Map<Class<?>, Class<?>> proxies = new ConcurrentHashMap<>();
 
-    public static boolean isLoaded(final Object element)
-    {
-        if (!isProxy(element))
-        {
+    public static boolean isLoaded(final Object element) {
+        if (!isProxy(element)) {
             throw new IllegalStateException("Instance [" + element + "] is not a proxy element.");
         }
         final ProxyObject proxy = (ProxyObject) element;
@@ -228,45 +225,36 @@ public class AssociationUtils
         return handler.isLoaded();
     }
 
-    public static boolean isProxy(final Object element)
-    {
-        if (null == element)
-        {
+    public static boolean isProxy(final Object element) {
+        if (null == element) {
             return false;
         }
-        if (element instanceof ProxyObject)
-        {
+        if (element instanceof ProxyObject) {
             final MethodHandler methodHandler = ((ProxyObject) element).getHandler();
-            if (methodHandler instanceof LazyAssociationHandler)
-            {
+            if (methodHandler instanceof LazyAssociationHandler) {
                 return true;
             }
         }
         return false;
     }
 
-    public static Object createProxy(final EntityMeta meta, final Object key, final EntitySession session, final ElementIdentity factory) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException
-    {
-        if (null == meta)
-        {
+    public static Object createProxy(final EntityMeta meta, final Object key, final EntitySession session, final ElementIdentity factory) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        if (null == meta) {
             return null;
         }
 
         final Class<?> clazz = meta.getType(meta.getId().fromKey(key));
         Class<?> proxy = proxies.get(clazz);
-        if (null == proxy)
-        {
+        if (null == proxy) {
             ProxyFactory.classLoaderProvider = pf ->
             {
                 final List<ClassLoader> loaders = new ArrayList<>(2);
                 loaders.add(AssociationUtils.class.getClassLoader());
-                if (null == pf)
-                {
+                if (null == pf) {
                     return new CompositeClassLoader(ProxyFactory.class.getClassLoader(), loaders);
                 }
                 final Class<?> type = pf.getSuperclass();
-                if (type != null)
-                {
+                if (type != null) {
                     loaders.add(type.getClassLoader());
                 }
                 return new CompositeClassLoader(ProxyFactory.class.getClassLoader(), loaders);
@@ -279,8 +267,7 @@ public class AssociationUtils
         }
 
         final Object instance = proxy.newInstance();
-        if (null == instance)
-        {
+        if (null == instance) {
             return null;
         }
 
@@ -290,8 +277,7 @@ public class AssociationUtils
         return clazz.cast(instance);
     }
 
-    private AssociationUtils()
-    {
+    private AssociationUtils() {
 
     }
 }

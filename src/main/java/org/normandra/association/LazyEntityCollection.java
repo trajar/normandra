@@ -209,8 +209,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>
  * Date: 3/25/14
  */
-abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
-{
+abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T> {
     protected final DataHolder data;
 
     protected final EntityMeta entity;
@@ -225,26 +224,20 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
 
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
-    public LazyEntityCollection(final EntitySession session, final EntityMeta meta, final DataHolder data, ElementIdentity<T> ef, final CollectionFactory<T> cf)
-    {
-        if (null == data)
-        {
+    public LazyEntityCollection(final EntitySession session, final EntityMeta meta, final DataHolder data, ElementIdentity<T> ef, final CollectionFactory<T> cf) {
+        if (null == data) {
             throw new NullArgumentException("data holder");
         }
-        if (null == session)
-        {
+        if (null == session) {
             throw new NullArgumentException("session");
         }
-        if (null == meta)
-        {
+        if (null == meta) {
             throw new NullArgumentException("entity");
         }
-        if (null == ef)
-        {
+        if (null == ef) {
             throw new NullArgumentException("element factory");
         }
-        if (null == cf)
-        {
+        if (null == cf) {
             throw new NullArgumentException("collection factory");
         }
         this.data = data;
@@ -255,40 +248,32 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
     }
 
     @Override
-    public boolean isLoaded()
-    {
+    public boolean isLoaded() {
         return this.loaded.get();
     }
 
-    protected Collection<T> getCollection()
-    {
+    protected Collection<T> getCollection() {
         return this.ensureEntities();
     }
 
-    private Collection<T> ensureEntities()
-    {
-        if (this.entities != null)
-        {
+    private Collection<T> ensureEntities() {
+        if (this.entities != null) {
             return this.entities;
         }
 
-        try
-        {
+        try {
             final Object value = this.data.get();
             this.loaded.getAndSet(true);
-            if (null == value)
-            {
+            if (null == value) {
                 this.entities = this.collectionFactory.create(0);
                 return this.entities;
             }
 
-            if (!(value instanceof Collection))
-            {
+            if (!(value instanceof Collection)) {
                 throw new IllegalArgumentException("Expected type of collection but found [" + value + "] from data holder [" + this.data + "].");
             }
 
-            if (value instanceof LazyEntityCollection)
-            {
+            if (value instanceof LazyEntityCollection) {
                 final LazyEntityCollection lazy = (LazyEntityCollection) value;
                 this.entities = this.collectionFactory.create(lazy.size());
                 this.entities.addAll(lazy);
@@ -300,108 +285,89 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
             this.entities = this.collectionFactory.create(results.size());
             this.entities.addAll(results);
             return this.entities;
-        }
-        catch (final Exception e)
-        {
+        } catch (final Exception e) {
             throw new IllegalStateException("Unable to query lazy entity collection with data [" + this.data + "].", e);
         }
     }
 
     @Override
-    public boolean equals(final Object obj)
-    {
-        if (null == obj)
-        {
+    public boolean equals(final Object obj) {
+        if (null == obj) {
             return false;
         }
         return this.ensureEntities().equals(obj);
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return this.ensureEntities().hashCode();
     }
 
     @Override
-    public int size()
-    {
+    public int size() {
         return this.ensureEntities().size();
     }
 
     @Override
-    public boolean isEmpty()
-    {
+    public boolean isEmpty() {
         return this.ensureEntities().isEmpty();
     }
 
     @Override
-    public boolean contains(final Object o)
-    {
-        if (null == o)
-        {
+    public boolean contains(final Object o) {
+        if (null == o) {
             return false;
         }
         return this.ensureEntities().contains(o);
     }
 
     @Override
-    public Iterator<T> iterator()
-    {
+    public Iterator<T> iterator() {
         return this.ensureEntities().iterator();
     }
 
     @Override
-    public Object[] toArray()
-    {
+    public Object[] toArray() {
         return this.ensureEntities().toArray();
     }
 
     @Override
-    public <T> T[] toArray(T[] a)
-    {
+    public <T> T[] toArray(T[] a) {
         return this.ensureEntities().toArray(a);
     }
 
     @Override
-    public boolean add(T o)
-    {
+    public boolean add(T o) {
         return this.ensureEntities().add(o);
     }
 
     @Override
-    public boolean remove(Object o)
-    {
+    public boolean remove(Object o) {
         return this.ensureEntities().remove(o);
     }
 
     @Override
-    public boolean containsAll(Collection<?> c)
-    {
+    public boolean containsAll(Collection<?> c) {
         return this.ensureEntities().containsAll(c);
     }
 
     @Override
-    public boolean addAll(Collection<? extends T> c)
-    {
+    public boolean addAll(Collection<? extends T> c) {
         return this.ensureEntities().addAll(c);
     }
 
     @Override
-    public boolean removeAll(Collection<?> c)
-    {
+    public boolean removeAll(Collection<?> c) {
         return this.ensureEntities().removeAll(c);
     }
 
     @Override
-    public boolean retainAll(Collection<?> c)
-    {
+    public boolean retainAll(Collection<?> c) {
         return this.ensureEntities().retainAll(c);
     }
 
     @Override
-    public void clear()
-    {
+    public void clear() {
         this.ensureEntities().clear();
     }
 }

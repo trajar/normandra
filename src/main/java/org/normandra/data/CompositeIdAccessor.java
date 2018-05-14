@@ -207,64 +207,48 @@ import java.util.Map;
  * <p>
  * Date: 2/15/14
  */
-public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccessor
-{
+public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccessor {
     private final Map<ColumnMeta, ColumnAccessor> accessors;
 
-    public CompositeIdAccessor(final Field field, final Map<ColumnMeta, ColumnAccessor> m)
-    {
+    public CompositeIdAccessor(final Field field, final Map<ColumnMeta, ColumnAccessor> m) {
         super(field);
-        if (null == m || m.isEmpty())
-        {
+        if (null == m || m.isEmpty()) {
             throw new IllegalArgumentException("Accessors cannot be null/empty.");
         }
         this.accessors = new LinkedHashMap<>(m);
     }
 
     @Override
-    public Object fromEntity(final Object entity)
-    {
-        if (null == entity)
-        {
+    public Object fromEntity(final Object entity) {
+        if (null == entity) {
             return null;
         }
-        try
-        {
+        try {
             return this.get(entity);
-        }
-        catch (final Exception e)
-        {
+        } catch (final Exception e) {
             throw new IllegalStateException("Unable to get field [" + this.getField().getName() + "] from entity [" + entity + "].", e);
         }
     }
 
     @Override
-    public Map<ColumnMeta, Object> fromKey(final Object key)
-    {
-        if (null == key)
-        {
+    public Map<ColumnMeta, Object> fromKey(final Object key) {
+        if (null == key) {
             return Collections.emptyMap();
         }
-        if (!this.getField().getType().isInstance(key))
-        {
+        if (!this.getField().getType().isInstance(key)) {
             return Collections.emptyMap();
         }
 
         final Map<ColumnMeta, Object> map = new LinkedHashMap<>(this.accessors.size());
-        for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet())
-        {
+        for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet()) {
             final ColumnMeta column = entry.getKey();
             final ColumnAccessor accessor = entry.getValue();
-            try
-            {
+            try {
                 final Object value = accessor.getValue(key, null);
-                if (value != null)
-                {
+                if (value != null) {
                     map.put(column, value);
                 }
-            }
-            catch (final Exception e)
-            {
+            } catch (final Exception e) {
                 throw new IllegalStateException("Unable to toEntity key properties from [" + key + "].", e);
             }
         }
@@ -272,17 +256,13 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
     }
 
     @Override
-    public Object fromData(final Map<ColumnMeta, Object> data)
-    {
-        if (null == data || data.isEmpty())
-        {
+    public Object fromData(final Map<ColumnMeta, Object> data) {
+        if (null == data || data.isEmpty()) {
             return null;
         }
-        try
-        {
+        try {
             final Object instance = this.getField().getType().newInstance();
-            for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet())
-            {
+            for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet()) {
                 final ColumnMeta column = entry.getKey();
                 final ColumnAccessor accessor = entry.getValue();
                 final Object value = data.get(column);
@@ -290,25 +270,19 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
                 accessor.setValue(instance, holder, null);
             }
             return instance;
-        }
-        catch (final Exception e)
-        {
+        } catch (final Exception e) {
             throw new IllegalStateException("Unable to instantiate composite key from field [" + this.getField() + "].", e);
         }
     }
 
     @Override
-    public Object toKey(final Map<ColumnMeta, Object> map)
-    {
-        if (null == map || map.isEmpty())
-        {
+    public Object toKey(final Map<ColumnMeta, Object> map) {
+        if (null == map || map.isEmpty()) {
             return null;
         }
-        try
-        {
+        try {
             final Object instance = this.getField().getType().newInstance();
-            for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet())
-            {
+            for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.accessors.entrySet()) {
                 final ColumnMeta column = entry.getKey();
                 final ColumnAccessor accessor = entry.getValue();
                 final Object value = map.get(column);
@@ -316,9 +290,7 @@ public class CompositeIdAccessor extends FieldColumnAccessor implements IdAccess
                 accessor.setValue(instance, data, null);
             }
             return instance;
-        }
-        catch (final Exception e)
-        {
+        } catch (final Exception e) {
             throw new IllegalStateException("Unable to instantiate composite key from field [" + this.getField() + "].", e);
         }
     }
