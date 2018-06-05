@@ -205,30 +205,20 @@ import java.util.Map;
 /**
  * a data handler for persisting data to neo4j database
  * <p>
- * <p>
  * Date: 7/14/14
  */
-public class GraphDataHandler implements DataHandler
-{
+public class GraphDataHandler implements DataHandler {
     private final PropertyModel model;
 
-    public GraphDataHandler(final PropertyModel model)
-    {
-        if (null == model)
-        {
+    public GraphDataHandler(final PropertyModel model) {
+        if (null == model) {
             throw new NullArgumentException("property model");
         }
         this.model = model;
     }
 
     @Override
-    public boolean save(final EntityMeta meta, final Map<ColumnMeta, Object> data) throws NormandraException
-    {
-        final Object key = meta.getId().fromData(data);
-        if (null == key)
-        {
-            return false;
-        }
+    public boolean save(final EntityMeta meta, final Map<ColumnMeta, Object> data) throws NormandraException {
         this.model.put(data);
         return true;
     }

@@ -203,13 +203,9 @@ import java.util.Map;
  * <p/>
  * Date: 1/15/14
  */
-public interface IdAccessor
-{
+public interface IdAccessor {
     Object fromEntity(Object entity);
-
     Map<ColumnMeta, Object> fromKey(Object key);
-
     Object fromData(Map<ColumnMeta, Object> data);
-
     Object toKey(Map<ColumnMeta, Object> map);
 }
