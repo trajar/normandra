@@ -142,12 +142,12 @@ public class GraphManager extends EntityManager {
      * @return
      * @throws NormandraException
      */
-    public <T> NodeQuery<T> queryNodes(final Class<T> clazz, final String query, Map<String, Object> parameters) throws NormandraException {
+    public <T> NodeQuery<T> queryNodes(final Class<T> clazz, final String query, final Map<String, Object> parameters) throws NormandraException {
         if (null == clazz || null == query) {
             return null;
         }
 
-        final EntityMeta meta = this.meta.getEdgeMeta(clazz);
+        final EntityMeta meta = this.meta.getNodeMeta(clazz);
         if (null == meta) {
             throw new IllegalArgumentException("Entity [" + clazz + "] is not node type.");
         }
@@ -164,7 +164,7 @@ public class GraphManager extends EntityManager {
      * @return
      * @throws NormandraException
      */
-    public <T> EdgeQuery<T> queryEdges(final Class<T> clazz, String query, Map<String, Object> parameters) throws NormandraException {
+    public <T> EdgeQuery<T> queryEdges(final Class<T> clazz, final String query, final Map<String, Object> parameters) throws NormandraException {
         if (null == clazz || null == query) {
             return null;
         }
