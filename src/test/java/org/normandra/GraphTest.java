@@ -231,6 +231,7 @@ abstract public class GraphTest extends BaseTest {
         manager.clear();
         Assert.assertNotNull(manager.getNode(SimpleNode.class, foo.getId()));
         Assert.assertNotNull(manager.getNode(SimpleNode.class, bar.getId()));
+        Assert.assertEquals(2, manager.getNodes(SimpleNode.class, foo.getId(), bar.getId()).size());
         Assert.assertNull(manager.getNode(SimpleNode.class, UUID.randomUUID()));
 
         // get get-by-multiple-ids

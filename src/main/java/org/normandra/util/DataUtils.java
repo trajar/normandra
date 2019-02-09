@@ -279,14 +279,14 @@ public class DataUtils {
         if (null == data || data.length <= 0) {
             return null;
         }
-        return Base64.getMimeEncoder().encodeToString(data);
+        return Base64.getEncoder().encodeToString(data);
     }
 
     public static UUID stringToUUID(final String value) {
         if (null == value || value.isEmpty()) {
             return null;
         }
-        final byte[] data = Base64.getMimeDecoder().decode(value);
+        final byte[] data = Base64.getDecoder().decode(value);
         return bytesToUUID(data);
     }
 
@@ -500,8 +500,8 @@ public class DataUtils {
         mapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
         mapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        mapper.disable(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS);
-        mapper.disable(SerializationFeature.WRITE_NULL_MAP_VALUES);
+//      mapper.disable(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS);
+//      mapper.disable(SerializationFeature.WRITE_NULL_MAP_VALUES);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
                 .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
