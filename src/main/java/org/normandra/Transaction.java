@@ -206,7 +206,7 @@ import org.slf4j.LoggerFactory;
 public class Transaction implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(Transaction.class);
 
-    private final Transactional sesssion;
+    private final Transactional session;
 
     private final boolean ownsTransaction;
 
@@ -216,12 +216,12 @@ public class Transaction implements AutoCloseable {
         if (null == session) {
             throw new NullArgumentException("session");
         }
-        this.sesssion = session;
-        if (this.sesssion.pendingWork()) {
+        this.session = session;
+        if (this.session.pendingWork()) {
             this.ownsTransaction = false;
         } else {
             this.ownsTransaction = true;
-            this.sesssion.beginWork();
+            this.session.beginWork();
         }
     }
 
@@ -283,9 +283,9 @@ public class Transaction implements AutoCloseable {
             return;
         }
         if (Boolean.TRUE.equals(this.success)) {
-            this.sesssion.commitWork();
+            this.session.commitWork();
         } else {
-            this.sesssion.rollbackWork();
+            this.session.rollbackWork();
         }
     }
 }
