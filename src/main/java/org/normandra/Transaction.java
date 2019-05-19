@@ -208,21 +208,13 @@ public class Transaction implements AutoCloseable {
 
     private final Transactional session;
 
-    private final boolean ownsTransaction;
-
     private Boolean success = null;
 
-    public Transaction(final Transactional session) throws NormandraException {
+    public Transaction(final Transactional session) {
         if (null == session) {
             throw new NullArgumentException("session");
         }
         this.session = session;
-        if (this.session.pendingWork()) {
-            this.ownsTransaction = false;
-        } else {
-            this.ownsTransaction = true;
-            this.session.beginWork();
-        }
     }
 
     public void success() {
@@ -279,9 +271,6 @@ public class Transaction implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        if (!this.ownsTransaction) {
-            return;
-        }
         if (Boolean.TRUE.equals(this.success)) {
             this.session.commitWork();
         } else {

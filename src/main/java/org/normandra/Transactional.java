@@ -215,14 +215,9 @@ public interface Transactional
     /**
      * start transaction or unit of work
      *
-     * @return Returns a transaction instance, which should be closed.
+     * @return Returns a transaction instance, which should be active.
      */
     Transaction beginTransaction() throws NormandraException;
-
-    /**
-     * @return Returns true if we have begun a unit of work (i.e. transaction).
-     */
-    boolean pendingWork();
 
     /**
      * being unit of work

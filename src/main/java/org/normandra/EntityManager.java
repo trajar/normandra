@@ -327,11 +327,6 @@ public class EntityManager extends AbstractTransactional {
     }
 
     @Override
-    public boolean pendingWork() {
-        return this.database.pendingWork();
-    }
-
-    @Override
     public void beginWork() throws NormandraException {
         this.database.beginWork();
     }
