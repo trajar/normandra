@@ -202,7 +202,7 @@ import java.util.Arrays;
 
 abstract public class SaveTest extends BaseTest {
     public SaveTest(final TestHelper helper) {
-        super(helper, Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class, StoreEntity.class, ParkingLotEntity.class, StudentIndexEntity.class, CompositeIndexEntity.class));
+        super(helper, Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class, StoreEntity.class, ParkingLotEntity.class, ClassEntity.class, StudentEntity.class, StudentIndexEntity.class, CompositeIndexEntity.class));
     }
 
     @Test
@@ -334,6 +334,7 @@ abstract public class SaveTest extends BaseTest {
         Assert.assertNotNull(existing);
         Assert.assertEquals(composite.getId(), existing.getId());
         Assert.assertEquals(composite.getName(), existing.getName());
+        session.clear();
         Assert.assertNull(session.get(CompositeIndexEntity.class, composite.getId()));
         Assert.assertNull(session.get(CompositeIndexEntity.class, composite.getName()));
     }
