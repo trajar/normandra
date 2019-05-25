@@ -213,7 +213,7 @@ import java.util.UUID;
 public class CompositeIndexEntity
 {
     @Embeddable
-    public static class Key implements Serializable
+    public static class Key
     {
         @Id
         private String id;

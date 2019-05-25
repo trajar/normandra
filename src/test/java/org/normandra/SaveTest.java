@@ -202,7 +202,7 @@ import java.util.Arrays;
 
 abstract public class SaveTest extends BaseTest {
     public SaveTest(final TestHelper helper) {
-        super(helper, Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class, StoreEntity.class, ParkingLotEntity.class));
+        super(helper, Arrays.asList(DogEntity.class, CatEntity.class, ZooEntity.class, StoreEntity.class, ParkingLotEntity.class, StudentIndexEntity.class, CompositeIndexEntity.class));
     }
 
     @Test
