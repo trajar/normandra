@@ -212,6 +212,24 @@ abstract public class QueryTest extends BaseTest {
     }
 
     @Test
+    public void testProperty() throws Exception {
+        final EntityManager manager = helper.getManager();
+
+        final DogEntity dog = new DogEntity("sophi", 2);
+        manager.save(dog);
+        Assert.assertNotNull(dog.getId());
+        manager.clear();
+
+        PropertyQuery query = manager.query("select name, num_barks from animal where num_barks > 0");
+        Assert.assertNotNull(query);
+        Collection<Map<String, Object>> list = query.list();
+        Assert.assertEquals(1, list.size());
+        Map<String, Object> properties = list.iterator().next();
+        Assert.assertEquals(2, properties.size());
+        Assert.assertEquals("sophi", properties.get("name"));
+    }
+
+    @Test
     public void testSimple() throws Exception {
         final EntityManager manager = helper.getManager();
 

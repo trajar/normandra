@@ -234,4 +234,9 @@ public interface DatabaseSession extends EntitySession, Transactional {
      * query database using string with mapped parameters
      */
     DatabaseQuery query(EntityMeta meta, String query, Map<String, Object> parameters) throws NormandraException;
+
+    /**
+     * query database using string with mapped parameters
+     */
+    PropertyQuery query(String query, Map<String, Object> parameters) throws NormandraException;
 }

@@ -252,6 +252,14 @@ public class EntityManager extends AbstractTransactional {
         return this.database.query(meta, name, parameters);
     }
 
+    public PropertyQuery query(final String query) throws NormandraException {
+        return this.database.query(query, Collections.emptyMap());
+    }
+
+    public PropertyQuery query(final String query, final Map<String, Object> parameters) throws NormandraException {
+        return this.database.query(query, parameters);
+    }
+
     public Object scalarQuery(final String nameOrQuery) throws NormandraException {
         return this.database.scalarQuery(nameOrQuery);
     }
