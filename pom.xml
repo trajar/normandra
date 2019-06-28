@@ -45,7 +45,7 @@
     <dependency>
       <groupId>org.javassist</groupId>
       <artifactId>javassist</artifactId>
-      <version>3.24.0-GA</version>
+      <version>3.25.0-GA</version>
     </dependency>
     <!-- jpa -->
     <dependency>
@@ -115,7 +115,7 @@
     <dependency>
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
-      <version>1.1.7.2</version>
+      <version>1.1.7.3</version>
     </dependency>
   </dependencies>
 
