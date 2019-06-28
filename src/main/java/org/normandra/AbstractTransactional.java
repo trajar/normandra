@@ -197,7 +197,6 @@ package org.normandra;
 /**
  * a base transactional class
  * <p>
- * <p>
  * Date: 8/31/14
  */
 abstract public class AbstractTransactional implements Transactional {
@@ -220,7 +219,6 @@ abstract public class AbstractTransactional implements Transactional {
         }
         return (T) tmp[0];
     }
-
 
     @Override
     public Transaction beginTransaction() throws NormandraException {

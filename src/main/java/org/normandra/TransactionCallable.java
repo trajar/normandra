@@ -197,10 +197,9 @@ package org.normandra;
 /**
  * a runnable worker within a transaction
  * <p>
- * 
+ * <p>
  * Date: 5/30/15
  */
-public interface TransactionCallable<T>
-{
-    <T> T call(Transaction tx) throws Exception;
+public interface TransactionCallable<T> {
+    T call(Transaction tx) throws Exception;
 }

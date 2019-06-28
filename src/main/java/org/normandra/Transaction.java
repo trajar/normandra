@@ -271,6 +271,10 @@ public class Transaction implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        if (null == this.success) {
+            logger.warn("Transaction closing but not marked as commit/rollback, defaulting to rollback.");
+            this.success = false;
+        }
         if (Boolean.TRUE.equals(this.success)) {
             this.session.commitWork();
         } else {
