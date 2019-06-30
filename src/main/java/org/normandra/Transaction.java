@@ -210,11 +210,12 @@ public class Transaction implements AutoCloseable {
 
     private Boolean success = null;
 
-    public Transaction(final Transactional session) {
+    public Transaction(final Transactional session) throws NormandraException {
         if (null == session) {
             throw new NullArgumentException("session");
         }
         this.session = session;
+        this.session.beginWork();
     }
 
     public void success() {
