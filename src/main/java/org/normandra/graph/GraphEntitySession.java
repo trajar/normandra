@@ -197,13 +197,11 @@ package org.normandra.graph;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
+import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 import org.normandra.util.ArraySet;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * a graph-based entity session
@@ -262,5 +260,10 @@ public class GraphEntitySession implements EntitySession {
             }
         }
         return Collections.unmodifiableList(new ArrayList<>(orderedSet));
+    }
+
+    @Override
+    public Object load(EntityMeta meta, Map<ColumnMeta, Object> data) throws NormandraException {
+        return this.graph.load(meta, data);
     }
 }

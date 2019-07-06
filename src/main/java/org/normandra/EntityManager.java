@@ -195,6 +195,7 @@
 package org.normandra;
 
 import org.apache.commons.lang.NullArgumentException;
+import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.EntityMetaLookup;
 
@@ -282,7 +283,7 @@ public class EntityManager extends AbstractTransactional {
 
     public <T> T get(final Class<? extends T> clazz, final Object key) throws NormandraException {
         if (null == clazz) {
-            throw new NullArgumentException("element");
+            throw new NullArgumentException("type");
         }
         if (null == key) {
             return null;
@@ -295,7 +296,28 @@ public class EntityManager extends AbstractTransactional {
 
         final Object obj = this.database.get(meta, key);
         if (obj != null) {
-            return (T) obj;
+            return clazz.cast(obj);
+        }
+
+        return null;
+    }
+
+    public <T> T load(final Class<? extends T> clazz, final Map<ColumnMeta, Object> data) throws NormandraException {
+        if (null == clazz) {
+            throw new NullArgumentException("type");
+        }
+        if (null == data || data.isEmpty()) {
+            return null;
+        }
+
+        final EntityMeta meta = this.lookup.getMeta(clazz);
+        if (null == meta) {
+            return null;
+        }
+
+        final Object obj = this.database.load(meta, data);
+        if (obj != null) {
+            return clazz.cast(obj);
         }
 
         return null;
