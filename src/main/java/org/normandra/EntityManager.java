@@ -232,6 +232,14 @@ public class EntityManager extends AbstractTransactional {
         this.database.clear();
     }
 
+    public EntityMeta findMeta(final String labelOrType) {
+        return this.lookup.getMeta(labelOrType);
+    }
+
+    public EntityMeta findMeta(final Class clazz) {
+        return this.lookup.getMeta(clazz);
+    }
+
     public DatabaseSession getSession() {
         return this.database;
     }
