@@ -207,63 +207,52 @@ import java.util.Map;
  * <p>
  * Date: 7/14/14
  */
-public class NullEntityCache implements EntityCache
-{
+public class NullEntityCache implements EntityCache {
     private static final EntityCache instance = new NullEntityCache();
 
     private static final EntityCacheFactory factory = new Factory();
 
-    public static final EntityCache getInstance()
-    {
+    public static final EntityCache getInstance() {
         return NullEntityCache.instance;
     }
 
-    public static final EntityCacheFactory getFactory()
-    {
+    public static final EntityCacheFactory getFactory() {
         return NullEntityCache.factory;
     }
 
-    private static class Factory implements EntityCacheFactory
-    {
+    private static class Factory implements EntityCacheFactory {
         @Override
-        public EntityCache create()
-        {
+        public EntityCache create() {
             return NullEntityCache.instance;
         }
     }
 
     @Override
-    public void clear()
-    {
+    public void clear() {
 
     }
 
     @Override
-    public <T> Map<Object, T> find(EntityMeta meta, Collection<?> keys, Class<T> clazz)
-    {
+    public <T> Map<Object, T> find(EntityMeta meta, Collection<?> keys, Class<T> clazz) {
         return Collections.emptyMap();
     }
 
     @Override
-    public Object get(EntityMeta meta, Object key, Class clazz)
-    {
+    public Object get(EntityMeta meta, Object key, Class clazz) {
         return null;
     }
 
     @Override
-    public boolean remove(EntityMeta meta, Object key)
-    {
+    public boolean remove(EntityMeta meta, Object key) {
         return false;
     }
 
     @Override
-    public boolean put(EntityMeta meta, Object key, Object entity)
-    {
+    public boolean put(EntityMeta meta, Object key, Object entity) {
         return false;
     }
 
-    private NullEntityCache()
-    {
+    private NullEntityCache() {
 
     }
 }

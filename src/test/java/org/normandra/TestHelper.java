@@ -204,5 +204,5 @@ public interface TestHelper {
     GraphManager getGraph();
     void create(DatabaseMetaBuilder builder) throws Exception;
     void create(GraphMetaBuilder builder) throws Exception;
-    void cleanup();
+    void cleanup() throws Exception;
 }

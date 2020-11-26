@@ -45,6 +45,13 @@ public class DatabaseMetaBuilder {
         return this;
     }
 
+    public GraphMetaBuilder asGraph() {
+        final GraphMetaBuilder graph = new GraphMetaBuilder();
+        return graph
+                .withColumnFactory(this.columnAccessorFactory)
+                .withEntityClasses(this.classes);
+    }
+
     public DatabaseMeta create() {
         final AnnotationParser parser = new AnnotationParser(this.columnAccessorFactory, this.classes);
         return new DatabaseMeta(parser.read());

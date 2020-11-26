@@ -194,11 +194,13 @@
 
 package org.normandra.property;
 
+import org.normandra.NormandraException;
 import org.normandra.data.DataHandler;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -208,49 +210,55 @@ import java.util.Map;
  * <p>
  * Date: 7/21/14
  */
-public class MemoryPropertyModel implements PropertyModel, DataHandler
-{
+public class MemoryPropertyModel implements PropertyModel, DataHandler {
     private final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
 
-    public MemoryPropertyModel()
-    {
+    public MemoryPropertyModel() {
 
     }
 
-    public MemoryPropertyModel(final Map<ColumnMeta, Object> m)
-    {
-        if (m != null)
-        {
+    public MemoryPropertyModel(final Map<ColumnMeta, Object> m) {
+        if (m != null) {
             this.data.putAll(m);
         }
     }
 
     @Override
-    public Map<ColumnMeta, Object> get()
-    {
+    public Map<ColumnMeta, Object> get() {
         return Collections.unmodifiableMap(this.data);
     }
 
     @Override
-    public void put(final Map<ColumnMeta, Object> data)
-    {
-        if (null == data || data.isEmpty())
-        {
+    public Map<String, Object> fields(Map<ColumnMeta, Object> data) throws NormandraException {
+        if (null == data || data.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        final Map<String, Object> fields = new HashMap<>(data.size());
+        for (final Map.Entry<ColumnMeta, Object> entry : data.entrySet()) {
+            final ColumnMeta column = entry.getKey();
+            final String name = column.getName();
+            fields.put(name, entry.getValue());
+        }
+        return Collections.unmodifiableMap(fields);
+    }
+
+    @Override
+    public void put(final Map<ColumnMeta, Object> data) {
+        if (null == data || data.isEmpty()) {
             return;
         }
         this.data.putAll(data);
     }
 
     @Override
-    public boolean save(final EntityMeta entity, final Map<ColumnMeta, Object> data)
-    {
+    public boolean save(final EntityMeta entity, final Map<ColumnMeta, Object> data) {
         this.data.putAll(data);
         return true;
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         // nothing to do
     }
 }

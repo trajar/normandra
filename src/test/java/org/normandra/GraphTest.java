@@ -359,17 +359,28 @@ abstract public class GraphTest extends BaseTest {
         }
         Assert.assertEquals(2, nodes.size());
 
-        /*
-        Assert.assertEquals(1, john.expandByType(1, SimpleEdge.class).size());
-        Assert.assertEquals(2, john.expandByType(2, SimpleEdge.class).size());
-        Assert.assertEquals(2, bob.expandByType(1, SimpleEdge.class).size());
+        Assert.assertEquals(1, counterIterables(john.expandByType(1, SimpleEdge.class)));
+        Assert.assertEquals(2, counterIterables(john.expandByType(2, SimpleEdge.class)));
+        Assert.assertEquals(2, counterIterables(bob.expandByType(1, SimpleEdge.class)));
 
-        Assert.assertEquals(3, john.expand(3).size());
-        Assert.assertEquals(3, john.expandByType(3, SimpleEdge.class).size());
-        Assert.assertEquals(3, john.expand(4).size());
-        Assert.assertEquals(3, john.expandByType(4, SimpleEdge.class).size());
-        Assert.assertEquals(3, john.expand(5).size());
-        Assert.assertEquals(3, john.expandByType(5, SimpleEdge.class).size());
-        */
+        Assert.assertEquals(3, counterIterables(john.expand(3)));
+        Assert.assertEquals(3, counterIterables(john.expandByType(3, SimpleEdge.class)));
+        Assert.assertEquals(3, counterIterables(john.expand(4)));
+        Assert.assertEquals(3, counterIterables(john.expandByType(4, SimpleEdge.class)));
+        Assert.assertEquals(3, counterIterables(john.expand(5)));
+        Assert.assertEquals(3, counterIterables(john.expandByType(5, SimpleEdge.class)));
+    }
+
+    private static int counterIterables(final Iterable itr) {
+        if (null == itr) {
+            return 0;
+        }
+        int num = 0;
+        for (final Object obj : itr) {
+            if (obj != null) {
+                num++;
+            }
+        }
+        return num;
     }
 }

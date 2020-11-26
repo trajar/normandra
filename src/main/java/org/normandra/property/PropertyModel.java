@@ -208,5 +208,6 @@ import java.util.Map;
  */
 public interface PropertyModel extends Closeable, AutoCloseable {
     Map<ColumnMeta, Object> get() throws NormandraException;
+    Map<String, Object> fields(Map<ColumnMeta, Object> data) throws NormandraException;
     void put(Map<ColumnMeta, Object> data) throws NormandraException;
 }
