@@ -206,7 +206,6 @@ import java.util.Map;
  * <p>
  * Date: 5/25/14
  */
-public interface DataHandler
-{
+public interface DataHandler {
     boolean save(EntityMeta entity, Map<ColumnMeta, Object> data) throws NormandraException;
 }

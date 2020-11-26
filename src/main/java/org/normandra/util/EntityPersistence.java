@@ -237,14 +237,14 @@ public class EntityPersistence {
         }
 
         // handle data for each entity
-        final Map<ColumnMeta, Object> data = this.mapData(entity, instance);
+        final Map<ColumnMeta, Object> data = this.map(entity, instance);
         final Map<ColumnMeta, Object> filtered = entity.filter(data, instance);
         if (!handler.save(entity, filtered)) {
             throw new NormandraException("Unable to save instance, unknown error.");
         }
     }
 
-    private Map<ColumnMeta, Object> mapData(final EntityMeta entity, final Object instance) throws NormandraException {
+    private Map<ColumnMeta, Object> map(final EntityMeta entity, final Object instance) throws NormandraException {
         final Map<ColumnMeta, Object> data = new LinkedHashMap<>();
         for (final ColumnMeta column : entity) {
             if (!(column instanceof MappedColumnMeta)) {

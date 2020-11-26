@@ -203,7 +203,6 @@ import java.io.Serializable;
 /**
  * id generator sequence api
  */
-public interface IdGenerator
-{
+public interface IdGenerator {
     Serializable generate(EntitySession session, EntityMeta entity) throws NormandraException;
 }
