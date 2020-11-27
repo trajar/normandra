@@ -195,8 +195,6 @@
 package org.normandra;
 
 import org.normandra.meta.DatabaseMeta;
-import org.normandra.meta.EntityMeta;
-import org.normandra.meta.QueryMeta;
 
 /**
  * entity manager factory, a core constructor
@@ -226,12 +224,6 @@ public class EntityManagerFactory {
         try {
             // refresh schema
             this.database.refresh();
-            // register queries
-            for (final EntityMeta meta : this.databaseMeta) {
-                for (final QueryMeta query : meta.getQueries()) {
-                    this.database.registerQuery(meta, query.getName(), query.getQuery());
-                }
-            }
             this.configured = true;
         } catch (final Exception e) {
             throw new NormandraException("Unable to refresh database.", e);

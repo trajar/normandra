@@ -204,23 +204,19 @@ import java.util.UUID;
  * <p>
  * Date: 3/21/14
  */
-public class UUIDGenerator implements IdGenerator
-{
+public class UUIDGenerator implements IdGenerator {
     private static final UUIDGenerator instance = new UUIDGenerator();
 
-    public static IdGenerator getInstance()
-    {
+    public static IdGenerator getInstance() {
         return UUIDGenerator.instance;
     }
 
-    private UUIDGenerator()
-    {
+    private UUIDGenerator() {
 
     }
 
     @Override
-    public UUID generate(EntitySession session, EntityMeta entity)
-    {
+    public UUID generate(EntitySession session, EntityMeta entity) {
         return UUID.randomUUID();
     }
 }

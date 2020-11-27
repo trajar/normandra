@@ -197,14 +197,14 @@ package org.normandra.meta;
 import org.apache.commons.lang.NullArgumentException;
 
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * column meta-data
  * <p>
  * Date: 9/1/13
  */
-public class ColumnMeta implements Comparable<ColumnMeta>
-{
+public class ColumnMeta implements Comparable<ColumnMeta> {
     private final String name;
 
     private final String property;
@@ -217,18 +217,14 @@ public class ColumnMeta implements Comparable<ColumnMeta>
 
     private final boolean json;
 
-    public ColumnMeta(final String name, final String property, final Class<?> clazz, final boolean primaryKey, final boolean lazy, final boolean json)
-    {
-        if (null == name)
-        {
+    public ColumnMeta(final String name, final String property, final Class<?> clazz, final boolean primaryKey, final boolean lazy, final boolean json) {
+        if (null == name) {
             throw new NullArgumentException("name");
         }
-        if (null == property)
-        {
+        if (null == property) {
             throw new NullArgumentException("property");
         }
-        if (null == clazz)
-        {
+        if (null == clazz) {
             throw new NullArgumentException("class");
         }
         this.name = name;
@@ -242,111 +238,67 @@ public class ColumnMeta implements Comparable<ColumnMeta>
     /**
      * @return the name of the column in the database
      */
-    public String getName()
-    {
+    public String getName() {
         return this.name;
     }
 
     /**
      * @return the name of the property (ie class field) within the entity
      */
-    public String getProperty()
-    {
+    public String getProperty() {
         return this.property;
     }
 
-    public Class<?> getType()
-    {
+    public Class<?> getType() {
         return this.type;
     }
 
-    public boolean isCollection()
-    {
+    public boolean isCollection() {
         return Collection.class.isAssignableFrom(this.type);
     }
 
-    public boolean isEmbedded()
-    {
+    public boolean isEmbedded() {
         return true;
     }
 
-    public boolean isPrimaryKey()
-    {
+    public boolean isPrimaryKey() {
         return this.primaryKey;
     }
 
-    public boolean isLazyLoaded()
-    {
+    public boolean isLazyLoaded() {
         return this.lazy;
     }
 
-    public boolean isJson()
-    {
+    public boolean isJson() {
         return this.json;
     }
 
     @Override
-    public int compareTo(final ColumnMeta meta)
-    {
-        if (null == meta)
-        {
+    public int compareTo(final ColumnMeta meta) {
+        if (null == meta) {
             return 1;
         }
         return this.name.compareToIgnoreCase(meta.name);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.name + " (" + this.type.getSimpleName() + ")";
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         ColumnMeta that = (ColumnMeta) o;
-
-        if (primaryKey != that.primaryKey)
-        {
-            return false;
-        }
-        if (lazy != that.lazy)
-        {
-            return false;
-        }
-        if (json != that.json)
-        {
-            return false;
-        }
-        if (name != null ? !name.equals(that.name) : that.name != null)
-        {
-            return false;
-        }
-        if (property != null ? !property.equals(that.property) : that.property != null)
-        {
-            return false;
-        }
-        return type != null ? type.equals(that.type) : that.type == null;
+        return primaryKey == that.primaryKey &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(property, that.property) &&
+                Objects.equals(type, that.type);
     }
 
     @Override
-    public int hashCode()
-    {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (property != null ? property.hashCode() : 0);
-        result = 31 * result + (type != null ? type.hashCode() : 0);
-        result = 31 * result + (primaryKey ? 1 : 0);
-        result = 31 * result + (lazy ? 1 : 0);
-        result = 31 * result + (json ? 1 : 0);
-        return result;
+    public int hashCode() {
+        return Objects.hash(name, property, type, primaryKey);
     }
 }

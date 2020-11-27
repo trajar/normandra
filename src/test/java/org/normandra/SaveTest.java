@@ -211,11 +211,16 @@ abstract public class SaveTest extends BaseTest {
 
         final DogEntity dog = new DogEntity("fido", 12);
         session.save(dog);
-        Assert.assertEquals(Long.valueOf(1), dog.getId());
 
         final CatEntity cat = new CatEntity("hank", true);
         session.save(cat);
-        Assert.assertEquals(Long.valueOf(2), cat.getId());
+
+        session.clear();
+
+        Assert.assertEquals(dog, session.get(DogEntity.class, dog.getId()));
+        Assert.assertEquals(cat, session.get(CatEntity.class, cat.getId()));
+
+        Assert.assertEquals(dog, session.get(AnimalEntity.class, dog.getId()));
     }
 
     @Test
@@ -241,14 +246,8 @@ abstract public class SaveTest extends BaseTest {
     @Test
     public void testNoId() throws Exception {
         final EntityManager session = helper.getManager();
-        Exception exception = null;
-        try {
-            session.save(new ParkingLotEntity("A", 100));
-            session.save(new ParkingLotEntity("B", 220));
-        } catch (final Exception e) {
-            exception = e;
-        }
-        Assert.assertNotNull(exception);
+        session.save(new ParkingLotEntity("A", 100));
+        session.save(new ParkingLotEntity("B", 220));
     }
 
     @Test
@@ -257,9 +256,9 @@ abstract public class SaveTest extends BaseTest {
 
         final ClassEntity classroom = new ClassEntity("geopolitics", 234);
         session.save(classroom);
-        Assert.assertTrue(classroom == session.get(ClassEntity.class, 1L));
+        Assert.assertTrue(classroom == session.get(ClassEntity.class, classroom.getId()));
         session.clear();
-        Assert.assertEquals(classroom, session.get(ClassEntity.class, 1L));
+        Assert.assertEquals(classroom, session.get(ClassEntity.class, classroom.getId()));
 
         StudentEntity student = new StudentEntity("fred");
         session.save(student);
@@ -299,10 +298,8 @@ abstract public class SaveTest extends BaseTest {
 
         DogEntity dog = new DogEntity("fido", 12);
         session.save(dog);
-        Assert.assertEquals(Long.valueOf(1), dog.getId());
         CatEntity cat = new CatEntity("hank", true);
         session.save(cat);
-        Assert.assertEquals(Long.valueOf(2), cat.getId());
 
         ZooEntity zoo = new ZooEntity(Arrays.asList(cat));
         zoo.addLocation(new ZooLocation("boston", "bean town"));
@@ -314,6 +311,9 @@ abstract public class SaveTest extends BaseTest {
         Assert.assertNotNull(existing);
         Assert.assertTrue(zoo.getCats().containsAll(existing.getCats()));
         Assert.assertTrue(existing.getCats().containsAll(zoo.getCats()));
+
+        Assert.assertEquals(zoo.getLocations().size(), existing.getLocations().size());
+        Assert.assertEquals(zoo.getLocations().iterator().next(), existing.getLocations().iterator().next());
     }
 
     @Test
@@ -348,8 +348,6 @@ abstract public class SaveTest extends BaseTest {
             session.save(dog);
             tx.success();
         });
-        Assert.assertEquals(Long.valueOf(1), dog.getId());
-
         session.clear();
 
         final DogEntity existing = session.get(DogEntity.class, dog.getId());

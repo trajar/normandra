@@ -205,9 +205,6 @@ public class DatabaseMeta implements EntityMetaLookup, Iterable<EntityMeta> {
     private final EntityMetaCollection entities;
 
     public DatabaseMeta(final Collection<EntityMeta> c) {
-        if (null == c || c.isEmpty()) {
-            throw new IllegalArgumentException("Entities cannot be null/empty.");
-        }
         this.entities = new EntityMetaCollection(c);
     }
 

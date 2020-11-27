@@ -196,23 +196,14 @@ package org.normandra.entities;
 
 import org.normandra.util.ArraySet;
 
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import javax.persistence.*;
+import java.util.*;
 
 /**
  * Date: 3/30/14
  */
 @Entity
-public class ZooEntity
-{
+public class ZooEntity {
     @Id
     private UUID id;
 
@@ -222,40 +213,35 @@ public class ZooEntity
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<ZooLocation> locations = new HashSet<>();
 
-    public ZooEntity()
-    {
+    public ZooEntity() {
 
     }
 
-    public ZooEntity(final Collection<CatEntity> c)
-    {
+    public ZooEntity(final Collection<CatEntity> c) {
         this.cats = new ArraySet<>(c);
     }
 
-    public Set<CatEntity> getCats()
-    {
-        if (null == this.cats)
-        {
+    public Set<CatEntity> getCats() {
+        if (null == this.cats) {
             return Collections.emptySet();
-        }
-        else
-        {
+        } else {
             return Collections.unmodifiableSet(this.cats);
         }
     }
 
-    public boolean addLocation(final ZooLocation location)
-    {
+    public boolean addLocation(final ZooLocation location) {
         return this.locations.add(location);
     }
 
-    public boolean removeLocation(final ZooLocation location)
-    {
+    public boolean removeLocation(final ZooLocation location) {
         return this.locations.remove(location);
     }
 
-    public UUID getId()
-    {
+    public Collection<ZooLocation> getLocations() {
+        return this.locations;
+    }
+
+    public UUID getId() {
         return id;
     }
 }

@@ -217,12 +217,6 @@ public class GraphMeta extends DatabaseMeta {
 
     public GraphMeta(final Collection<EntityMeta> vertices, final Collection<EntityMeta> edges, final Collection<EntityMeta> entities) {
         super(merge(Arrays.asList(vertices, edges, entities)));
-        if (null == vertices || vertices.isEmpty()) {
-            throw new IllegalArgumentException("Vertex entities cannot be null/empty.");
-        }
-        if (null == edges || edges.isEmpty()) {
-            throw new IllegalArgumentException("Edge entities cannot be null/empty.");
-        }
         this.nodeEntities = new EntityMetaCollection(vertices);
         this.edgeEntities = new EntityMetaCollection(edges);
         this.genericEntities = new EntityMetaCollection(entities);

@@ -206,6 +206,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+import java.util.UUID;
 
 /**
  * base entity for inheritance
@@ -221,8 +222,7 @@ import javax.persistence.Table;
 public class AnimalEntity
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
-    private Long id;
+    private UUID id;
 
     @Column
     private String name;
@@ -237,7 +237,7 @@ public class AnimalEntity
         this.name = name;
     }
 
-    public Long getId()
+    public UUID getId()
     {
         return id;
     }

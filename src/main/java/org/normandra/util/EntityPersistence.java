@@ -226,7 +226,7 @@ public class EntityPersistence {
 
     public void save(final EntityMeta entity, final Object instance, final DataHandler handler) throws NormandraException {
         // generate any primary ids
-        for (final ColumnMeta column : entity.getColumns()) {
+        for (final ColumnMeta column : entity.getPrimaryKeys()) {
             final ColumnAccessor accessor = entity.getAccessor(column);
             final IdGenerator generator = entity.getGenerator(column);
             if (generator != null && accessor != null && accessor.isEmpty(instance)) {

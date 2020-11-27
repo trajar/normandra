@@ -197,10 +197,10 @@ package org.normandra.association;
 import javassist.util.proxy.MethodHandler;
 import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
-import org.normandra.data.DataHolder;
 import org.normandra.NormandraException;
 import org.normandra.data.BasicDataHolder;
 import org.normandra.data.ColumnAccessor;
+import org.normandra.data.DataHolder;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
@@ -217,8 +217,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>
  * Date: 2/2/14
  */
-public class LazyAssociationHandler implements MethodHandler
-{
+public class LazyAssociationHandler implements MethodHandler {
     private static final Logger logger = LoggerFactory.getLogger(LazyAssociationHandler.class);
 
     private static final Collection<String> ignoredMethods = Arrays.asList("setHandler", "getHandler", "toString");
@@ -231,18 +230,14 @@ public class LazyAssociationHandler implements MethodHandler
 
     private final EntitySession session;
 
-    public LazyAssociationHandler(final EntityMeta meta, final AssociationAccessor accessor, final EntitySession session)
-    {
-        if (null == meta)
-        {
+    public LazyAssociationHandler(final EntityMeta meta, final AssociationAccessor accessor, final EntitySession session) {
+        if (null == meta) {
             throw new NullArgumentException("entity meta");
         }
-        if (null == accessor)
-        {
+        if (null == accessor) {
             throw new NullArgumentException("accessor");
         }
-        if (null == session)
-        {
+        if (null == session) {
             throw new NullArgumentException("session");
         }
         this.meta = meta;
@@ -250,48 +245,39 @@ public class LazyAssociationHandler implements MethodHandler
         this.session = session;
     }
 
-    public boolean isLoaded()
-    {
+    public boolean isLoaded() {
         return this.loaded.get();
     }
 
     @Override
-    public Object invoke(final Object self, final Method thisMethod, final Method proceed, final Object[] args) throws Throwable
-    {
+    public Object invoke(final Object self, final Method thisMethod, final Method proceed, final Object[] args) throws Throwable {
         boolean skip = false;
-        for (final String ignore : ignoredMethods)
-        {
-            if (thisMethod.getName().equals(ignore) || proceed.getName().equals(ignore))
-            {
+        for (final String ignore : ignoredMethods) {
+            if (thisMethod.getName().equals(ignore) || proceed.getName().equals(ignore)) {
                 skip = true;
                 break;
             }
         }
-        if (!skip && !this.loaded.get())
-        {
+        if (!skip && !this.loaded.get()) {
             this.load(self);
         }
         return proceed.invoke(self, args);
     }
 
-    private boolean load(final Object self) throws NormandraException
-    {
-        if (this.loaded.get())
-        {
+    private boolean load(final Object self) throws NormandraException {
+        if (this.loaded.get()) {
             return false;
         }
 
         logger.debug("Intercepting proxy method invocation, fetching lazy association for [" + this.meta + "].");
         final Object value = this.accessor.get();
-        if (null == value)
-        {
+        if (null == value) {
             logger.info("Lazy association fetched, null/empty value found.");
             return false;
         }
 
         logger.debug("Lazy association fetched, copying entity values from instance [" + value + "].");
-        for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.meta.getAccessors())
-        {
+        for (final Map.Entry<ColumnMeta, ColumnAccessor> entry : this.meta.getAccessors()) {
             final ColumnAccessor accessor = entry.getValue();
             final Object columnValue = accessor.getValue(value, session);
             final DataHolder data = new BasicDataHolder(columnValue);

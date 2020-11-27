@@ -207,35 +207,26 @@ import java.util.Set;
 /**
  * concrete set element accessor
  * <p>
- * 
+ * <p>
  * Date: 1/19/14
  */
-public class SetColumnAccessor extends CollectionColumnAccessor
-{
-    public SetColumnAccessor(final Field prop, final Class<?> generic, final boolean lazy)
-    {
+public class SetColumnAccessor extends CollectionColumnAccessor {
+    public SetColumnAccessor(final Field prop, final Class<?> generic, final boolean lazy) {
         super(prop, generic, lazy);
     }
 
-
     @Override
-    public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException
-    {
-        if (this.isLazy())
-        {
+    public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException {
+        if (this.isLazy()) {
             return this.setCollection(entity, new LazyElementSet(session, data));
-        }
-        else
-        {
-            final Object value = data.get();
-            return this.setCollection(entity, (Collection) value);
+        } else {
+            final Collection value = (Collection) data.get();
+            return this.setCollection(entity, new HashSet<>(value));
         }
     }
 
-
     @Override
-    public Set getValue(final Object entity, EntitySession session) throws NormandraException
-    {
+    public Set getValue(final Object entity, EntitySession session) throws NormandraException {
         final Collection<?> list = this.getCollection(entity);
         return Collections.unmodifiableSet(new HashSet<>(list));
     }

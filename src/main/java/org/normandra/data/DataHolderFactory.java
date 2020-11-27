@@ -206,11 +206,8 @@ import org.normandra.meta.ColumnMeta;
  * 
  * Date: 5/15/14
  */
-public interface DataHolderFactory
-{
+public interface DataHolderFactory {
     DataHolder createStatic(Object value);
     DataHolder createLazy(EntityMeta meta, ColumnMeta column, Object key);
-    DataHolder createJoinCollection(EntityMeta meta, JoinCollectionMeta column, Object key);
-    DataHolder createJoinColumn(EntityMeta meta, JoinColumnMeta column, Object key);
     DataHolder createMappedColumn(EntityMeta meta, MappedColumnMeta column, Object key);
 }

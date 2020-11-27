@@ -200,33 +200,28 @@ package org.normandra.meta;
  * <p>
  * Date: 3/22/14
  */
-public class JoinCollectionMeta extends ColumnMeta
-{
+public class JoinCollectionMeta extends ColumnMeta {
     private final EntityMeta entity;
 
     private final boolean embedded;
 
-    public JoinCollectionMeta(final String name, final String property, final Class<?> clazz, final EntityMeta associated, final boolean primary, final boolean lazy, final boolean embedded)
-    {
+    public JoinCollectionMeta(final String name, final String property, final Class<?> clazz, final EntityMeta associated, final boolean primary, final boolean lazy, final boolean embedded) {
         super(name, property, clazz, primary, lazy, false);
         this.entity = associated;
         this.embedded = embedded;
     }
 
     @Override
-    public boolean isCollection()
-    {
+    public boolean isCollection() {
         return true;
     }
 
     @Override
-    public boolean isEmbedded()
-    {
+    public boolean isEmbedded() {
         return this.embedded;
     }
 
-    public EntityMeta getEntity()
-    {
+    public EntityMeta getEntity() {
         return this.entity;
     }
 }

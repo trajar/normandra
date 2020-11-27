@@ -745,7 +745,7 @@ public class AnnotationParser {
                 throw new IllegalStateException("Type [" + type + "] is not a registered entity.");
             }
             final ColumnAccessor accessor = this.factory.createSingleJoin(field, entity, lazy);
-            final ColumnMeta primary = entity.getPrimaryKeys().iterator().next();
+            final ColumnMeta primary = entity.getPrimaryKey();
             final ColumnMeta column = new JoinColumnMeta(name, property, primary.getType(), entity, false);
             final Map<ColumnMeta, ColumnAccessor> map = new HashMap<>(1);
             map.put(column, accessor);

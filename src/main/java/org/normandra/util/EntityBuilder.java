@@ -200,7 +200,9 @@ import org.normandra.NormandraException;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.DataHolder;
 import org.normandra.data.DataHolderFactory;
-import org.normandra.meta.*;
+import org.normandra.meta.ColumnMeta;
+import org.normandra.meta.EntityMeta;
+import org.normandra.meta.MappedColumnMeta;
 
 import java.util.Map;
 
@@ -248,11 +250,7 @@ public class EntityBuilder {
                 final ColumnAccessor accessor = meta.getAccessor(column);
                 if (accessor != null && !accessor.isLoaded(instance)) {
                     DataHolder lazy = null;
-                    if (column instanceof JoinColumnMeta) {
-                        lazy = this.factory.createJoinColumn(meta, (JoinColumnMeta) column, key);
-                    } else if (column instanceof JoinCollectionMeta) {
-                        lazy = this.factory.createJoinCollection(meta, (JoinCollectionMeta) column, key);
-                    } else if (column instanceof MappedColumnMeta) {
+                    if (column instanceof MappedColumnMeta) {
                         lazy = this.factory.createMappedColumn(meta, (MappedColumnMeta) column, key);
                     } else if (!column.isEmbedded() && !data.containsKey(column)) {
                         lazy = this.factory.createLazy(meta, column, key);

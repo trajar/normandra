@@ -208,16 +208,14 @@ import java.lang.reflect.Field;
  * <p>
  * Date: 2/1/14
  */
-public class SingleJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor
-{
+public class SingleJoinColumnAccessor extends FieldColumnAccessor implements ColumnAccessor {
     private final ElementIdentity factory;
 
     private final EntityMeta entity;
 
     private final boolean lazy;
 
-    public SingleJoinColumnAccessor(final Field field, final EntityMeta meta, final boolean lazy, final ElementIdentity factory)
-    {
+    public SingleJoinColumnAccessor(final Field field, final EntityMeta meta, final boolean lazy, final ElementIdentity factory) {
         super(field);
         this.entity = meta;
         this.lazy = lazy;
@@ -225,93 +223,65 @@ public class SingleJoinColumnAccessor extends FieldColumnAccessor implements Col
     }
 
     @Override
-    public boolean isEmpty(final Object entity) throws NormandraException
-    {
-        try
-        {
+    public boolean isEmpty(final Object entity) throws NormandraException {
+        try {
             return this.get(entity) == null;
-        }
-        catch (final Exception e)
-        {
+        } catch (final Exception e) {
             throw new NormandraException("Unable to get join-column.", e);
         }
     }
 
     @Override
-    public boolean isLoaded(final Object entity) throws NormandraException
-    {
-        try
-        {
+    public boolean isLoaded(final Object entity) throws NormandraException {
+        try {
             final Object association = this.get(entity);
-            if (null == association)
-            {
+            if (null == association) {
                 return true;
             }
-            if (!AssociationUtils.isProxy(association))
-            {
+            if (!AssociationUtils.isProxy(association)) {
                 return true;
             }
             return AssociationUtils.isLoaded(association);
-        }
-        catch (final Exception e)
-        {
+        } catch (final Exception e) {
             throw new NormandraException("Unable to determine if entity/proxy column [" + this.getField().getName() + "] is loaded.", e);
         }
     }
 
     @Override
-    public Object getValue(final Object entity, EntitySession session) throws NormandraException
-    {
+    public Object getValue(final Object entity, EntitySession session) throws NormandraException {
         final Object associatedEntity;
-        try
-        {
+        try {
             associatedEntity = this.get(entity);
-        }
-        catch (final Exception e)
-        {
+        } catch (final Exception e) {
             throw new NormandraException("Unable to get join-column [" + this.getField().getName() + "].", e);
         }
-        if (null == associatedEntity)
-        {
+        if (null == associatedEntity) {
             return null;
         }
         return this.factory.fromEntity(session, associatedEntity);
     }
 
     @Override
-    public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException
-    {
-        if (null == data || data.isEmpty())
-        {
-            try
-            {
+    public boolean setValue(final Object entity, final DataHolder data, final EntitySession session) throws NormandraException {
+        if (null == data || data.isEmpty()) {
+            try {
                 this.set(entity, null);
                 return true;
-            }
-            catch (final Exception e)
-            {
+            } catch (final Exception e) {
                 throw new NormandraException("Unable to set join-column [" + this.getField().getName() + "] to empty/null value.", e);
             }
-        }
-        else
-        {
+        } else {
             final Object key = data.get();
-            try
-            {
+            try {
                 final Object associated;
-                if (this.lazy)
-                {
+                if (this.lazy) {
                     associated = AssociationUtils.createProxy(this.entity, key, session, this.factory);
-                }
-                else
-                {
+                } else {
                     associated = this.factory.toEntity(session, key);
                 }
                 this.set(entity, associated);
                 return true;
-            }
-            catch (final Exception e)
-            {
+            } catch (final Exception e) {
                 throw new NormandraException("Unable to set join-column [" + this.getField().getName() + "] from data [" + data.getClass().getSimpleName() + "].", e);
             }
         }

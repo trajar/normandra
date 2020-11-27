@@ -194,9 +194,7 @@
 
 package org.normandra;
 
-import org.normandra.graph.Graph;
 import org.normandra.meta.DatabaseMeta;
-import org.normandra.meta.EntityMeta;
 
 /**
  * a NoSQL database abstraction
@@ -207,7 +205,5 @@ public interface Database {
     DatabaseMeta getMeta();
     DatabaseSession createSession();
     void refresh() throws NormandraException;
-    boolean registerQuery(EntityMeta meta, String name, String query) throws NormandraException;
-    boolean unregisterQuery(String name) throws NormandraException;
     void close();
 }

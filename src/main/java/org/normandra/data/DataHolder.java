@@ -196,9 +196,18 @@ package org.normandra.data;
 
 import org.normandra.NormandraException;
 
-public interface DataHolder
-{
-    boolean isEmpty();
+public interface DataHolder {
+    default boolean isEmpty() {
+        try {
+            if (this.get() != null) {
+                return false;
+            } else {
+                return true;
+            }
+        } catch (final Exception e) {
+            throw new IllegalStateException("Unable to determine if data is empty.", e);
+        }
+    }
 
     Object get() throws NormandraException;
 }

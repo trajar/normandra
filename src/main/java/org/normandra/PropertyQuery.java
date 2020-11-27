@@ -1,6 +1,8 @@
 package org.normandra;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,10 +17,20 @@ public interface PropertyQuery extends Iterable<Map<String, Object>>, AutoClosea
     /**
      * lists all items returned by query
      */
-    Collection<Map<String, Object>> list() throws NormandraException;
+    default List<Map<String, Object>> list() throws NormandraException {
+        final List<Map<String, Object>> list = new ArrayList<>();
+        for (final Map<String, Object> item : this) {
+            if (item != null) {
+                list.add(item);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
 
     /**
      * @return Returns the number of items returned by this query.
      */
-    boolean empty() throws NormandraException;
+    default boolean empty() throws NormandraException {
+        return this.first() != null;
+    }
 }

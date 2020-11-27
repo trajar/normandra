@@ -204,8 +204,7 @@ import java.lang.reflect.Field;
  * 
  * Date: 9/23/14
  */
-public interface ColumnAccessorFactory
-{
+public interface ColumnAccessorFactory {
     ColumnAccessor createBasic(Field field, Class<?> clazz);
     ColumnAccessor createManyJoin(Field field, EntityMeta meta, boolean lazy);
     ColumnAccessor createSingleJoin(Field field, EntityMeta meta, boolean lazy);

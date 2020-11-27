@@ -53,19 +53,4 @@ abstract public class GraphAdapter extends AbstractTransactional implements Data
             throw new IllegalStateException("Cannot delete graph entity without id.");
         }
     }
-
-    @Override
-    public boolean exists(EntityMeta meta, Object key) throws NormandraException {
-        return false;
-    }
-
-    @Override
-    public Object get(EntityMeta meta, Object key) throws NormandraException {
-        return null;
-    }
-
-    @Override
-    public List<Object> get(EntityMeta meta, Object... keys) throws NormandraException {
-        return null;
-    }
 }

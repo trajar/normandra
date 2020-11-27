@@ -49,7 +49,7 @@ public class DatabaseMetaBuilder {
         final GraphMetaBuilder graph = new GraphMetaBuilder();
         return graph
                 .withColumnFactory(this.columnAccessorFactory)
-                .withEntityClasses(this.classes);
+                .withNodeClasses(this.classes);
     }
 
     public DatabaseMeta create() {

@@ -206,6 +206,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 
 /**
  * class entity
@@ -218,8 +219,7 @@ import java.util.Collections;
 public class ClassEntity
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
-    private Long id;
+    private UUID id;
 
     @Column
     private String name;
@@ -280,7 +280,7 @@ public class ClassEntity
     }
 
 
-    public Long getId()
+    public UUID getId()
     {
         return id;
     }

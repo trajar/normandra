@@ -196,8 +196,9 @@ package org.normandra.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ZooLocation
-{
+import java.util.Objects;
+
+public class ZooLocation {
     @JsonProperty
     public String address;
 
@@ -205,14 +206,26 @@ public class ZooLocation
     public String description;
 
     @Deprecated
-    public ZooLocation()
-    {
+    public ZooLocation() {
 
     }
 
-    public ZooLocation(final String address, final String desc)
-    {
+    public ZooLocation(final String address, final String desc) {
         this.address = address;
         this.description = desc;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ZooLocation that = (ZooLocation) o;
+        return Objects.equals(address, that.address) &&
+                Objects.equals(description, that.description);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(address, description);
     }
 }

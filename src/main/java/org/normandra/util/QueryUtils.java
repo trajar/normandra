@@ -206,12 +206,9 @@ import java.util.regex.Pattern;
  * <p>
  * Date: 6/9/14
  */
-public class QueryUtils
-{
-    public static String prepare(final EntityMeta entity, final String query) throws NormandraException
-    {
-        if (null == query || query.isEmpty())
-        {
+public class QueryUtils {
+    public static String prepare(final EntityMeta entity, final String query) throws NormandraException {
+        if (null == query || query.isEmpty()) {
             return "";
         }
         String result = query;
@@ -220,20 +217,16 @@ public class QueryUtils
         return result;
     }
 
-    private static String replaceEntityNames(final EntityMeta meta, final String query) throws NormandraException
-    {
-        if (null == meta)
-        {
+    private static String replaceEntityNames(final EntityMeta meta, final String query) throws NormandraException {
+        if (null == meta) {
             return query;
         }
 
         String result = query;
-        for (final Class<?> clazz : meta.getTypes())
-        {
+        for (final Class<?> clazz : meta.getTypes()) {
             result = result.replace(clazz.getSimpleName(), meta.getTable());
             Class<?> parent = clazz.getSuperclass();
-            while (parent != null && !Object.class.equals(parent))
-            {
+            while (parent != null && !Object.class.equals(parent)) {
                 result = result.replace(parent.getSimpleName(), meta.getTable());
                 parent = parent.getSuperclass();
             }
@@ -241,24 +234,20 @@ public class QueryUtils
         return result;
     }
 
-    private static String ensureColumnNames(final String query) throws NormandraException
-    {
+    private static String ensureColumnNames(final String query) throws NormandraException {
         final String upperCase = query.toUpperCase();
         final Matcher selectMatcher = Pattern.compile("SELECT").matcher(upperCase);
-        if (!selectMatcher.find())
-        {
+        if (!selectMatcher.find()) {
             return query;
         }
 
         final Matcher fromMatcher = Pattern.compile("FROM").matcher(upperCase);
-        if (!fromMatcher.find(selectMatcher.end()))
-        {
+        if (!fromMatcher.find(selectMatcher.end())) {
             return query;
         }
 
         final String columns = query.substring(selectMatcher.end() + 1, fromMatcher.start()).trim();
-        if (!columns.isEmpty())
-        {
+        if (!columns.isEmpty()) {
             return query;
         }
 
@@ -266,8 +255,7 @@ public class QueryUtils
         return result;
     }
 
-    private QueryUtils()
-    {
+    private QueryUtils() {
 
     }
 }

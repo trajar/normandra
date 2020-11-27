@@ -202,22 +202,18 @@ import org.apache.commons.lang.NullArgumentException;
  * <p>
  * Date: 2/14/14
  */
-public class JoinColumnMeta extends ColumnMeta
-{
+public class JoinColumnMeta extends ColumnMeta {
     private final EntityMeta entity;
 
-    public JoinColumnMeta(final String name, final String property, final Class<?> clazz, final EntityMeta entity, final boolean primaryKey)
-    {
+    public JoinColumnMeta(final String name, final String property, final Class<?> clazz, final EntityMeta entity, final boolean primaryKey) {
         super(name, property, clazz, primaryKey, false, false);
-        if (null == entity)
-        {
+        if (null == entity) {
             throw new NullArgumentException("entity");
         }
         this.entity = entity;
     }
 
-    public EntityMeta getEntity()
-    {
+    public EntityMeta getEntity() {
         return this.entity;
     }
 }
