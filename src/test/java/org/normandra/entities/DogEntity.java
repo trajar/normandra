@@ -207,7 +207,6 @@ import javax.persistence.NamedQuery;
  */
 @Entity
 @DiscriminatorValue("dog")
-@NamedQuery(name = "dog_by_id", query = "select from DogEntity where id = :id")
 public class DogEntity extends AnimalEntity
 {
     @Column
