@@ -205,6 +205,7 @@ import org.normandra.entities.StudentEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * annotation parser unit tests
@@ -237,7 +238,7 @@ public class AnnotationParserTest
         Assert.assertEquals(2, student.getIndexed().size());
         Assert.assertEquals(StudentEntity.class, student.getTypes().iterator().next());
         Assert.assertTrue(student.hasColumn("class_id"));
-        Assert.assertEquals(Long.class, student.findColumn("class_id").getType());
+        Assert.assertEquals(UUID.class, student.findColumn("class_id").getType());
         Assert.assertTrue(student.findColumn("class_id") instanceof JoinColumnMeta);
         Assert.assertEquals(entities.get(0), ((JoinColumnMeta) student.findColumn("class_id")).getEntity());
     }
