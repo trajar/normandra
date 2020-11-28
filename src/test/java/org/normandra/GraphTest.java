@@ -251,6 +251,7 @@ abstract public class GraphTest extends BaseTest {
         Assert.assertEquals(0, fooNode.getDegree());
         Assert.assertEquals(0, barNode.getDegree());
 
+        // add edges
         final SimpleEdge likes = new SimpleEdge("likes");
         final SimpleEdge hates = new SimpleEdge("hates");
         final Edge likesEdge = fooNode.createEdge(barNode, likes);
@@ -262,7 +263,6 @@ abstract public class GraphTest extends BaseTest {
         Assert.assertEquals(2, fooNode.getDegree());
         Assert.assertEquals(2, barNode.getDegree());
         manager.clear();
-
         List edges = new ArrayList<>();
         for (final Object item : fooNode.getEdges()) {
             edges.add(item);
@@ -270,6 +270,16 @@ abstract public class GraphTest extends BaseTest {
         Assert.assertEquals(2, edges.size());
         Assert.assertTrue(edges.contains(likesEdge));
         Assert.assertTrue(edges.contains(hatesEdge));
+
+        manager.clear();
+
+        // test query by edge
+        Edge existing = manager.getEdge(SimpleEdge.class, likes.getId());
+        Assert.assertNotNull(existing);
+        Assert.assertEquals(likes, existing.getEntity());
+        existing = manager.getEdge(SimpleEdge.class, hates.getId());
+        Assert.assertNotNull(existing);
+        Assert.assertEquals(hates, existing.getEntity());
     }
 
     @Test

@@ -6,8 +6,6 @@ import org.normandra.NormandraException;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.GraphMeta;
 
-import java.util.List;
-
 /**
  * an adapter for graph databases to use as entity model
  */

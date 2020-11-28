@@ -200,7 +200,7 @@ import javax.persistence.Id;
 import java.util.Date;
 import java.util.UUID;
 
-@Entity
+@Entity(name = "simple_edge_2")
 public class SimpleEdge2 {
     @Id
     private UUID guid;

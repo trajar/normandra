@@ -14,6 +14,15 @@ public interface PropertyQuery extends Iterable<Map<String, Object>>, AutoClosea
      */
     Map<String, Object> first() throws NormandraException;
 
+    default Object firstScalar() throws NormandraException {
+        final Map<String, Object> map = this.first();
+        if (null == map || map.isEmpty() || map.keySet().isEmpty()) {
+            return null;
+        }
+        final String firstKey = map.keySet().iterator().next();
+        return map.get(firstKey);
+    }
+
     /**
      * lists all items returned by query
      */

@@ -194,7 +194,10 @@
 
 package org.normandra;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * a simple database query
@@ -210,10 +213,20 @@ public interface DatabaseQuery<T> extends Iterable<T>, AutoCloseable {
     /**
      * lists all items returned by query
      */
-    Collection<T> list() throws NormandraException;
+    default Collection<T> list() throws NormandraException {
+        final List<T> list = new ArrayList<>();
+        for (final T item : this) {
+            if (item != null) {
+                list.add(item);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
 
     /**
      * @return Returns the number of items returned by this query.
      */
-    boolean empty() throws NormandraException;
+    default boolean empty() throws NormandraException {
+        return this.first() != null ? false : true;
+    }
 }
