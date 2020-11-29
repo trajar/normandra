@@ -196,6 +196,7 @@ package org.normandra;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.normandra.entities.CompositeIndexEntity;
 import org.normandra.graph.*;
 
 import java.util.*;
@@ -203,7 +204,7 @@ import java.util.*;
 abstract public class GraphTest extends BaseTest {
 
     public GraphTest(final TestHelper helper) {
-        super(helper, Arrays.asList(SimpleNode.class), Arrays.asList(SimpleEdge.class, SimpleEdge2.class));
+        super(helper, Arrays.asList(SimpleNode.class, CompositeIndexEntity.class), Arrays.asList(SimpleEdge.class, SimpleEdge2.class));
     }
 
     @Test
@@ -280,6 +281,33 @@ abstract public class GraphTest extends BaseTest {
         existing = manager.getEdge(SimpleEdge.class, hates.getId());
         Assert.assertNotNull(existing);
         Assert.assertEquals(hates, existing.getEntity());
+    }
+
+    @Test
+    public void testNodeWithCompositeKey() throws Exception {
+        final GraphManager manager = helper.getGraph();
+
+        CompositeIndexEntity composite = new CompositeIndexEntity("foo");
+        Node<CompositeIndexEntity> compositeNode = manager.addNode(composite);
+        Assert.assertNotNull(composite.getId());
+        Assert.assertNotNull(composite.getName());
+        Node<CompositeIndexEntity> cached = manager.getNode(CompositeIndexEntity.class, new CompositeIndexEntity.Key(composite.getId(), composite.getName()));
+        Assert.assertTrue(compositeNode == cached);
+        Assert.assertTrue(composite == cached.getEntity());
+
+        manager.clear();
+
+        Node<CompositeIndexEntity> existing = manager.getNode(CompositeIndexEntity.class, new CompositeIndexEntity.Key(composite.getId(), composite.getName()));
+        Assert.assertNotNull(existing);
+        Assert.assertEquals(composite.getId(), existing.getEntity().getId());
+        Assert.assertEquals(composite.getName(), existing.getEntity().getName());
+
+        manager.clear();
+
+        Assert.assertNull(manager.getNode(CompositeIndexEntity.class, composite.getId()));
+        Assert.assertNull(manager.getNode(CompositeIndexEntity.class, composite.getName()));
+        Assert.assertNull(manager.get(CompositeIndexEntity.class, composite.getId()));
+        Assert.assertNull(manager.get(CompositeIndexEntity.class, composite.getName()));
     }
 
     @Test

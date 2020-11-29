@@ -194,105 +194,89 @@
 
 package org.normandra.entities;
 
-import javax.persistence.Embeddable;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import java.io.Serializable;
+import javax.persistence.*;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
  * index of students
  * <p>
- * <p>
  * Date: 3/2/14
  */
 @Table(name = "composite_index")
 @Entity
-public class CompositeIndexEntity
-{
+public class CompositeIndexEntity {
     @Embeddable
-    public static class Key
-    {
+    public static class Key {
         @Id
-        private String id;
+        private String guid;
 
         @Id
         private String name;
 
-        public Key()
-        {
+        public Key() {
 
         }
 
-        public Key(final String name)
-        {
-            this.id = UUID.randomUUID().toString();
+        public Key(final String name) {
+            this.guid = UUID.randomUUID().toString();
             this.name = name;
         }
 
-        public Key(final UUID id, final String name)
-        {
-            this.id = id.toString();
+        public Key(final UUID id, final String name) {
+            this.guid = id.toString();
             this.name = name;
         }
 
-        public Key(final String id, final String name)
-        {
-            this.id = id;
+        public Key(final String id, final String name) {
+            this.guid = id;
             this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Key key = (Key) o;
+            return Objects.equals(guid, key.guid) &&
+                    Objects.equals(name, key.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(guid, name);
         }
     }
 
     @EmbeddedId
     private Key key;
 
-    public CompositeIndexEntity()
-    {
+    public CompositeIndexEntity() {
 
     }
 
-    public CompositeIndexEntity(final String name)
-    {
+    public CompositeIndexEntity(final String name) {
         this.key = new Key(name);
     }
 
-    public String getId()
-    {
-        return this.key.id;
+    public String getId() {
+        return this.key.guid;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return this.key.name;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         CompositeIndexEntity that = (CompositeIndexEntity) o;
-
-        if (key != null ? !key.equals(that.key) : that.key != null)
-        {
-            return false;
-        }
-
-        return true;
+        return Objects.equals(key, that.key);
     }
 
     @Override
-    public int hashCode()
-    {
-        return key != null ? key.hashCode() : 0;
+    public int hashCode() {
+        return Objects.hash(key);
     }
 }

@@ -329,6 +329,8 @@ abstract public class SaveTest extends BaseTest {
         session.save(composite);
         Assert.assertNotNull(composite.getId());
         Assert.assertNotNull(composite.getName());
+        final CompositeIndexEntity cached = session.get(CompositeIndexEntity.class, new CompositeIndexEntity.Key(composite.getId(), composite.getName()));
+        Assert.assertTrue(composite == cached);
         session.clear();
         final CompositeIndexEntity existing = session.get(CompositeIndexEntity.class, new CompositeIndexEntity.Key(composite.getId(), composite.getName()));
         Assert.assertNotNull(existing);
