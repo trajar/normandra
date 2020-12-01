@@ -194,6 +194,7 @@
 
 package org.normandra.cache;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -209,6 +210,15 @@ public interface MapFactory {
             @Override
             public Map create() {
                 return new WeakHashMap();
+            }
+        };
+    }
+
+    public static MapFactory withStrongKeys() {
+        return new MapFactory() {
+            @Override
+            public Map create() {
+                return new HashMap();
             }
         };
     }
