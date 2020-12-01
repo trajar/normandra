@@ -17,8 +17,6 @@ public class StrongMemoryCache implements EntityCache {
 
     private final MapFactory maps;
 
-    private int purgeCount = 0;
-
     public static class Factory implements EntityCacheFactory {
         private final MapFactory maps;
 
