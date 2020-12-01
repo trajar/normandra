@@ -204,11 +204,9 @@ import java.util.*;
 
 /**
  * a simple in-memory cache, where the cached entities are held with a weak reference
- * <p>
- * Date: 2/3/14
  */
-public class MemoryCache implements EntityCache {
-    private static final Logger logger = LoggerFactory.getLogger(MemoryCache.class);
+public class WeakMemoryCache implements EntityCache {
+    private static final Logger logger = LoggerFactory.getLogger(WeakMemoryCache.class);
 
     private static int purgeDelayCount = 1000;
 
@@ -230,11 +228,11 @@ public class MemoryCache implements EntityCache {
 
         @Override
         public EntityCache create() {
-            return new MemoryCache(this.maps);
+            return new WeakMemoryCache(this.maps);
         }
     }
 
-    public MemoryCache(final MapFactory f) {
+    public WeakMemoryCache(final MapFactory f) {
         if (null == f) {
             throw new NullArgumentException("map factory");
         }
