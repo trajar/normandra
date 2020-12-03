@@ -196,6 +196,8 @@ package org.normandra.meta;
 
 import org.apache.commons.lang.NullArgumentException;
 
+import java.util.Objects;
+
 /**
  * a join column meta description
  * <p>
@@ -215,5 +217,19 @@ public class JoinColumnMeta extends ColumnMeta {
 
     public EntityMeta getEntity() {
         return this.entity;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        JoinColumnMeta that = (JoinColumnMeta) o;
+        return Objects.equals(entity, that.entity);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), entity);
     }
 }

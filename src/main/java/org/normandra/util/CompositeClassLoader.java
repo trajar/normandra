@@ -195,49 +195,52 @@
 package org.normandra.util;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
  * loads class first by parent, then delegates
  */
-public class CompositeClassLoader extends ClassLoader
-{
+public class CompositeClassLoader extends ClassLoader {
     private final Collection<ClassLoader> loaders;
 
-    public CompositeClassLoader(final ClassLoader parent, final Collection<ClassLoader> delegates)
-    {
+    public CompositeClassLoader(final ClassLoader parent, final Collection<ClassLoader> delegates) {
         super(parent);
         this.loaders = new ArraySet<>(delegates.stream().filter((x) -> x != null).collect(Collectors.toList()));
     }
 
     @Override
-    public Class loadClass(final String name) throws ClassNotFoundException
-    {
-        try
-        {
+    public Class loadClass(final String name) throws ClassNotFoundException {
+        try {
             final Class clazz = super.loadClass(name);
-            if (clazz != null)
-            {
+            if (clazz != null) {
                 return clazz;
             }
-        }
-        catch (final ClassNotFoundException e)
-        {
+        } catch (final ClassNotFoundException e) {
             // ignore
         }
 
-        for (final ClassLoader loader : this.loaders)
-        {
-            try
-            {
+        for (final ClassLoader loader : this.loaders) {
+            try {
                 return loader.loadClass(name);
-            }
-            catch (final ClassNotFoundException notFound)
-            {
+            } catch (final ClassNotFoundException notFound) {
                 // ignore
             }
         }
 
         throw new ClassNotFoundException("Unable to load class [" + name + "].");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CompositeClassLoader that = (CompositeClassLoader) o;
+        return Objects.equals(loaders, that.loaders);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(loaders);
     }
 }

@@ -229,6 +229,8 @@ public class AnnotationParser {
 
     private final Map<Class, EntityMeta> entities = new LinkedHashMap<>();
 
+    private final Set<Field> configuredFields = new HashSet<>();
+
     public AnnotationParser(final ColumnAccessorFactory factory, final Class clazz, final Class... list) {
         if (null == factory) {
             throw new NullArgumentException("factory");
@@ -564,8 +566,10 @@ public class AnnotationParser {
             for (final Class<?> clazz : this.getHierarchy(entityClazz)) {
                 for (final Field field : this.getFields(clazz, annotations)) {
                     if (this.configureField(entity, field)) {
-                        logger.debug("Configured metadata for [" + field + "] in [" + entity + "].");
-                        num++;
+                        if (this.configuredFields.add(field)) {
+                            logger.debug("Configured metadata for [" + field + "] in [" + entity + "].");
+                            num++;
+                        }
                     }
                 }
             }

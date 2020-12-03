@@ -199,11 +199,7 @@
  */
 package org.normandra.property;
 
-import org.normandra.meta.ColumnMeta;
-import org.normandra.meta.EntityMeta;
-import org.normandra.meta.JoinCollectionMeta;
-import org.normandra.meta.JoinColumnMeta;
-import org.normandra.meta.MappedColumnMeta;
+import org.normandra.meta.*;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -214,52 +210,41 @@ import java.util.Set;
  * a property filter that saves only concrete (non-joined) columns within an
  * entity primary table
  */
-public class BasicPropertyFilter implements PropertyFilter
-{
+public class BasicPropertyFilter implements PropertyFilter {
     private final Set<String> ignored = new HashSet<>();
 
-    public BasicPropertyFilter()
-    {
+    public BasicPropertyFilter() {
         this(null);
     }
 
-    public BasicPropertyFilter(final Collection<String> c)
-    {
-        if (c != null && !c.isEmpty())
-        {
+    public BasicPropertyFilter(final Collection<String> c) {
+        if (c != null && !c.isEmpty()) {
             this.ignored.addAll(c);
         }
     }
 
     @Override
-    public boolean accept(final EntityMeta meta, final ColumnMeta column)
-    {
-        if (null == column)
-        {
+    public boolean accept(final EntityMeta meta, final ColumnMeta column) {
+        if (null == column) {
             return false;
         }
 
         // checked ingored columns
-        if (this.ignored.contains(column.getName()))
-        {
+        if (this.ignored.contains(column.getName())) {
             return false;
         }
-        if (this.ignored.contains(column.getProperty()))
-        {
+        if (this.ignored.contains(column.getProperty())) {
             return false;
         }
 
         // checked related or joined columns
-        if (column instanceof JoinCollectionMeta)
-        {
+        if (column instanceof JoinCollectionMeta) {
             return false;
         }
-        if (column instanceof JoinColumnMeta)
-        {
+        if (column instanceof JoinColumnMeta) {
             return false;
         }
-        if (column instanceof MappedColumnMeta)
-        {
+        if (column instanceof MappedColumnMeta) {
             return false;
         }
 
@@ -268,29 +253,15 @@ public class BasicPropertyFilter implements PropertyFilter
     }
 
     @Override
-    public int hashCode()
-    {
-        int hash = 5;
-        hash = 79 * hash + Objects.hashCode(this.ignored);
-        return hash;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BasicPropertyFilter that = (BasicPropertyFilter) o;
+        return Objects.equals(ignored, that.ignored);
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
-        if (obj == null)
-        {
-            return false;
-        }
-        if (getClass() != obj.getClass())
-        {
-            return false;
-        }
-        final BasicPropertyFilter other = (BasicPropertyFilter) obj;
-        if (!Objects.equals(this.ignored, other.ignored))
-        {
-            return false;
-        }
-        return true;
+    public int hashCode() {
+        return Objects.hash(ignored);
     }
 }

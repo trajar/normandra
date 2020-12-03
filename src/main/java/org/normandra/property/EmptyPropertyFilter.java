@@ -200,25 +200,21 @@ import org.normandra.meta.EntityMeta;
 /**
  * an empty property filter that allows everything
  * <p>
- *  Date: 8/29/14
+ * Date: 8/29/14
  */
-public class EmptyPropertyFilter implements PropertyFilter
-{
+public class EmptyPropertyFilter implements PropertyFilter {
     private static final PropertyFilter instance = new EmptyPropertyFilter();
 
-    public static PropertyFilter getInstance()
-    {
+    public static PropertyFilter getInstance() {
         return EmptyPropertyFilter.instance;
     }
 
-    private EmptyPropertyFilter()
-    {
+    private EmptyPropertyFilter() {
 
     }
 
     @Override
-    public boolean accept(EntityMeta meta, ColumnMeta column)
-    {
+    public boolean accept(EntityMeta meta, ColumnMeta column) {
         return true;
     }
 }

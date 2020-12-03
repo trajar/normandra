@@ -194,28 +194,22 @@
 
 package org.normandra.meta;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * a generated index of columns
  * <p>
  * Date: 7/3/16
  */
-public class IndexMeta
-{
+public class IndexMeta {
     private final List<ColumnMeta> columns;
 
     private final boolean unique;
 
     private final String name;
 
-    public IndexMeta(final String name, final Collection<ColumnMeta> columns, final boolean unique)
-    {
-        if (null == name || name.isEmpty())
-        {
+    public IndexMeta(final String name, final Collection<ColumnMeta> columns, final boolean unique) {
+        if (null == name || name.isEmpty()) {
             throw new IllegalArgumentException("Name cannot be null or empty.");
         }
         this.name = name;
@@ -223,52 +217,28 @@ public class IndexMeta
         this.unique = unique;
     }
 
-    public List<ColumnMeta> getColumns()
-    {
+    public List<ColumnMeta> getColumns() {
         return Collections.unmodifiableList(this.columns);
     }
 
-    public boolean isUnique()
-    {
+    public boolean isUnique() {
         return this.unique;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return this.name;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         IndexMeta indexMeta = (IndexMeta) o;
-
-        if (unique != indexMeta.unique)
-        {
-            return false;
-        }
-        if (columns != null ? !columns.equals(indexMeta.columns) : indexMeta.columns != null)
-        {
-            return false;
-        }
-        return name != null ? name.equals(indexMeta.name) : indexMeta.name == null;
+        return unique == indexMeta.unique && Objects.equals(columns, indexMeta.columns) && Objects.equals(name, indexMeta.name);
     }
 
     @Override
-    public int hashCode()
-    {
-        int result = columns != null ? columns.hashCode() : 0;
-        result = 31 * result + (unique ? 1 : 0);
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        return result;
+    public int hashCode() {
+        return Objects.hash(columns, unique, name);
     }
 }

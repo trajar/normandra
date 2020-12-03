@@ -194,38 +194,49 @@
 
 package org.normandra.meta;
 
+import java.util.Objects;
+
 /**
  * a column that is mapped to another table, which ultimately owns the data
  * <p>
  * <p>
  * Date: 5/31/14
  */
-public class MappedColumnMeta extends ColumnMeta
-{
+public class MappedColumnMeta extends ColumnMeta {
     private final EntityMeta entity;
 
     private final ColumnMeta column;
 
-    public MappedColumnMeta(final EntityMeta entity, final ColumnMeta column, final String name, final String property, final Class<?> clazz, final boolean lazy)
-    {
+    public MappedColumnMeta(final EntityMeta entity, final ColumnMeta column, final String name, final String property, final Class<?> clazz, final boolean lazy) {
         super(name, property, clazz, false, lazy, false);
         this.entity = entity;
         this.column = column;
     }
 
-    public EntityMeta getEntity()
-    {
+    public EntityMeta getEntity() {
         return this.entity;
     }
 
-    public ColumnMeta getColumn()
-    {
+    public ColumnMeta getColumn() {
         return this.column;
     }
 
     @Override
-    public boolean isEmbedded()
-    {
+    public boolean isEmbedded() {
         return false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        MappedColumnMeta that = (MappedColumnMeta) o;
+        return Objects.equals(entity, that.entity) && Objects.equals(column, that.column);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), entity, column);
     }
 }

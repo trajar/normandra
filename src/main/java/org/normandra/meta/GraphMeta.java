@@ -335,29 +335,18 @@ public class GraphMeta extends DatabaseMeta {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        GraphMeta graphMeta = (GraphMeta) o;
-
-        if (edgeEntities != null ? !edgeEntities.equals(graphMeta.edgeEntities) : graphMeta.edgeEntities != null) {
-            return false;
-        }
-        if (nodeEntities != null ? !nodeEntities.equals(graphMeta.nodeEntities) : graphMeta.nodeEntities != null) {
-            return false;
-        }
-
-        return true;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        GraphMeta that = (GraphMeta) o;
+        return Objects.equals(nodeEntities, that.nodeEntities) &&
+                Objects.equals(edgeEntities, that.edgeEntities) &&
+                Objects.equals(genericEntities, that.genericEntities) &&
+                Objects.equals(propertyFilters, that.propertyFilters);
     }
 
     @Override
     public int hashCode() {
-        int result = nodeEntities != null ? nodeEntities.hashCode() : 0;
-        result = 31 * result + (edgeEntities != null ? edgeEntities.hashCode() : 0);
-        return result;
+        return Objects.hash(super.hashCode(), nodeEntities, edgeEntities, genericEntities, propertyFilters);
     }
 }

@@ -281,24 +281,14 @@ public class DatabaseMeta implements EntityMetaLookup, Iterable<EntityMeta> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         DatabaseMeta that = (DatabaseMeta) o;
-
-        if (entities != null ? !entities.equals(that.entities) : that.entities != null) {
-            return false;
-        }
-
-        return true;
+        return Objects.equals(entities, that.entities);
     }
 
     @Override
     public int hashCode() {
-        return entities != null ? entities.hashCode() : 0;
+        return Objects.hash(entities);
     }
 }

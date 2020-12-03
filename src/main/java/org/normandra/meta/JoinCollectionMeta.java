@@ -194,6 +194,8 @@
 
 package org.normandra.meta;
 
+import java.util.Objects;
+
 /**
  * joined collection column, usually from one-to-many association
  * <p>
@@ -223,5 +225,19 @@ public class JoinCollectionMeta extends ColumnMeta {
 
     public EntityMeta getEntity() {
         return this.entity;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        JoinCollectionMeta that = (JoinCollectionMeta) o;
+        return embedded == that.embedded && Objects.equals(entity, that.entity);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), entity, embedded);
     }
 }

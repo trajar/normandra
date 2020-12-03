@@ -194,6 +194,8 @@
 
 package org.normandra.meta;
 
+import java.util.Objects;
+
 /**
  * a jpa query annotation meta
  * <p>
@@ -207,7 +209,6 @@ public class QueryMeta implements Comparable<QueryMeta> {
 
     private final String query;
 
-
     public QueryMeta(final Class<?> entity, final String name, final String query) {
         if (null == name || name.isEmpty()) {
             throw new IllegalArgumentException("Name cannot be null/empty.");
@@ -220,54 +221,38 @@ public class QueryMeta implements Comparable<QueryMeta> {
         this.entity = entity;
     }
 
-
     public Class<?> getEntity() {
         return this.entity;
     }
-
 
     public String getName() {
         return name;
     }
 
-
     public String getQuery() {
         return query;
     }
-
 
     @Override
     public int compareTo(QueryMeta o) {
         return this.name.compareTo(o.name);
     }
 
-
     @Override
     public String toString() {
         return "{" + this.name + "} " + this.query;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         QueryMeta queryMeta = (QueryMeta) o;
-
-        if (entity != null ? !entity.equals(queryMeta.entity) : queryMeta.entity != null) return false;
-        if (name != null ? !name.equals(queryMeta.name) : queryMeta.name != null) return false;
-        if (query != null ? !query.equals(queryMeta.query) : queryMeta.query != null) return false;
-
-        return true;
+        return Objects.equals(entity, queryMeta.entity) && Objects.equals(name, queryMeta.name) && Objects.equals(query, queryMeta.query);
     }
-
 
     @Override
     public int hashCode() {
-        int result = entity != null ? entity.hashCode() : 0;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (query != null ? query.hashCode() : 0);
-        return result;
+        return Objects.hash(entity, name, query);
     }
 }

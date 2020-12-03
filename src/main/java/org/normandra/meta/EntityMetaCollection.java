@@ -331,4 +331,17 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
     public Iterator<EntityMeta> iterator() {
         return Collections.unmodifiableCollection(this.classMap.values()).iterator();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EntityMetaCollection that = (EntityMetaCollection) o;
+        return Objects.equals(classMap, that.classMap);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(classMap);
+    }
 }

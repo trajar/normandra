@@ -239,8 +239,7 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta> 
         }
         this.name = name;
         this.table = table;
-        this.types = new HashSet<>(types.size());
-        types.forEach(this.types::add);
+        this.types = new HashSet(types);
     }
 
     public Map<ColumnMeta, Object> filter(final Map<ColumnMeta, Object> data, final Object instance) {
@@ -586,29 +585,16 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta> 
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         EntityMeta that = (EntityMeta) o;
-
-        if (name != null ? !name.equals(that.name) : that.name != null) {
-            return false;
-        }
-        if (types != null ? !types.equals(that.types) : that.types != null) {
-            return false;
-        }
-        return table != null ? table.equals(that.table) : that.table == null;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(types, that.types) &&
+                Objects.equals(table, that.table);
     }
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (types != null ? types.hashCode() : 0);
-        result = 31 * result + (table != null ? table.hashCode() : 0);
-        return result;
+        return Objects.hash(name, types, table);
     }
 }

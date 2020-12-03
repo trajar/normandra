@@ -196,6 +196,8 @@ package org.normandra.data;
 
 import org.normandra.NormandraException;
 
+import java.util.Objects;
+
 /**
  * a static entity reference
  * <p>
@@ -216,24 +218,14 @@ public class StaticEntityReference<T> implements EntityReference<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        StaticEntityReference that = (StaticEntityReference) o;
-
-        if (instance != null ? !instance.equals(that.instance) : that.instance != null) {
-            return false;
-        }
-
-        return true;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StaticEntityReference<?> that = (StaticEntityReference<?>) o;
+        return Objects.equals(instance, that.instance);
     }
 
     @Override
     public int hashCode() {
-        return instance != null ? instance.hashCode() : 0;
+        return Objects.hash(instance);
     }
 }
