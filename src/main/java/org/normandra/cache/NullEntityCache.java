@@ -233,6 +233,11 @@ public class NullEntityCache implements EntityCache {
     }
 
     @Override
+    public void clearTypes(EntityMeta meta) {
+
+    }
+
+    @Override
     public <T> Map<Object, T> find(EntityMeta meta, Collection<?> keys, Class<T> clazz) {
         return Collections.emptyMap();
     }

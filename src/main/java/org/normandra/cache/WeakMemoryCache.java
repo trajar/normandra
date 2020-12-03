@@ -246,6 +246,17 @@ public class WeakMemoryCache implements EntityCache {
     }
 
     @Override
+    public void clearTypes(final EntityMeta meta) {
+        if (null == meta) {
+            return;
+        }
+        final Map<Object, WeakReference> entities = this.cache.remove(meta);
+        if (entities != null && !entities.isEmpty()) {
+            entities.clear();
+        }
+    }
+
+    @Override
     public <T> T get(final EntityMeta meta, final Object key, final Class<T> clazz) {
         if (null == meta || null == key) {
             return null;
