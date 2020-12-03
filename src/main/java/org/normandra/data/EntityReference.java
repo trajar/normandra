@@ -203,4 +203,5 @@ import org.normandra.NormandraException;
  */
 public interface EntityReference<T> {
     T getInstance() throws NormandraException;
+    void reload() throws NormandraException;
 }

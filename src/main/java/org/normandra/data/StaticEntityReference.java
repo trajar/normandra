@@ -217,6 +217,11 @@ public class StaticEntityReference<T> implements EntityReference<T> {
     }
 
     @Override
+    public void reload() throws NormandraException {
+        // nothing to do here
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
