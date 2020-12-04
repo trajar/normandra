@@ -252,7 +252,7 @@ public class Transaction implements AutoCloseable {
         }
     }
 
-    public Object execute(final TransactionCallable<?> worker) throws NormandraException {
+    public <T> T execute(final TransactionCallable<T> worker) throws NormandraException {
         if (null == worker) {
             return null;
         }

@@ -275,7 +275,7 @@ abstract public class AbstractTransactional implements Transactional {
         this.currentRetry = 0;
         Exception error;
         try (final Transaction tx = this.beginTransaction()) {
-            return (T) tx.execute(worker);
+            return tx.execute(worker);
         } catch (final Exception e) {
             error = e;
             if (null == handler) {
@@ -297,7 +297,7 @@ abstract public class AbstractTransactional implements Transactional {
                     }
                 }
                 try (final Transaction tx = this.beginTransaction()) {
-                    return (T) tx.execute(worker);
+                    return tx.execute(worker);
                 } catch (final Exception e) {
                     error = e;
                 }
