@@ -284,6 +284,7 @@ public class WeakMemoryCache implements EntityCache {
         try {
             return clazz.cast(instance);
         } catch (final ClassCastException e) {
+            logger.warn("Unable to convert [" + instance + "] to type [" + clazz + "].");
             return null;
         }
     }
@@ -318,7 +319,11 @@ public class WeakMemoryCache implements EntityCache {
                 if (null == clazz || Object.class.equals(clazz)) {
                     items.add(item);
                 } else {
-                    items.add(clazz.cast(item));
+                    try {
+                        items.add(clazz.cast(item));
+                    } catch (final ClassCastException e) {
+                        logger.warn("Unable to convert [" + item + "] to type [" + clazz + "].");
+                    }
                 }
             }
         }
@@ -372,7 +377,7 @@ public class WeakMemoryCache implements EntityCache {
                 return false;
             }
         } catch (final Exception e) {
-            logger.warn("Unable to retrieve key to cache entity [" + instance + "] of type [" + meta + "].", e);
+            logger.warn("Unable to assign key [" + key + "] to cache entity [" + instance + "] of type [" + meta + "].", e);
             return false;
         }
     }

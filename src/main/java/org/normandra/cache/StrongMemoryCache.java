@@ -5,7 +5,6 @@ import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
@@ -82,6 +81,7 @@ public class StrongMemoryCache implements EntityCache {
         try {
             return clazz.cast(instance);
         } catch (final ClassCastException e) {
+            logger.warn("Unable to convert [" + instance + "] to type [" + clazz + "].");
             return null;
         }
     }
@@ -114,7 +114,12 @@ public class StrongMemoryCache implements EntityCache {
             if (null == clazz || Object.class.equals(clazz)) {
                 items.add(item);
             } else {
-                items.add(clazz.cast(item));
+                try {
+                    items.add(clazz.cast(item));
+                } catch (final ClassCastException e) {
+                    logger.warn("Unable to convert [" + item + "] to type [" + clazz + "].");
+                    return null;
+                }
             }
         }
         return Collections.unmodifiableList(items);
@@ -158,7 +163,7 @@ public class StrongMemoryCache implements EntityCache {
                 return entities.remove(key) != null;
             }
         } catch (final Exception e) {
-            logger.warn("Unable to retrieve key to cache entity [" + instance + "] of type [" + meta + "].", e);
+            logger.warn("Unable to assign key [" + key + "] to cache entity [" + instance + "] of type [" + meta + "].", e);
             return false;
         }
     }
