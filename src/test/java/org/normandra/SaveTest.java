@@ -199,6 +199,7 @@ import org.junit.Test;
 import org.normandra.entities.*;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 abstract public class SaveTest extends BaseTest {
     public SaveTest(final TestHelper helper) {
@@ -345,15 +346,62 @@ abstract public class SaveTest extends BaseTest {
     public void testTransactionRunnable() throws Exception {
         final EntityManager session = helper.getManager();
 
-        final DogEntity dog = new DogEntity("fido", 12);
+        DogEntity dog = new DogEntity("fido", 12);
         session.withTransaction((tx) -> {
             session.save(dog);
             tx.success();
         });
         session.clear();
 
-        final DogEntity existing = session.get(DogEntity.class, dog.getId());
+        DogEntity existing = session.get(DogEntity.class, dog.getId());
         Assert.assertNotNull(existing);
         Assert.assertEquals(dog, existing);
+
+        final AtomicInteger cnt = new AtomicInteger();
+        final DogEntity nulldog = null;
+        Exception error = null;
+        ExceptionHandler handler = new ExceptionHandler() {
+            @Override
+            public boolean needsRetry(Exception error) {
+                return true;
+            }
+
+            @Override
+            public void handleError(Exception e) {
+                cnt.incrementAndGet();
+            }
+        };
+        try {
+            session.withTransaction((tx) -> {
+                session.save(nulldog);
+                tx.success();
+            }, handler);
+        } catch (final Exception e) {
+            e.printStackTrace();
+            error = e;
+        }
+        Assert.assertNotNull(error);
+        Assert.assertEquals(session.getTransactionMaxRetries(), cnt.get());
+
+        cnt.set(0);
+        error = null;
+        Object result = null;
+        try {
+            final TransactionCallable txcallable = new TransactionCallable() {
+                @Override
+                public Object call(Transaction tx) throws Exception {
+                    session.save(nulldog);
+                    tx.success();
+                    return "test";
+                }
+            };
+            result = session.withTransaction(txcallable, handler);
+        } catch (final Exception e) {
+            e.printStackTrace();
+            error = e;
+        }
+        Assert.assertNull(result);
+        Assert.assertNotNull(error);
+        Assert.assertEquals(session.getTransactionMaxRetries(), cnt.get());
     }
 }

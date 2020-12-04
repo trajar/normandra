@@ -208,8 +208,14 @@ public interface Transactional {
     /**
      * executes a worker within a transaction context
      */
-    void withTransaction(TransactionRunnable worker) throws NormandraException;
-    <T> T withTransaction(TransactionCallable<T> worker) throws NormandraException;
+    default void withTransaction(TransactionRunnable worker) throws NormandraException {
+        withTransaction(worker, null);
+    }
+    void withTransaction(TransactionRunnable worker, ExceptionHandler handler) throws NormandraException;
+    default <T> T withTransaction(TransactionCallable<T> worker) throws NormandraException {
+        return withTransaction(worker, null);
+    }
+    <T> T withTransaction(TransactionCallable<T> worker, ExceptionHandler handler) throws NormandraException;
 
     /**
      * start transaction or unit of work

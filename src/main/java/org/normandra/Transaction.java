@@ -210,6 +210,8 @@ public class Transaction implements AutoCloseable {
 
     private Boolean success = null;
 
+    private Exception error = null;
+
     public Transaction(final Transactional session) throws NormandraException {
         if (null == session) {
             throw new NullArgumentException("session");
@@ -229,45 +231,38 @@ public class Transaction implements AutoCloseable {
         this.success = Boolean.FALSE;
     }
 
+    public Exception getError() {
+        return this.error;
+    }
+
+    public boolean hasError() {
+        return this.error != null;
+    }
+
     public void execute(final TransactionRunnable worker) throws NormandraException {
         if (null == worker) {
             return;
         }
-
-        for (int i = 1; i <= 10; i++) {
-            try {
-                worker.run(this);
-                return;
-            } catch (final Exception e) {
-                if ("ONeedRetryException".equalsIgnoreCase(e.getClass().getSimpleName())) {
-                    logger.info("Error executing unit of work, recovering from retry-exception [attempt #" + i + "].", e);
-                } else {
-                    this.success = Boolean.FALSE;
-                    throw new NormandraException("Unable to execute unit of work.", e);
-                }
-            }
+        try {
+            worker.run(this);
+        } catch (final Exception e) {
+            this.success = Boolean.FALSE;
+            this.error = e;
+            throw new NormandraException("Unable to execute unit of work.", e);
         }
     }
 
-    public Object execute(final TransactionCallable worker) throws NormandraException {
+    public Object execute(final TransactionCallable<?> worker) throws NormandraException {
         if (null == worker) {
             return null;
         }
-
-        for (int i = 1; i <= 10; i++) {
-            try {
-                return worker.call(this);
-            } catch (final Exception e) {
-                if ("ONeedRetryException".equalsIgnoreCase(e.getClass().getSimpleName())) {
-                    logger.info("Error executing unit of work, recovering from retry-exception [attempt #" + i + "].", e);
-                } else {
-                    this.success = Boolean.FALSE;
-                    throw new NormandraException("Unable to execute unit of work.", e);
-                }
-            }
+        try {
+            return worker.call(this);
+        } catch (final Exception e) {
+            this.success = Boolean.FALSE;
+            this.error = e;
+            throw new NormandraException("Unable to execute unit of work.", e);
         }
-
-        return null;
     }
 
     @Override
@@ -277,6 +272,9 @@ public class Transaction implements AutoCloseable {
             this.success = false;
         }
         if (Boolean.TRUE.equals(this.success)) {
+            if (this.error != null) {
+                logger.warn("Transaction marked as successful but found exception.", this.error);
+            }
             this.session.commitWork();
         } else {
             this.session.rollbackWork();

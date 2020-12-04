@@ -200,24 +200,116 @@ package org.normandra;
  * Date: 8/31/14
  */
 abstract public class AbstractTransactional implements Transactional {
+    private int retryDelayMsec = 50;
+
+    private int maxNumberRetries = 10;
+
+    private int currentRetry = 0;
+
+    public int getTransactionRetryDelay() {
+        return this.retryDelayMsec;
+    }
+
+    public void setTransactionRetryDelay(final int delayMsec) {
+        this.retryDelayMsec = delayMsec;
+    }
+
+    public int getTransactionMaxRetries() {
+        return this.maxNumberRetries;
+    }
+
+    public void setTransactionMaxRetries(final int maxRetries) {
+        this.maxNumberRetries = maxRetries;
+    }
+
     @Override
-    public void withTransaction(final TransactionRunnable worker) throws NormandraException {
+    public void withTransaction(final TransactionRunnable worker, final ExceptionHandler handler) throws NormandraException {
+        // reset retry counter and start transaction
+        final long startTime = handler != null ? System.currentTimeMillis() : 0;
+        this.currentRetry = 0;
+        Exception error;
         try (final Transaction tx = this.beginTransaction()) {
             tx.execute(worker);
+            return;
         } catch (final Exception e) {
-            throw new NormandraException("Unable to execute transaction.", e);
+            error = e;
+            if (null == handler) {
+                // no error handler, re-throw error
+                throw new NormandraException("Unable to execute transaction.", e);
+            }
+        }
+
+        // we were unable to complete transaction
+        while (this.currentRetry < this.maxNumberRetries) {
+            this.currentRetry++;
+            handler.handleError(error);
+            if (handler.needsRetry(error)) {
+                if (this.retryDelayMsec > 0) {
+                    try {
+                        Thread.sleep(this.retryDelayMsec);
+                    } catch (final InterruptedException interruptedException) {
+                        throw new NormandraException("Unable to execute transaction retry operation.", interruptedException);
+                    }
+                }
+                try (final Transaction tx = this.beginTransaction()) {
+                    tx.execute(worker);
+                    return;
+                } catch (final Exception e) {
+                    error = e;
+                }
+            }
+        }
+
+        if (this.currentRetry > 0) {
+            final long duration = System.currentTimeMillis() - startTime;
+            throw new NormandraException("Unable to execute transaction despite " + this.currentRetry + " retries and " + duration + " msec, logging last error.", error);
+        } else {
+            throw new NormandraException("Unable to execute transaction (handler did not request retry), logging last error.", error);
         }
     }
 
     @Override
-    public <T> T withTransaction(final TransactionCallable<T> worker) throws NormandraException {
-        final Object[] tmp = new Object[1];
+    public <T> T withTransaction(final TransactionCallable<T> worker, final ExceptionHandler handler) throws NormandraException {
+        // reset retry counter and start transaction
+        final long startTime = handler != null ? System.currentTimeMillis() : 0;
+        this.currentRetry = 0;
+        Exception error;
         try (final Transaction tx = this.beginTransaction()) {
-            tmp[0] = tx.execute(worker);
+            return (T) tx.execute(worker);
         } catch (final Exception e) {
-            throw new NormandraException("Unable to execute transaction.", e);
+            error = e;
+            if (null == handler) {
+                // no error handler, re-throw error
+                throw new NormandraException("Unable to execute transaction.", e);
+            }
         }
-        return (T) tmp[0];
+
+        // we were unable to complete transaction
+        while (this.currentRetry < this.maxNumberRetries) {
+            this.currentRetry++;
+            handler.handleError(error);
+            if (handler.needsRetry(error)) {
+                if (this.retryDelayMsec > 0) {
+                    try {
+                        Thread.sleep(this.retryDelayMsec);
+                    } catch (final InterruptedException interruptedException) {
+                        throw new NormandraException("Unable to execute transaction retry operation.", interruptedException);
+                    }
+                }
+                try (final Transaction tx = this.beginTransaction()) {
+                    return (T) tx.execute(worker);
+                } catch (final Exception e) {
+                    error = e;
+                }
+            }
+        }
+
+        if (this.currentRetry > 0) {
+            final long duration = System.currentTimeMillis() - startTime;
+            throw new NormandraException("Unable to execute transaction despite " + this.currentRetry + " retries and " + duration + " msec, logging last error.", error);
+        } else {
+            throw new NormandraException("Unable to execute transaction (handler did not request retry), logging last error.", error);
+        }
     }
 
     @Override
