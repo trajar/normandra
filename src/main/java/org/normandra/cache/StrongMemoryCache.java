@@ -5,6 +5,7 @@ import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
@@ -99,6 +100,24 @@ public class StrongMemoryCache implements EntityCache {
             }
         }
         return Collections.unmodifiableMap(map);
+    }
+
+    @Override
+    public <T> Iterable<T> listByType(final EntityMeta meta, final Class<T> clazz) {
+        if (null == meta) {
+            return Collections.emptyList();
+        }
+
+        final Map<?, ?> map = this.cache.get(meta);
+        final List items = new ArrayList<>(map.size());
+        for (final Object item : map.values()) {
+            if (null == clazz || Object.class.equals(clazz)) {
+                items.add(item);
+            } else {
+                items.add(clazz.cast(item));
+            }
+        }
+        return Collections.unmodifiableList(items);
     }
 
     @Override

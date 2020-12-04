@@ -208,7 +208,7 @@ import java.util.*;
 public class WeakMemoryCache implements EntityCache {
     private static final Logger logger = LoggerFactory.getLogger(WeakMemoryCache.class);
 
-    private static int purgeDelayCount = 1000;
+    private static final int purgeDelayCount = 500;
 
     private final Map<EntityMeta, Map<Object, WeakReference>> cache = new TreeMap<>();
 
@@ -302,6 +302,27 @@ public class WeakMemoryCache implements EntityCache {
             }
         }
         return Collections.unmodifiableMap(map);
+    }
+
+    @Override
+    public <T> Iterable<T> listByType(final EntityMeta meta, final Class<T> clazz) {
+        if (null == meta) {
+            return Collections.emptyList();
+        }
+
+        final Map<Object, WeakReference> map = this.cache.get(meta);
+        final List items = new ArrayList<>(map.size());
+        for (final WeakReference ref : map.values()) {
+            final Object item = ref.get();
+            if (item != null) {
+                if (null == clazz || Object.class.equals(clazz)) {
+                    items.add(item);
+                } else {
+                    items.add(clazz.cast(item));
+                }
+            }
+        }
+        return Collections.unmodifiableList(items);
     }
 
     @Override

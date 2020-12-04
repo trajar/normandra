@@ -209,6 +209,7 @@ public interface EntityCache {
     void clearTypes(EntityMeta meta);
     <T> T get(EntityMeta meta, Object key, Class<T> clazz);
     <T> Map<Object, T> find(EntityMeta meta, Collection<?> keys, Class<T> clazz);
-    boolean remove(EntityMeta meta, Object key);
+    <T> Iterable<T> listByType(EntityMeta meta, Class<T> clazz);
     boolean put(EntityMeta meta, Object key, Object entity);
+    boolean remove(EntityMeta meta, Object key);
 }

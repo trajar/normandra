@@ -243,6 +243,11 @@ public class NullEntityCache implements EntityCache {
     }
 
     @Override
+    public <T> Iterable<T> listByType(EntityMeta meta, Class<T> clazz) {
+        return Collections.emptyList();
+    }
+
+    @Override
     public Object get(EntityMeta meta, Object key, Class clazz) {
         return null;
     }
