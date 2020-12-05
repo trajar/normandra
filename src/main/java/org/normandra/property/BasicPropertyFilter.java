@@ -217,10 +217,21 @@ public class BasicPropertyFilter implements PropertyFilter {
         this(null);
     }
 
-    public BasicPropertyFilter(final Collection<String> c) {
-        if (c != null && !c.isEmpty()) {
-            this.ignored.addAll(c);
+    public BasicPropertyFilter(final Collection<String> ignoredProperties) {
+        if (ignoredProperties != null && !ignoredProperties.isEmpty()) {
+            this.ignored.addAll(ignoredProperties);
         }
+    }
+
+    public void clearIgnoredProperties() {
+        this.ignored.clear();
+    }
+
+    public boolean ignoreProperty(final String propertyName) {
+        if (null == propertyName || propertyName.isEmpty()) {
+            return false;
+        }
+        return this.ignored.add(propertyName);
     }
 
     @Override
