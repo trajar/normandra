@@ -199,9 +199,9 @@ import org.normandra.meta.DatabaseMetaBuilder;
 import org.normandra.meta.GraphMetaBuilder;
 
 public interface TestHelper {
-    Database getDatabase();
-    EntityManager getManager();
-    GraphManager getGraph();
+    Database getDatabase() throws Exception ;
+    EntityManager getManager() throws Exception ;
+    GraphManager getGraph() throws Exception ;
     void create(DatabaseMetaBuilder builder) throws Exception;
     void create(GraphMetaBuilder builder) throws Exception;
     void cleanup() throws Exception;
