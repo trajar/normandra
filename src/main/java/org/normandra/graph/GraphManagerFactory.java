@@ -1,5 +1,6 @@
 package org.normandra.graph;
 
+import org.normandra.DatabaseConstruction;
 import org.normandra.EntityManagerFactory;
 import org.normandra.NormandraException;
 import org.normandra.meta.GraphMeta;
@@ -12,8 +13,8 @@ public class GraphManagerFactory extends EntityManagerFactory {
 
     private final GraphMeta graphMeta;
 
-    public GraphManagerFactory(final GraphDatabase db, final GraphMeta meta) {
-        super(db, meta);
+    public GraphManagerFactory(final GraphDatabase db, final GraphMeta meta, final DatabaseConstruction constructionMode) {
+        super(db, meta, constructionMode);
         this.database = db;
         this.graphMeta = meta;
     }

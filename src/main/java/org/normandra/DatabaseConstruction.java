@@ -196,11 +196,21 @@ package org.normandra;
 
 /**
  * database contruction modes
- * <p/>
- * 
+ * <p>
  * Date: 9/7/13
  */
-public enum DatabaseConstruction
-{
-    CREATE, RECREATE, UPDATE, NONE
+public enum DatabaseConstruction {
+    // create schema if not already exists
+    CREATE_SCHEMA,
+    // drop existing schema and data, and recreate
+    DROP_DATA_AND_RECREATE_SCHEMA,
+    // migrate existing schema, creating new
+    // properties/indices as required
+    MIGRATE_SCHEMA,
+    // ensure the requested schema represented in
+    // database, removing unused properties/indices
+    // as well as any entities no longer used
+    FORCE_SCHEMA,
+    // do nothing, no checks, use existing schema
+    NONE
 }

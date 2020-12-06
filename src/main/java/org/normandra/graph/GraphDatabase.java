@@ -1,6 +1,7 @@
 package org.normandra.graph;
 
 import org.normandra.Database;
+import org.normandra.DatabaseConstruction;
 import org.normandra.NormandraException;
 import org.normandra.meta.DatabaseMeta;
 import org.normandra.meta.GraphMeta;
@@ -13,5 +14,8 @@ import org.normandra.meta.GraphMeta;
 public interface GraphDatabase extends Database {
     GraphMeta getMeta();
     Graph createGraph();
-    void refresh() throws NormandraException;
+    default void refresh(DatabaseConstruction constructionMode) throws NormandraException {
+        refreshWith(getMeta(), constructionMode);
+    }
+    void refreshWith(GraphMeta meta, DatabaseConstruction constructionMode) throws NormandraException;
 }

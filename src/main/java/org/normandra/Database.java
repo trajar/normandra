@@ -204,6 +204,9 @@ import org.normandra.meta.DatabaseMeta;
 public interface Database {
     DatabaseMeta getMeta();
     DatabaseSession createSession();
-    void refresh() throws NormandraException;
+    default void refresh(DatabaseConstruction mode) throws NormandraException {
+        refreshWith(getMeta(), mode);
+    }
+    void refreshWith(DatabaseMeta meta, DatabaseConstruction mode) throws NormandraException;
     void close();
 }

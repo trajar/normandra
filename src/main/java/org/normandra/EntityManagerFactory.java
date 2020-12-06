@@ -204,11 +204,14 @@ public class EntityManagerFactory {
 
     private final DatabaseMeta databaseMeta;
 
+    private final DatabaseConstruction constructionMode;
+
     private boolean configured = false;
 
-    public EntityManagerFactory(final Database db, final DatabaseMeta meta) {
+    public EntityManagerFactory(final Database db, final DatabaseMeta meta, final DatabaseConstruction constructionMode) {
         this.database = db;
         this.databaseMeta = meta;
+        this.constructionMode = constructionMode;
     }
 
     public EntityManager create() throws NormandraException {
@@ -223,7 +226,7 @@ public class EntityManagerFactory {
 
         try {
             // refresh schema
-            this.database.refresh();
+            this.database.refresh(this.constructionMode);
             this.configured = true;
         } catch (final Exception e) {
             throw new NormandraException("Unable to refresh database.", e);

@@ -197,6 +197,8 @@ package org.normandra;
 import org.junit.Assert;
 import org.junit.Test;
 import org.normandra.entities.*;
+import org.normandra.meta.DatabaseMeta;
+import org.normandra.meta.DatabaseMetaBuilder;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -197,24 +197,39 @@ package org.normandra.entities;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.util.Objects;
 
 @Entity
-public class StoreEntity
-{
+public class StoreEntity {
     @Id
     public String name;
 
     @Embedded
     public Address address;
 
-    public StoreEntity(final String name, final Address address)
-    {
+    public StoreEntity(final String name, final Address address) {
         this.name = name;
         this.address = address;
     }
 
-    public StoreEntity()
-    {
+    public StoreEntity() {
 
+    }
+
+    public String getId() {
+        return this.name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StoreEntity that = (StoreEntity) o;
+        return Objects.equals(name, that.name) && Objects.equals(address, that.address);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, address);
     }
 }
