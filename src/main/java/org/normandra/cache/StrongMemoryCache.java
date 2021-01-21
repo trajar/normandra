@@ -109,6 +109,10 @@ public class StrongMemoryCache implements EntityCache {
         }
 
         final Map<?, ?> map = this.cache.get(meta);
+        if (null == map || map.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
         final List items = new ArrayList<>(map.size());
         for (final Object item : map.values()) {
             if (null == clazz || Object.class.equals(clazz)) {

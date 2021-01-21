@@ -312,6 +312,10 @@ public class WeakMemoryCache implements EntityCache {
         }
 
         final Map<Object, WeakReference> map = this.cache.get(meta);
+        if (null == map || map.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         final List items = new ArrayList<>(map.size());
         for (final WeakReference ref : map.values()) {
             final Object item = ref.get();
