@@ -47,7 +47,7 @@ public class StrongMemoryCache implements EntityCache {
     }
 
     @Override
-    public void clearTypes(final EntityMeta meta) {
+    public void clearType(final EntityMeta meta) {
         if (null == meta) {
             return;
         }

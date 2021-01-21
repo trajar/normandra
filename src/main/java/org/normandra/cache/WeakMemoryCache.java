@@ -246,7 +246,7 @@ public class WeakMemoryCache implements EntityCache {
     }
 
     @Override
-    public void clearTypes(final EntityMeta meta) {
+    public void clearType(final EntityMeta meta) {
         if (null == meta) {
             return;
         }

@@ -233,7 +233,7 @@ public class NullEntityCache implements EntityCache {
     }
 
     @Override
-    public void clearTypes(EntityMeta meta) {
+    public void clearType(EntityMeta meta) {
 
     }
 

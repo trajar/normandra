@@ -206,7 +206,7 @@ import java.util.Map;
  */
 public interface EntityCache {
     void clear();
-    void clearTypes(EntityMeta meta);
+    void clearType(EntityMeta meta);
     <T> T get(EntityMeta meta, Object key, Class<T> clazz);
     <T> Map<Object, T> find(EntityMeta meta, Collection<?> keys, Class<T> clazz);
     <T> Iterable<T> listByType(EntityMeta meta, Class<T> clazz);
