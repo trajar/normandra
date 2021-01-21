@@ -118,7 +118,6 @@ public class StrongMemoryCache implements EntityCache {
                     items.add(clazz.cast(item));
                 } catch (final ClassCastException e) {
                     logger.warn("Unable to convert [" + item + "] to type [" + clazz + "].");
-                    return null;
                 }
             }
         }
