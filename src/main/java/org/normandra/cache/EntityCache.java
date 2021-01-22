@@ -212,4 +212,16 @@ public interface EntityCache {
     <T> Iterable<T> listByType(EntityMeta meta, Class<T> clazz);
     boolean put(EntityMeta meta, Object key, Object entity);
     boolean remove(EntityMeta meta, Object key);
+
+    default void clearTypes(final Iterable<EntityMeta> metas) {
+        for (final EntityMeta meta : metas) {
+            this.clearType(meta);
+        }
+    }
+
+    default void clearTypes(final EntityMeta... metas) {
+        for (final EntityMeta meta : metas) {
+            this.clearType(meta);
+        }
+    }
 }
