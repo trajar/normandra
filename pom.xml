@@ -7,7 +7,7 @@
 
   <groupId>org.normandra</groupId>
   <artifactId>normandra</artifactId>
-  <version>1.25</version>
+  <version>1.25.1</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -53,19 +53,6 @@
       <artifactId>javax.persistence</artifactId>
       <version>2.2.1</version>
     </dependency>
-    <!-- jackson 1.9.x -->
-    <!--
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-core-asl</artifactId>
-      <version>1.9.13</version>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
-      <version>1.9.13</version>
-    </dependency>
-    -->
     <!-- jackson 2.x -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
