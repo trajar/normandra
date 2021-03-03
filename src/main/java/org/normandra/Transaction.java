@@ -236,12 +236,12 @@ public class Transaction implements AutoCloseable {
     }
 
     public boolean hasError() {
-        return this.error != null;
+        return this.getError() != null; 
     }
 
     public void execute(final TransactionRunnable worker) throws NormandraException {
         if (null == worker) {
-            return;
+            throw new IllegalArgumentException();
         }
         try {
             worker.run(this);
@@ -254,7 +254,7 @@ public class Transaction implements AutoCloseable {
 
     public <T> T execute(final TransactionCallable<T> worker) throws NormandraException {
         if (null == worker) {
-            return null;
+            throw new IllegalArgumentException();
         }
         try {
             return worker.call(this);
@@ -272,11 +272,13 @@ public class Transaction implements AutoCloseable {
             this.success = false;
         }
         if (Boolean.TRUE.equals(this.success)) {
-            if (this.error != null) {
+            if (this.hasError()) {
                 logger.warn("Transaction marked as successful but found exception.", this.error);
             }
+            logger.trace("Committing transaction [" + this + "].");
             this.session.commitWork();
         } else {
+            logger.trace("Rolling back transaction [" + this + "].");
             this.session.rollbackWork();
         }
     }

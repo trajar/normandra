@@ -255,6 +255,8 @@ abstract public class AbstractTransactional implements Transactional {
                 } catch (final Exception e) {
                     error = e;
                 }
+            } else {
+                break;
             }
         }
 
@@ -299,6 +301,8 @@ abstract public class AbstractTransactional implements Transactional {
                 } catch (final Exception e) {
                     error = e;
                 }
+            } else {
+                break;
             }
         }
 
