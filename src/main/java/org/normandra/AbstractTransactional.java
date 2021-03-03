@@ -204,8 +204,6 @@ abstract public class AbstractTransactional implements Transactional {
 
     private int maxNumberRetries = 10;
 
-    private int currentRetry = 0;
-
     public int getTransactionRetryDelay() {
         return this.retryDelayMsec;
     }
@@ -226,7 +224,7 @@ abstract public class AbstractTransactional implements Transactional {
     public void withTransaction(final TransactionRunnable worker, final ExceptionHandler handler) throws NormandraException {
         // reset retry counter and start transaction
         final long startTime = handler != null ? System.currentTimeMillis() : 0;
-        this.currentRetry = 0;
+        int currentRetry = 0;
         Exception error;
         try (final Transaction tx = this.beginTransaction()) {
             tx.execute(worker);
@@ -240,8 +238,8 @@ abstract public class AbstractTransactional implements Transactional {
         }
 
         // we were unable to complete transaction
-        while (this.currentRetry < this.maxNumberRetries) {
-            this.currentRetry++;
+        while (currentRetry < this.maxNumberRetries) {
+            currentRetry++;
             handler.handleError(error);
             if (handler.needsRetry(error)) {
                 if (this.retryDelayMsec > 0) {
@@ -260,9 +258,9 @@ abstract public class AbstractTransactional implements Transactional {
             }
         }
 
-        if (this.currentRetry > 0) {
+        if (currentRetry > 0) {
             final long duration = System.currentTimeMillis() - startTime;
-            throw new NormandraException("Unable to execute transaction despite " + this.currentRetry + " retries and " + duration + " msec, logging last error.", error);
+            throw new NormandraException("Unable to execute transaction despite " + currentRetry + " retries and " + duration + " msec, logging last error.", error);
         } else {
             throw new NormandraException("Unable to execute transaction (handler did not request retry), logging last error.", error);
         }
@@ -272,7 +270,7 @@ abstract public class AbstractTransactional implements Transactional {
     public <T> T withTransaction(final TransactionCallable<T> worker, final ExceptionHandler handler) throws NormandraException {
         // reset retry counter and start transaction
         final long startTime = handler != null ? System.currentTimeMillis() : 0;
-        this.currentRetry = 0;
+        int currentRetry = 0;
         Exception error;
         try (final Transaction tx = this.beginTransaction()) {
             return tx.execute(worker);
@@ -285,8 +283,8 @@ abstract public class AbstractTransactional implements Transactional {
         }
 
         // we were unable to complete transaction
-        while (this.currentRetry < this.maxNumberRetries) {
-            this.currentRetry++;
+        while (currentRetry < this.maxNumberRetries) {
+            currentRetry++;
             handler.handleError(error);
             if (handler.needsRetry(error)) {
                 if (this.retryDelayMsec > 0) {
@@ -304,9 +302,9 @@ abstract public class AbstractTransactional implements Transactional {
             }
         }
 
-        if (this.currentRetry > 0) {
+        if (currentRetry > 0) {
             final long duration = System.currentTimeMillis() - startTime;
-            throw new NormandraException("Unable to execute transaction despite " + this.currentRetry + " retries and " + duration + " msec, logging last error.", error);
+            throw new NormandraException("Unable to execute transaction despite " + currentRetry + " retries and " + duration + " msec, logging last error.", error);
         } else {
             throw new NormandraException("Unable to execute transaction (handler did not request retry), logging last error.", error);
         }
