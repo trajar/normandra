@@ -363,6 +363,29 @@ abstract public class GraphTest extends BaseTest {
     }
 
     @Test
+    public void testUpdateNode() throws Exception {
+        final GraphManager manager = helper.getGraph();
+
+        final SimpleNode simpleEntity = new SimpleNode("i am a node");
+        final Node node = manager.addNode(simpleEntity);
+        Assert.assertNotNull(node);
+
+        Assert.assertTrue(node == manager.getNode(SimpleNode.class, simpleEntity.getId()));
+        Assert.assertEquals(simpleEntity, manager.getNode(SimpleNode.class, simpleEntity.getId()).getEntity());
+
+        UUID oldId = simpleEntity.getId();
+        SimpleNode updatedEntity = new SimpleNode();
+        updatedEntity.setId(UUID.randomUUID());
+        updatedEntity.setName("i have a new name");
+        node.updateEntity(updatedEntity);
+
+        manager.clear();
+
+        Assert.assertNull(manager.getNode(SimpleNode.class, oldId));
+        Assert.assertEquals(updatedEntity, manager.getNode(SimpleNode.class, updatedEntity.getId()).getEntity());
+    }
+
+    @Test
     public void testExpand() throws Exception {
         final GraphManager manager = helper.getGraph();
 
