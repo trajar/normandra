@@ -453,10 +453,10 @@ abstract public class GraphTest extends BaseTest {
                 tx.success();
             });
             long duration = System.currentTimeMillis() - start;
-            System.out.println("Added nodes [" + nodes.get(nodes.size() - 1) + "], [" + nodes.get(nodes.size() - 1) + "] which took [" + duration + "] msec.");
+//          System.out.println("Added nodes [" + nodes.get(nodes.size() - 1) + "], [" + nodes.get(nodes.size() - 1) + "] which took [" + duration + "] msec.");
         }
         final long testDuration = System.currentTimeMillis() - testStart;
-        System.out.println("Added [" + nodes.size() + "] which took [" + testDuration + "] msec.");
+//      System.out.println("Added [" + nodes.size() + "] which took [" + testDuration + "] msec.");
     }
 
     private static int counterIterables(final Iterable itr) {
