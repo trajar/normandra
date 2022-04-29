@@ -194,7 +194,6 @@
 
 package org.normandra.association;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.meta.EntityMeta;
@@ -206,49 +205,39 @@ import java.util.List;
 /**
  * an element factory that unpacks entity ids from object instances
  */
-public class BasicElementIdentity<T> implements ElementIdentity<T>
-{
+public class BasicElementIdentity<T> implements ElementIdentity<T> {
     private final EntityMeta entity;
 
-    public BasicElementIdentity(final EntityMeta entity)
-    {
-        if (null == entity)
-        {
-            throw new NullArgumentException("entity context");
+    public BasicElementIdentity(final EntityMeta entity) {
+        if (null == entity) {
+            throw new IllegalArgumentException();
         }
         this.entity = entity;
     }
 
-    public EntityMeta getEntity()
-    {
+    public EntityMeta getEntity() {
         return entity;
     }
 
     @Override
-    public Object fromKey(EntitySession session, Object key) throws NormandraException
-    {
+    public Object fromKey(EntitySession session, Object key) throws NormandraException {
         return key;
     }
 
     @Override
-    public Object fromEntity(EntitySession session, final T value) throws NormandraException
-    {
+    public Object fromEntity(EntitySession session, final T value) throws NormandraException {
         return this.entity.getId().fromEntity(value);
     }
 
     @Override
-    public List<?> fromEntities(EntitySession session, final T... values) throws NormandraException
-    {
-        if (null == values || values.length <= 0)
-        {
+    public List<?> fromEntities(EntitySession session, final T... values) throws NormandraException {
+        if (null == values || values.length <= 0) {
             return Collections.emptyList();
         }
         final List list = new ArrayList<>(values.length);
-        for (final Object value : values)
-        {
+        for (final Object value : values) {
             final Object key = this.entity.getId().fromEntity(value);
-            if (key != null)
-            {
+            if (key != null) {
                 list.add(key);
             }
         }
@@ -256,14 +245,12 @@ public class BasicElementIdentity<T> implements ElementIdentity<T>
     }
 
     @Override
-    public T toEntity(final EntitySession session, final Object value) throws NormandraException
-    {
+    public T toEntity(final EntitySession session, final Object value) throws NormandraException {
         return (T) session.get(this.entity, value);
     }
 
     @Override
-    public List toEntities(final EntitySession session, final Object... values) throws NormandraException
-    {
+    public List toEntities(final EntitySession session, final Object... values) throws NormandraException {
         return session.get(this.entity, values);
     }
 }

@@ -194,7 +194,6 @@
 
 package org.normandra.meta;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.data.ColumnAccessor;
 import org.normandra.data.IdAccessor;
 import org.normandra.data.NullIdAccessor;
@@ -549,7 +548,7 @@ public class EntityMeta implements Iterable<ColumnMeta>, Comparable<EntityMeta> 
 
     void setId(final IdAccessor id) {
         if (null == id) {
-            throw new NullArgumentException("id accessor");
+            throw new IllegalArgumentException();
         }
         this.id = id;
     }

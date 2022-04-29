@@ -195,7 +195,6 @@
 package org.normandra.meta;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.data.*;
 import org.normandra.util.ArraySet;
 import org.normandra.util.CaseUtils;
@@ -232,11 +231,8 @@ public class AnnotationParser {
     private final Set<Field> configuredFields = new HashSet<>();
 
     public AnnotationParser(final ColumnAccessorFactory factory, final Class clazz, final Class... list) {
-        if (null == factory) {
-            throw new NullArgumentException("factory");
-        }
-        if (null == clazz) {
-            throw new NullArgumentException("class");
+        if (null == factory || null == clazz) {
+            throw new IllegalArgumentException("factory");
         }
         this.factory = factory;
         this.classes = new ArrayList<>();
@@ -251,11 +247,8 @@ public class AnnotationParser {
     }
 
     public AnnotationParser(final ColumnAccessorFactory factory, final Collection<Class> c) {
-        if (null == factory) {
-            throw new NullArgumentException("factory");
-        }
-        if (null == c) {
-            throw new NullArgumentException("classes");
+        if (null == factory || null == c) {
+            throw new IllegalArgumentException();
         }
         this.factory = factory;
         this.classes = new ArrayList<>(c);

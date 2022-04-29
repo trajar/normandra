@@ -1,6 +1,5 @@
 package org.normandra.meta;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.data.BasicColumnAccessorFactory;
 import org.normandra.data.ColumnAccessorFactory;
 import org.normandra.property.EmptyPropertyFilter;
@@ -28,7 +27,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withNodeClass(final Class<?> clazz) {
         if (null == clazz) {
-            throw new NullArgumentException("class");
+            throw new IllegalArgumentException();
         }
         this.nodeClasses.add(clazz);
         return this;
@@ -36,7 +35,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withNodeClasses(final Class... clazzes) {
         if (null == clazzes) {
-            throw new NullArgumentException("classes");
+            throw new IllegalArgumentException();
         }
         for (final Class<?> clazz : clazzes) {
             if (clazz != null) {
@@ -48,7 +47,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withNodeClasses(final Iterable<Class> c) {
         if (null == c) {
-            throw new NullArgumentException("classes");
+            throw new IllegalArgumentException();
         }
         for (final Class<?> clazz : c) {
             if (clazz != null) {
@@ -60,7 +59,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withEdgeClass(final Class<?> clazz) {
         if (null == clazz) {
-            throw new NullArgumentException("class");
+            throw new IllegalArgumentException();
         }
         this.edgeClasses.add(clazz);
         return this;
@@ -68,7 +67,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withEdgeClasses(final Class... clazzes) {
         if (null == clazzes) {
-            throw new NullArgumentException("classes");
+            throw new IllegalArgumentException();
         }
         for (final Class<?> clazz : clazzes) {
             if (clazz != null) {
@@ -80,7 +79,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withEdgeClasses(final Iterable<Class> c) {
         if (null == c) {
-            throw new NullArgumentException("classes");
+            throw new IllegalArgumentException();
         }
         for (final Class<?> clazz : c) {
             if (clazz != null) {
@@ -92,7 +91,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withEntityClass(final Class<?> clazz) {
         if (null == clazz) {
-            throw new NullArgumentException("class");
+            throw new IllegalArgumentException();
         }
         this.entityClasses.add(clazz);
         return this;
@@ -100,7 +99,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withEntityClasses(final Class... clazzes) {
         if (null == clazzes) {
-            throw new NullArgumentException("classes");
+            throw new IllegalArgumentException();
         }
         for (final Class<?> clazz : clazzes) {
             if (clazz != null) {
@@ -112,7 +111,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withEntityClasses(final Iterable<Class> c) {
         if (null == c) {
-            throw new NullArgumentException("classes");
+            throw new IllegalArgumentException();
         }
         for (final Class<?> clazz : c) {
             if (clazz != null) {
@@ -124,7 +123,7 @@ public class GraphMetaBuilder {
 
     public GraphMetaBuilder withPropertyFilterFor(final Class<?> clazz, final PropertyFilter filter) {
         if (null == clazz) {
-            throw new NullArgumentException("class");
+            throw new IllegalArgumentException();
         }
         if (null == filter) {
             this.propertyFilters.remove(clazz);

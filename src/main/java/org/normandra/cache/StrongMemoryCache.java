@@ -1,6 +1,5 @@
 package org.normandra.cache;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,7 @@ public class StrongMemoryCache implements EntityCache {
 
         public Factory(final MapFactory f) {
             if (null == f) {
-                throw new NullArgumentException("map factory");
+                throw new IllegalArgumentException();
             }
             this.maps = f;
         }
@@ -35,7 +34,7 @@ public class StrongMemoryCache implements EntityCache {
 
     public StrongMemoryCache(final MapFactory f) {
         if (null == f) {
-            throw new NullArgumentException("map factory");
+            throw new IllegalArgumentException();
         }
         this.maps = f;
     }
@@ -112,7 +111,7 @@ public class StrongMemoryCache implements EntityCache {
         if (null == map || map.isEmpty()) {
             return Collections.emptyList();
         }
-        
+
         final List items = new ArrayList<>(map.size());
         for (final Object item : map.values()) {
             if (null == clazz || Object.class.equals(clazz)) {

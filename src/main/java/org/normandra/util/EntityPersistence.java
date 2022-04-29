@@ -194,7 +194,6 @@
 
 package org.normandra.util;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.data.BasicDataHolder;
@@ -219,7 +218,7 @@ public class EntityPersistence {
 
     public EntityPersistence(final EntitySession session) {
         if (null == session) {
-            throw new NullArgumentException("session");
+            throw new IllegalArgumentException();
         }
         this.session = session;
     }

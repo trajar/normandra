@@ -199,7 +199,6 @@
  */
 package org.normandra.meta;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.util.ArraySet;
 
 import java.util.*;
@@ -212,7 +211,7 @@ public class EntityMetaCollection implements EntityMetaLookup, Iterable<EntityMe
 
     public EntityMetaCollection(final Iterable<EntityMeta> metas) {
         if (null == metas) {
-            throw new NullArgumentException("metadata");
+            throw new IllegalArgumentException();
         }
         for (final EntityMeta entity : metas) {
             for (final Class<?> clazz : entity.getTypes()) {

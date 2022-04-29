@@ -194,7 +194,6 @@
 
 package org.normandra.cache;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.meta.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -221,7 +220,7 @@ public class WeakMemoryCache implements EntityCache {
 
         public Factory(final MapFactory f) {
             if (null == f) {
-                throw new NullArgumentException("map factory");
+                throw new IllegalArgumentException();
             }
             this.maps = f;
         }
@@ -234,7 +233,7 @@ public class WeakMemoryCache implements EntityCache {
 
     public WeakMemoryCache(final MapFactory f) {
         if (null == f) {
-            throw new NullArgumentException("map factory");
+            throw new IllegalArgumentException();
         }
         this.maps = f;
     }

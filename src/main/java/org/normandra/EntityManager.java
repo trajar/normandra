@@ -194,7 +194,6 @@
 
 package org.normandra;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
 import org.normandra.meta.EntityMetaLookup;
@@ -213,18 +212,15 @@ public class EntityManager extends AbstractTransactional {
     private final EntityMetaLookup lookup;
 
     public EntityManager(final DatabaseSession db, final EntityMetaLookup lookup) {
-        if (null == db) {
-            throw new NullArgumentException("database");
-        }
-        if (null == lookup) {
-            throw new NullArgumentException("lookup");
+        if (null == db || null == lookup) {
+            throw new IllegalArgumentException();
         }
         this.database = db;
         this.lookup = lookup;
     }
 
     @Override
-    public void close() {
+    public void close() throws Exception {
         this.database.close();
     }
 
@@ -250,7 +246,7 @@ public class EntityManager extends AbstractTransactional {
 
     public <T> DatabaseQuery<T> query(final Class<T> clazz, final String name, final Map<String, Object> parameters) throws NormandraException {
         if (null == clazz) {
-            throw new NullArgumentException("type");
+            throw new IllegalArgumentException();
         }
 
         final EntityMeta meta = this.lookup.getMeta(clazz);
@@ -275,7 +271,7 @@ public class EntityManager extends AbstractTransactional {
 
     public <T> boolean exists(final Class<T> clazz, final Object key) throws NormandraException {
         if (null == clazz) {
-            throw new NullArgumentException("element");
+            throw new IllegalArgumentException();
         }
         if (null == key) {
             return false;
@@ -291,7 +287,7 @@ public class EntityManager extends AbstractTransactional {
 
     public <T> T get(final Class<? extends T> clazz, final Object key) throws NormandraException {
         if (null == clazz) {
-            throw new NullArgumentException("type");
+            throw new IllegalArgumentException();
         }
         if (null == key) {
             return null;
@@ -312,7 +308,7 @@ public class EntityManager extends AbstractTransactional {
 
     public <T> T load(final Class<? extends T> clazz, final Map<ColumnMeta, Object> data) throws NormandraException {
         if (null == clazz) {
-            throw new NullArgumentException("type");
+            throw new IllegalArgumentException();
         }
         if (null == data || data.isEmpty()) {
             return null;
@@ -333,7 +329,7 @@ public class EntityManager extends AbstractTransactional {
 
     public <T> void delete(final T element) throws NormandraException {
         if (null == element) {
-            throw new NullArgumentException("element");
+            throw new IllegalArgumentException();
         }
 
         final Class<?> clazz = element.getClass();
@@ -347,7 +343,7 @@ public class EntityManager extends AbstractTransactional {
 
     public <T> void save(final T element) throws NormandraException {
         if (null == element) {
-            throw new NullArgumentException("element");
+            throw new IllegalArgumentException();
         }
 
         final Class<?> clazz = element.getClass();

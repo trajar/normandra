@@ -196,17 +196,18 @@ package org.normandra;
 
 import org.normandra.meta.DatabaseMeta;
 
+import java.io.Closeable;
+
 /**
  * a NoSQL database abstraction
  * <p/>
  * Date: 8/31/13
  */
-public interface Database {
+public interface Database extends Closeable {
     DatabaseMeta getMeta();
     DatabaseSession createSession();
     default void refresh(DatabaseConstruction mode) throws NormandraException {
         refreshWith(getMeta(), mode);
     }
     void refreshWith(DatabaseMeta meta, DatabaseConstruction mode) throws NormandraException;
-    void close();
 }

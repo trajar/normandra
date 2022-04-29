@@ -206,7 +206,7 @@ import java.util.Map;
  * 
  * Date: 2/9/14
  */
-public interface EntitySession {
+public interface EntitySession extends AutoCloseable {
     boolean exists(EntityMeta meta, Object key) throws NormandraException;
     Object get(EntityMeta meta, Object key) throws NormandraException;
     List<Object> get(EntityMeta meta, Object... keys) throws NormandraException;

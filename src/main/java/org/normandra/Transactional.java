@@ -199,12 +199,7 @@ package org.normandra;
  * <p>
  *  Date: 8/30/14
  */
-public interface Transactional {
-    /**
-     * close session, release any associated resources
-     */
-    void close();
-
+public interface Transactional extends AutoCloseable {
     /**
      * executes a worker within a transaction context
      */

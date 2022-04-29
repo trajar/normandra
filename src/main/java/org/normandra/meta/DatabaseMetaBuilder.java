@@ -1,6 +1,5 @@
 package org.normandra.meta;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.data.BasicColumnAccessorFactory;
 import org.normandra.data.ColumnAccessorFactory;
 
@@ -19,7 +18,7 @@ public class DatabaseMetaBuilder {
 
     public DatabaseMetaBuilder withClass(final Class clazz) {
         if (null == clazz) {
-            throw new NullArgumentException("class");
+            throw new IllegalArgumentException();
         }
         this.classes.add(clazz);
         return this;
@@ -27,7 +26,7 @@ public class DatabaseMetaBuilder {
 
     public DatabaseMetaBuilder withClasses(final Class... clazzes) {
         if (null == clazzes) {
-            throw new NullArgumentException("classes");
+            throw new IllegalArgumentException();
         }
         for (final Class<?> clazz : clazzes) {
             this.withClass(clazz);
@@ -37,7 +36,7 @@ public class DatabaseMetaBuilder {
 
     public DatabaseMetaBuilder withClasses(final Iterable<Class> c) {
         if (null == c) {
-            throw new NullArgumentException("classes");
+            throw new IllegalArgumentException();
         }
         for (final Class<?> clazz : c) {
             this.withClass(clazz);

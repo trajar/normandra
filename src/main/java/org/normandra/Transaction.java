@@ -194,7 +194,6 @@
 
 package org.normandra;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -214,7 +213,7 @@ public class Transaction implements AutoCloseable {
 
     public Transaction(final Transactional session) throws NormandraException {
         if (null == session) {
-            throw new NullArgumentException("session");
+            throw new IllegalArgumentException();
         }
         this.session = session;
         this.session.beginWork();

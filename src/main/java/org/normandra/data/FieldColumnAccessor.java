@@ -194,8 +194,6 @@
 
 package org.normandra.data;
 
-import org.apache.commons.lang.NullArgumentException;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
@@ -204,37 +202,29 @@ import java.lang.reflect.InvocationTargetException;
  * <p/>
  * Date: 1/15/14
  */
-abstract public class FieldColumnAccessor
-{
+abstract public class FieldColumnAccessor {
     private final Field field;
 
-    public FieldColumnAccessor(final Field field)
-    {
-        if (null == field)
-        {
-            throw new NullArgumentException("field");
+    public FieldColumnAccessor(final Field field) {
+        if (null == field) {
+            throw new IllegalArgumentException();
         }
         this.field = field;
-        if (!this.field.isAccessible())
-        {
+        if (!this.field.isAccessible()) {
             this.field.setAccessible(true);
         }
     }
 
-    public Field getField()
-    {
+    public Field getField() {
         return this.field;
     }
 
-    protected final boolean set(final Object entity, final Object value) throws IllegalAccessException, InvocationTargetException
-    {
-        if (null == entity)
-        {
+    protected final boolean set(final Object entity, final Object value) throws IllegalAccessException, InvocationTargetException {
+        if (null == entity) {
             return false;
         }
 
-        if (!this.field.getDeclaringClass().isInstance(entity))
-        {
+        if (!this.field.getDeclaringClass().isInstance(entity)) {
             return false;
         }
 
@@ -242,15 +232,12 @@ abstract public class FieldColumnAccessor
         return true;
     }
 
-    protected final Object get(final Object entity) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException
-    {
-        if (null == entity)
-        {
+    protected final Object get(final Object entity) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        if (null == entity) {
             return null;
         }
 
-        if (!this.field.getDeclaringClass().isInstance(entity))
-        {
+        if (!this.field.getDeclaringClass().isInstance(entity)) {
             return null;
         }
 
@@ -258,21 +245,17 @@ abstract public class FieldColumnAccessor
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass())
-        {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
         FieldColumnAccessor that = (FieldColumnAccessor) o;
 
-        if (field != null ? !field.equals(that.field) : that.field != null)
-        {
+        if (field != null ? !field.equals(that.field) : that.field != null) {
             return false;
         }
 
@@ -280,8 +263,7 @@ abstract public class FieldColumnAccessor
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return field != null ? field.hashCode() : 0;
     }
 }

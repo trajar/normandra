@@ -194,7 +194,6 @@
 
 package org.normandra.data;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.NormandraException;
 import org.normandra.association.LazyLoadedCollection;
 
@@ -218,7 +217,7 @@ abstract public class CollectionColumnAccessor extends FieldColumnAccessor imple
     public CollectionColumnAccessor(final Field field, final Class<?> generic, final boolean lazy) {
         super(field);
         if (null == generic) {
-            throw new NullArgumentException("generic");
+            throw new IllegalArgumentException();
         }
         this.generic = generic;
         this.lazy = lazy;

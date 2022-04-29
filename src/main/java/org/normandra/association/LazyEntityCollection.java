@@ -194,7 +194,6 @@
 
 package org.normandra.association;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.data.DataHolder;
 import org.normandra.meta.EntityMeta;
@@ -225,20 +224,8 @@ abstract public class LazyEntityCollection<T> implements LazyLoadedCollection<T>
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
     public LazyEntityCollection(final EntitySession session, final EntityMeta meta, final DataHolder data, ElementIdentity<T> ef, final CollectionFactory<T> cf) {
-        if (null == data) {
-            throw new NullArgumentException("data holder");
-        }
-        if (null == session) {
-            throw new NullArgumentException("session");
-        }
-        if (null == meta) {
-            throw new NullArgumentException("entity");
-        }
-        if (null == ef) {
-            throw new NullArgumentException("element factory");
-        }
-        if (null == cf) {
-            throw new NullArgumentException("collection factory");
+        if (null == data || null == session || null == meta || null == ef || null == cf) {
+            throw new IllegalArgumentException();
         }
         this.data = data;
         this.session = session;

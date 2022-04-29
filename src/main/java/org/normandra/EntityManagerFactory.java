@@ -196,6 +196,8 @@ package org.normandra;
 
 import org.normandra.meta.DatabaseMeta;
 
+import java.io.IOException;
+
 /**
  * entity manager factory, a core constructor
  */
@@ -233,7 +235,7 @@ public class EntityManagerFactory {
         }
     }
 
-    public void close() {
+    public void close() throws IOException {
         this.database.close();
     }
 }

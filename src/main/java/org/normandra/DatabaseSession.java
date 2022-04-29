@@ -206,11 +206,6 @@ import java.util.Map;
  */
 public interface DatabaseSession extends EntitySession, Transactional {
     /**
-     * close session, release any associated resources
-     */
-    void close();
-
-    /**
      * clear session context and any associated cached data
      */
     void clear();

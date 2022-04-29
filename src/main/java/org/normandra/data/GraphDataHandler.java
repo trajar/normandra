@@ -194,7 +194,6 @@
 
 package org.normandra.data;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
 import org.normandra.meta.EntityMeta;
@@ -212,7 +211,7 @@ public class GraphDataHandler implements DataHandler {
 
     public GraphDataHandler(final PropertyModel model) {
         if (null == model) {
-            throw new NullArgumentException("property model");
+            throw new IllegalArgumentException();
         }
         this.model = model;
     }

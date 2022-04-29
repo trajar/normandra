@@ -194,7 +194,6 @@
 
 package org.normandra.graph;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.meta.ColumnMeta;
@@ -213,7 +212,7 @@ public class GraphEntitySession implements EntitySession {
 
     public GraphEntitySession(final Graph graph) {
         if (null == graph) {
-            throw new NullArgumentException("graph");
+            throw new IllegalArgumentException();
         }
         this.graph = graph;
     }
@@ -265,5 +264,10 @@ public class GraphEntitySession implements EntitySession {
     @Override
     public Object load(EntityMeta meta, Map<ColumnMeta, Object> data) throws NormandraException {
         return this.graph.load(meta, data);
+    }
+
+    @Override
+    public void close() throws Exception {
+        this.graph.close();
     }
 }

@@ -194,8 +194,6 @@
 
 package org.normandra.meta;
 
-import org.apache.commons.lang.NullArgumentException;
-
 import java.util.Objects;
 
 /**
@@ -210,7 +208,7 @@ public class JoinColumnMeta extends ColumnMeta {
     public JoinColumnMeta(final String name, final String property, final Class<?> clazz, final EntityMeta entity, final boolean primaryKey) {
         super(name, property, clazz, primaryKey, false, false);
         if (null == entity) {
-            throw new NullArgumentException("entity");
+            throw new IllegalArgumentException();
         }
         this.entity = entity;
     }

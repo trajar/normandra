@@ -194,7 +194,6 @@
 
 package org.normandra.data;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.meta.ColumnMeta;
 
 import java.lang.reflect.Field;
@@ -214,7 +213,7 @@ public class BasicIdAccessor extends FieldColumnAccessor implements IdAccessor {
     public BasicIdAccessor(final Field field, final ColumnMeta key) {
         super(field);
         if (null == key) {
-            throw new NullArgumentException("primary key");
+            throw new IllegalArgumentException();
         }
         this.primary = key;
     }

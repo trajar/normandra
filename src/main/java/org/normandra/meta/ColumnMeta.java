@@ -194,8 +194,6 @@
 
 package org.normandra.meta;
 
-import org.apache.commons.lang.NullArgumentException;
-
 import java.util.Collection;
 import java.util.Objects;
 
@@ -218,14 +216,8 @@ public class ColumnMeta implements Comparable<ColumnMeta> {
     private final boolean json;
 
     public ColumnMeta(final String name, final String property, final Class<?> clazz, final boolean primaryKey, final boolean lazy, final boolean json) {
-        if (null == name) {
-            throw new NullArgumentException("name");
-        }
-        if (null == property) {
-            throw new NullArgumentException("property");
-        }
-        if (null == clazz) {
-            throw new NullArgumentException("class");
+        if (null == name || null == property || null == clazz) {
+            throw new IllegalArgumentException();
         }
         this.name = name;
         this.property = property;

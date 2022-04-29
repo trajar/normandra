@@ -194,64 +194,51 @@
 
 package org.normandra.meta;
 
-import org.apache.commons.lang.NullArgumentException;
-
 /**
  * collection column meta-data
  * <p>
  * Date: 9/1/13
  */
-public class EmbeddedCollectionMeta extends ColumnMeta
-{
+public class EmbeddedCollectionMeta extends ColumnMeta {
     private final Class<?> generic;
 
-    public EmbeddedCollectionMeta(final String name, final String property, final Class<?> clazz, final Class<?> generic, final boolean primary, final boolean lazy, final boolean json)
-    {
+    public EmbeddedCollectionMeta(final String name, final String property, final Class<?> clazz, final Class<?> generic, final boolean primary, final boolean lazy, final boolean json) {
         super(name, property, clazz, primary, lazy, json);
-        if (null == generic)
-        {
-            throw new NullArgumentException("generic");
+        if (null == generic) {
+            throw new IllegalArgumentException();
         }
         this.generic = generic;
     }
 
     @Override
-    public boolean isCollection()
-    {
+    public boolean isCollection() {
         return true;
     }
 
     @Override
-    public boolean isEmbedded()
-    {
+    public boolean isEmbedded() {
         return true;
     }
 
-    public Class<?> getGeneric()
-    {
+    public Class<?> getGeneric() {
         return this.generic;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass())
-        {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o))
-        {
+        if (!super.equals(o)) {
             return false;
         }
 
         EmbeddedCollectionMeta that = (EmbeddedCollectionMeta) o;
 
-        if (generic != null ? !generic.equals(that.generic) : that.generic != null)
-        {
+        if (generic != null ? !generic.equals(that.generic) : that.generic != null) {
             return false;
         }
 
@@ -259,8 +246,7 @@ public class EmbeddedCollectionMeta extends ColumnMeta
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + (generic != null ? generic.hashCode() : 0);
         return result;

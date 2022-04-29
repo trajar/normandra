@@ -194,7 +194,6 @@
 
 package org.normandra.util;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.data.ColumnAccessor;
@@ -223,7 +222,7 @@ public class EntityBuilder {
 
     public Object build(final EntityMeta meta, final Map<ColumnMeta, Object> data) throws NormandraException {
         if (null == meta) {
-            throw new NullArgumentException("entity meta");
+            throw new IllegalArgumentException();
         }
         if (null == data || data.isEmpty()) {
             return null;

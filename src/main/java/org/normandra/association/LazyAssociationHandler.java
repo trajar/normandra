@@ -195,7 +195,6 @@
 package org.normandra.association;
 
 import javassist.util.proxy.MethodHandler;
-import org.apache.commons.lang.NullArgumentException;
 import org.normandra.EntitySession;
 import org.normandra.NormandraException;
 import org.normandra.data.BasicDataHolder;
@@ -231,14 +230,8 @@ public class LazyAssociationHandler implements MethodHandler {
     private final EntitySession session;
 
     public LazyAssociationHandler(final EntityMeta meta, final AssociationAccessor accessor, final EntitySession session) {
-        if (null == meta) {
-            throw new NullArgumentException("entity meta");
-        }
-        if (null == accessor) {
-            throw new NullArgumentException("accessor");
-        }
-        if (null == session) {
-            throw new NullArgumentException("session");
+        if (null == meta || null == accessor || null == session) {
+            throw new IllegalArgumentException();
         }
         this.meta = meta;
         this.accessor = accessor;
