@@ -197,7 +197,7 @@ package org.normandra;
 /**
  * a element capable of handling unit of work operations
  * <p>
- *  Date: 8/30/14
+ * Date: 8/30/14
  */
 public interface Transactional extends AutoCloseable {
     /**
@@ -206,10 +206,13 @@ public interface Transactional extends AutoCloseable {
     default void withTransaction(TransactionRunnable worker) throws NormandraException {
         withTransaction(worker, null);
     }
+
     void withTransaction(TransactionRunnable worker, ExceptionHandler handler) throws NormandraException;
+
     default <T> T withTransaction(TransactionCallable<T> worker) throws NormandraException {
         return withTransaction(worker, null);
     }
+
     <T> T withTransaction(TransactionCallable<T> worker, ExceptionHandler handler) throws NormandraException;
 
     /**
@@ -225,12 +228,17 @@ public interface Transactional extends AutoCloseable {
     void beginWork() throws NormandraException;
 
     /**
-     * commit unit of work, executing any stored/batched operations
+     * commit unit of work, executing any stored/batched operations, and closing the transaction
      */
     void commitWork() throws NormandraException;
 
     /**
-     * rollback unit of work, clearing stored/batched operations
+     * rollback unit of work, clearing stored/batched operations, and closing the transaction
      */
     void rollbackWork() throws NormandraException;
+
+    /**
+     * mark unit of work as completed - the transaction will be treated as read-only unless committed or rolled back
+     */
+    void concludeWork() throws NormandraException;
 }

@@ -374,4 +374,9 @@ public class EntityManager extends AbstractTransactional {
     public void rollbackWork() throws NormandraException {
         this.database.rollbackWork();
     }
+
+    @Override
+    public void concludeWork() throws NormandraException {
+        this.database.concludeWork();
+    }
 }

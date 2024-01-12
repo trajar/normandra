@@ -235,7 +235,7 @@ public class Transaction implements AutoCloseable {
     }
 
     public boolean hasError() {
-        return this.getError() != null; 
+        return this.getError() != null;
     }
 
     public void execute(final TransactionRunnable worker) throws NormandraException {
@@ -267,18 +267,20 @@ public class Transaction implements AutoCloseable {
     @Override
     public void close() throws Exception {
         if (null == this.success) {
-            logger.warn("Transaction closing but not marked as commit/rollback, defaulting to rollback.");
-            this.success = false;
-        }
-        if (Boolean.TRUE.equals(this.success)) {
+            logger.trace("Transaction closing but not marked as commit/rollback, defaulting to read-only.");
+            this.session.concludeWork();
+        } else if (Boolean.TRUE.equals(this.success)) {
             if (this.hasError()) {
                 logger.warn("Transaction marked as successful but found exception.", this.error);
             }
             logger.trace("Committing transaction [" + this + "].");
             this.session.commitWork();
-        } else {
+        } else if (Boolean.FALSE.equals(this.success)) {
             logger.trace("Rolling back transaction [" + this + "].");
             this.session.rollbackWork();
+        } else {
+            logger.trace("Closing transaction as read-only [" + this + "].");
+            this.session.concludeWork();
         }
     }
 }

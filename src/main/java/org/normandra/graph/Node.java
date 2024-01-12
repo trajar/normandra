@@ -217,6 +217,13 @@ public interface Node<T> {
     void updateEntity(T entity) throws NormandraException;
 
     /**
+     * Refresh node from database.
+     *
+     * @throws NormandraException
+     */
+    void refresh() throws NormandraException;
+
+    /**
      * @return the current node entity instance from model
      */
     T getEntity() throws NormandraException;

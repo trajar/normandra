@@ -199,15 +199,21 @@ import org.normandra.NormandraException;
 /**
  * a graph edge (or relationship)
  * <p>
- * 
+ * <p>
  * Date: 7/13/14
  */
-public interface Edge<T>
-{
+public interface Edge<T> {
     void delete() throws NormandraException;
+
     Node getStart() throws NormandraException;
+
     Node getEnd() throws NormandraException;
+
     Node getOtherNode(Node node) throws NormandraException;
+
     void updateEntity(T entity) throws NormandraException;
+
     T getEntity() throws NormandraException;
+
+    void refresh() throws NormandraException;
 }
